@@ -4,8 +4,7 @@ on:
   push:
     branches:
       - main
-    paths:
-      - 'functions/**'
+    # Filter 'paths' sme vynechali, aby sa deploy spustil pri kazdej zmene
 
 jobs:
   deploy_functions:
@@ -29,7 +28,7 @@ jobs:
       - name: Deploy to Firebase
         uses: w9jds/firebase-action@master
         with:
-          args: deploy --only functions
+          args: deploy --only functions --force
         env:
           GCP_SA_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_PRAXIHUB }}
           PROJECT_ID: praxihub-app
