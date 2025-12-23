@@ -1,69 +1,92 @@
-const admin = require('firebase-admin');
-const serviceAccount = require('./service-account.json');
+const admin = require("firebase-admin");
+const serviceAccount = require("./service-account.json");
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount)
 });
 
 const db = admin.firestore();
-
-async function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
+const COLLECTION = "internships";
+// Using a reliable Google Storage URL to avoid 403 Forbidden errors from external sites
+const TEST_URL = "https://firebasestorage.googleapis.com/v0/b/firebase-snippets-official.appspot.com/o/testing%2Fdummy.pdf?alt=media&token=c1f444w7-7b22-4411-80a9-111111111111";
 
 async function runTest() {
+  console.log("🚀 Spúšťam vylepšený integračný test...");
+
+  const docRef = db.collection(COLLECTION).doc();
+  const testData = {
+    contract_url: TEST_URL,
+    status: "UPLOADED",
+    created_at: new Date()
+  };
+
   try {
-    console.log('Starting integration test...');
+    await docRef.set(testData);
+    console.log(`📄 Dokument vytvorený: ${docRef.id}`);
 
-    // Create a doc in internships collection
-    const internshipRef = db.collection('internships').doc();
-    const docData = {
-      status: 'UPLOADED',
-      contract_url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf'
-    };
+    await docRef.update({ status: "ANALYZING" });
+    console.log("⏳ Status zmenený na ANALYZING. Čakám na AI...");
 
-    await internshipRef.set(docData);
-    console.log(`Created document with ID: ${internshipRef.id}`);
-
-    // Update status to 'ANALYZING'
-    await internshipRef.update({ status: 'ANALYZING' });
-    console.log(`Updated status to ANALYZING for document: ${internshipRef.id}`);
-
-    // Poll every 1s (max 30s)
+    let attempts = 0;
     const maxAttempts = 30;
 
-    for (let i = 1; i <= maxAttempts; i++) {
-        await sleep(1000);
-        const doc = await internshipRef.get();
-        if (!doc.exists) {
-            console.error('Document disappeared!');
-            process.exit(1);
-        }
+    const checkStatus = setInterval(async () => {
+      attempts++;
+      const snap = await docRef.get();
 
-        const data = doc.data();
-        const status = data.status;
-        console.log(`Attempt ${i}: Current status is ${status}`);
+      if (!snap.exists) {
+        clearInterval(checkStatus);
+        console.error("❌ CHYBA: Dokument zmizol počas testu!");
+        process.exit(1);
+      }
 
-        if (status === 'COMPLETED') {
-            console.log('Success! Analysis completed.');
-            console.log('Extracted Data:', JSON.stringify(data, null, 2));
+      const data = snap.data();
+      process.stdout.write(`\r... Pokus ${attempts}/${maxAttempts} | Status: ${data.status}   `);
 
-            // Delete doc
-            await internshipRef.delete();
-            console.log('Document deleted.');
-            process.exit(0);
-        } else if (status === 'ERROR_ANALYSIS') {
-            console.error('Error in analysis.');
-            process.exit(1);
-        }
-    }
-
-    console.error('Timeout waiting for status update.');
-    process.exit(1);
+      // 1. SCENÁR: ÚSPECH
+      if (data.status === "COMPLETED") {
+        clearInterval(checkStatus);
+        console.log("\n\n✅ TEST ÚSPEŠNÝ!");
+        console.log("------------------------------------------------");
+        console.log("Výsledok analýzy:");
+        console.log(`🏢 Firma: ${data.organization_name}`);
+        console.log(`📅 Od: ${data.start_date}`);
+        console.log(`📅 Do: ${data.end_date}`);
+        console.log("------------------------------------------------");
+        await cleanup(docRef);
+      }
+      // 2. SCENÁR: CHYBA BACKENDU (Toto chceme vidieť v logoch)
+      else if (data.status === "ERROR_ANALYSIS") {
+        clearInterval(checkStatus);
+        console.error("\n\n❌ TEST ZLYHAL: Backend vrátil chybu.");
+        console.error("================================================");
+        console.error("CHYBOVÁ SPRÁVA Z DATABÁZY:");
+        console.error(data.ai_error_message || "Žiadna chybová správa v poli 'ai_error_message'");
+        console.error("================================================");
+        process.exit(1);
+      }
+      // 3. SCENÁR: TIMEOUT
+      else if (attempts >= maxAttempts) {
+        clearInterval(checkStatus);
+        console.error("\n\n⏰ TEST TIMEOUT: Žiadna odpoveď do 30 sekúnd.");
+        process.exit(1);
+      }
+    }, 1000);
 
   } catch (error) {
-    console.error('Test failed with error:', error);
+    console.error("\n❌ KRITICKÁ CHYBA SKRIPTU:", error);
     process.exit(1);
+  }
+}
+
+async function cleanup(docRef) {
+  try {
+    await docRef.delete();
+    console.log("🧹 Testovacie dáta vymazané.");
+    process.exit(0);
+  } catch (e) {
+    console.error("Chyba pri čistení:", e);
+    process.exit(0);
   }
 }
 
