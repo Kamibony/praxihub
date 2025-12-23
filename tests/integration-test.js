@@ -8,7 +8,7 @@ admin.initializeApp({
 const db = admin.firestore();
 const COLLECTION = "internships";
 // Using a reliable Google Storage URL to avoid 403 Forbidden errors from external sites
-const TEST_URL = "https://firebasestorage.googleapis.com/v0/b/firebase-snippets-official.appspot.com/o/testing%2Fdummy.pdf?alt=media&token=c1f444w7-7b22-4411-80a9-111111111111";
+const TEST_URL = "https://raw.githubusercontent.com/mozilla/pdf.js/master/web/compressed.tracemonkey-pldi-09.pdf";
 
 async function runTest() {
   console.log("🚀 Spúšťam vylepšený integračný test...");
