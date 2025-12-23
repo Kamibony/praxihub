@@ -11,7 +11,6 @@ if (!admin.apps.length) {
 exports.analyzeContract = functions.firestore
   .document("internships/{docId}")
   .onWrite(async (change, context) => { 
-    // ZMENA 1: Používame onWrite, aby sme zachytili vytvorenie AJ úpravu
     
     // Ak bol dokument vymazaný, nerob nič
     if (!change.after.exists) return null;
@@ -19,10 +18,11 @@ exports.analyzeContract = functions.firestore
     const newData = change.after.data();
     const previousData = change.before.exists ? change.before.data() : null;
 
-    // ZMENA 2: Logika spúšťania
-    // Spusti ak:
-    // A) Je to nový dokument (isNew) A status je 'ANALYZING'
-    // B) Status sa zmenil na 'ANALYZING' (napr. pri reštarte procesu)
+    // Logika spúšťania:
+    // Spusti funkciu LEN ak:
+    // A) Dokument je úplne nový (isNew) A jeho status je 'ANALYZING'
+    // ALEBO
+    // B) Dokument už existoval, ale status sa ZMENIL na 'ANALYZING'
     
     const isNew = !previousData;
     const statusChanged = previousData && previousData.status !== "ANALYZING";
@@ -33,8 +33,6 @@ exports.analyzeContract = functions.firestore
 
       try {
         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-        
-        // ZMENA 3: Vrátená verzia podľa vášho želania
         const model = genAI.getGenerativeModel({ model: "gemini-2.5-pro" });
 
         const fileUrl = newData.contract_url;
@@ -44,12 +42,13 @@ exports.analyzeContract = functions.firestore
         const response = await axios.get(fileUrl, { responseType: "arraybuffer" });
         const base64File = Buffer.from(response.data).toString("base64");
         
-        // Detekcia typu súboru (PDF alebo Obrázok)
+        // Detekcia typu súboru
         const mimeType = fileUrl.toLowerCase().includes(".pdf") ? "application/pdf" : "image/jpeg";
 
+        // --- OPRAVENÝ PROMPT (Odstránené problematické znaky ` ) ---
         const prompt = `
           Analyzuj túto zmluvu o praxi.
-          Vráť IBA validný JSON objekt (bez markdown formátovania ```json) s kľúčmi:
+          Vráť IBA validný JSON objekt (čistý text bez formátovania kódu) s kľúčmi:
           {
             "organization_name": "Názov firmy (String)",
             "start_date": "YYYY-MM-DD (String alebo null)",
@@ -60,7 +59,7 @@ exports.analyzeContract = functions.firestore
 
         const result = await model.generateContent([prompt, { inlineData: { data: base64File, mimeType: mimeType } }]);
         
-        // Čistenie odpovede (odstránenie ```json a ``` ak tam sú)
+        // Čistenie odpovede (odstránenie markdown značiek ak tam náhodou sú)
         const textResponse = result.response.text();
         const cleanJson = textResponse.replace(/```json/g, "").replace(/```/g, "").trim();
         
@@ -73,7 +72,7 @@ exports.analyzeContract = functions.firestore
           organization_name: extractedData.organization_name || "Neznáma firma",
           start_date: extractedData.start_date,
           end_date: extractedData.end_date,
-          status: "APPROVED", // Alebo COMPLETED, podľa toho ako to chcete v appke
+          status: "APPROVED", 
           ai_analysis_result: cleanJson,
           is_verified: true
         });
@@ -82,7 +81,6 @@ exports.analyzeContract = functions.firestore
 
       } catch (error) {
         console.error("❌ Chyba pri analýze:", error);
-        // Zapíšeme chybu do databázy, aby sme to videli v appke
         await change.after.ref.update({ 
             status: "REJECTED", 
             ai_error_message: error.message 
