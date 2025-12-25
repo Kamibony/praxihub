@@ -2,3 +2,5 @@ node_modules/
 functions/node_modules/
 tests/node_modules/
 **/node_modules/
+.next
+.expo
