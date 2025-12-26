@@ -19,11 +19,6 @@ exports.analyzeContract = functions.firestore
     const previousData = change.before.exists ? change.before.data() : null;
 
     // Logika spúšťania:
-    // Spusti funkciu LEN ak:
-    // A) Dokument je úplne nový (isNew) A jeho status je 'ANALYZING'
-    // ALEBO
-    // B) Dokument už existoval, ale status sa ZMENIL na 'ANALYZING'
-    
     const isNew = !previousData;
     const statusChanged = previousData && previousData.status !== "ANALYZING";
     const shouldRun = newData.status === "ANALYZING" && (isNew || statusChanged);
@@ -33,6 +28,7 @@ exports.analyzeContract = functions.firestore
 
       try {
         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+        // Ak by 2.5-pro nefungoval, zmeňte na "gemini-1.5-pro"
         const model = genAI.getGenerativeModel({ model: "gemini-2.5-pro" });
 
         const fileUrl = newData.contract_url;
@@ -61,7 +57,7 @@ exports.analyzeContract = functions.firestore
 
         const result = await model.generateContent([prompt, { inlineData: { data: base64File, mimeType: mimeType } }]);
         
-        // Čistenie odpovede (odstránenie markdown značiek ak tam náhodou sú)
+        // Čistenie odpovede
         const textResponse = result.response.text();
         const cleanJson = textResponse.replace(/```json/g, "").replace(/```/g, "").trim();
         
@@ -72,7 +68,7 @@ exports.analyzeContract = functions.firestore
         // Zápis výsledku do databázy vrátane IČO
         await change.after.ref.update({
           organization_name: extractedData.organization_name || "Neznáma firma",
-          organization_ico: extractedData.organization_ico || null, // Ukladáme IČO
+          organization_ico: extractedData.organization_ico || null,
           start_date: extractedData.start_date,
           end_date: extractedData.end_date,
           status: "APPROVED", 
