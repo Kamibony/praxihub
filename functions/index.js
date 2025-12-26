@@ -45,16 +45,18 @@ exports.analyzeContract = functions.firestore
         // Detekcia typu súboru
         const mimeType = fileUrl.toLowerCase().includes(".pdf") ? "application/pdf" : "image/jpeg";
 
-        // --- OPRAVENÝ PROMPT (Odstránené problematické znaky ` ) ---
+        // --- PROMPT S INŠTRUKCIOU PRE IČO ---
         const prompt = `
           Analyzuj túto zmluvu o praxi.
           Vráť IBA validný JSON objekt (čistý text bez formátovania kódu) s kľúčmi:
           {
             "organization_name": "Názov firmy (String)",
+            "organization_ico": "IČO firmy (String - iba čísla, bez medzier)",
             "start_date": "YYYY-MM-DD (String alebo null)",
             "end_date": "YYYY-MM-DD (String alebo null)"
           }
-          Nájdi názov organizácie, dátum začiatku a konca praxe. Ak údaj chýba, daj null.
+          Nájdi názov organizácie, jej IČO (identifikačné číslo), dátum začiatku a konca praxe. 
+          Ak IČO nevieš nájsť, skús hľadať 8-miestne číslo označené ako IČO. Ak údaj chýba, daj null.
         `;
 
         const result = await model.generateContent([prompt, { inlineData: { data: base64File, mimeType: mimeType } }]);
@@ -67,9 +69,10 @@ exports.analyzeContract = functions.firestore
         
         const extractedData = JSON.parse(cleanJson);
 
-        // Zápis výsledku do databázy
+        // Zápis výsledku do databázy vrátane IČO
         await change.after.ref.update({
           organization_name: extractedData.organization_name || "Neznáma firma",
+          organization_ico: extractedData.organization_ico || null, // Ukladáme IČO
           start_date: extractedData.start_date,
           end_date: extractedData.end_date,
           status: "APPROVED", 
@@ -77,7 +80,7 @@ exports.analyzeContract = functions.firestore
           is_verified: true
         });
 
-        console.log(`✅ Analýza úspešná: ${extractedData.organization_name}`);
+        console.log(`✅ Analýza úspešná: ${extractedData.organization_name} (IČO: ${extractedData.organization_ico})`);
 
       } catch (error) {
         console.error("❌ Chyba pri analýze:", error);
