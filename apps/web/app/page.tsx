@@ -5,7 +5,7 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-white flex flex-col font-sans">
       
-      {/* --- NAVIGÁCIA --- */}
+      {/* --- NAVIGACE --- */}
       <nav className="w-full py-6 px-8 flex justify-between items-center max-w-7xl mx-auto">
         <div className="text-2xl font-bold text-blue-600 flex items-center gap-2">
           <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
@@ -13,42 +13,42 @@ export default function LandingPage() {
         </div>
         <div className="space-x-4">
           <Link href="/login" className="text-gray-600 hover:text-gray-900 font-medium px-4 py-2">
-            Prihlásiť sa
+            Přihlásit se
           </Link>
           <Link href="/signup" className="bg-blue-600 text-white px-6 py-2.5 rounded-full font-medium hover:bg-blue-700 transition shadow-lg hover:shadow-xl">
-            Registrácia
+            Registrace
           </Link>
         </div>
       </nav>
 
-      {/* --- HERO SEKCIA --- */}
+      {/* --- HERO SEKCE --- */}
       <main className="flex-grow">
         <section className="relative pt-20 pb-32 overflow-hidden">
           <div className="max-w-7xl mx-auto px-6 relative z-10 text-center">
             <span className="bg-blue-50 text-blue-700 px-4 py-1.5 rounded-full text-sm font-semibold tracking-wide uppercase mb-6 inline-block">
-              Powered by Google Gemini AI
+              Poháněno Google Gemini AI
             </span>
             <h1 className="text-5xl md:text-7xl font-extrabold text-gray-900 leading-tight mb-8">
-              Budúcnosť správy <br />
+              Budoucnost správy <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">
                 odborných stáží
               </span>
             </h1>
             <p className="text-xl text-gray-500 mb-10 max-w-2xl mx-auto leading-relaxed">
-              Zabudnite na papierovanie. PraxiHub prepája študentov, firmy a univerzitu do jedného inteligentného ekosystému, ktorý automatizuje byrokraciu.
+              Zapomeňte na papírování. PraxiHub propojuje studenty, firmy a univerzitu do jednoho inteligentního ekosystému, který automatizuje byrokracii.
             </p>
             
             <div className="flex flex-col sm:flex-row justify-center gap-4">
               <Link href="/signup" className="px-8 py-4 bg-blue-600 text-white rounded-xl text-lg font-semibold hover:bg-blue-700 transition shadow-lg hover:-translate-y-1">
-                Začať používať zdarma
+                Začít používat zdarma
               </Link>
               <Link href="/login" className="px-8 py-4 bg-white text-gray-700 border border-gray-200 rounded-xl text-lg font-semibold hover:bg-gray-50 transition">
-                Mám už účet
+                Mám již účet
               </Link>
             </div>
           </div>
           
-          {/* Dekoratívne pozadie */}
+          {/* Dekorativní pozadí */}
           <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-full h-full z-0 opacity-40 pointer-events-none">
             <div className="absolute top-20 left-10 w-72 h-72 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl animate-blob"></div>
             <div className="absolute top-20 right-10 w-72 h-72 bg-blue-300 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-2000"></div>
@@ -59,18 +59,18 @@ export default function LandingPage() {
         {/* --- ÚČASTNÍCI (Karty) --- */}
         <section className="py-20 bg-gray-50">
           <div className="max-w-7xl mx-auto px-6">
-            <h2 className="text-3xl font-bold text-center text-gray-900 mb-16">Jeden systém, tri pohľady</h2>
+            <h2 className="text-3xl font-bold text-center text-gray-900 mb-16">Jeden systém, tři pohledy</h2>
             
             <div className="grid md:grid-cols-3 gap-8">
-              {/* Karta: Študent */}
+              {/* Karta: Student */}
               <div className="bg-white p-8 rounded-2xl shadow-sm hover:shadow-md transition border border-gray-100 relative group overflow-hidden">
                 <div className="absolute top-0 left-0 w-2 h-full bg-blue-500 group-hover:w-full transition-all duration-300 opacity-5"></div>
                 <div className="w-14 h-14 bg-blue-100 rounded-xl flex items-center justify-center text-blue-600 mb-6 relative z-10">
                    <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" /></svg>
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-3 relative z-10">Študent</h3>
+                <h3 className="text-xl font-bold text-gray-900 mb-3 relative z-10">Student</h3>
                 <p className="text-gray-600 relative z-10">
-                  Nahrávanie zmlúv fotkou, okamžitá AI kontrola údajov a sledovanie stavu schválenia v reálnom čase. Žiadne behanie po kanceláriách.
+                  Nahrávání smluv fotkou, okamžitá AI kontrola údajů a sledování stavu schválení v reálném čase. Žádné běhání po kancelářích.
                 </p>
               </div>
 
@@ -82,7 +82,7 @@ export default function LandingPage() {
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 mb-3 relative z-10">Firma</h3>
                 <p className="text-gray-600 relative z-10">
-                  Prehľad všetkých stážistov na jednom mieste. Automatické párovanie zmlúv podľa IČO a digitálna správa dokumentácie.
+                  Přehled všech stážistů na jednom místě. Automatické párování smluv podle IČO a digitální správa dokumentace.
                 </p>
               </div>
 
@@ -94,17 +94,17 @@ export default function LandingPage() {
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 mb-3 relative z-10">Koordinátor</h3>
                 <p className="text-gray-600 relative z-10">
-                  Absolútny prehľad. Dashboard s metrikami, filtrovanie podľa ročníkov a firiem, automatické notifikácie problémových zmlúv.
+                  Absolutní přehled. Dashboard s metrikami, filtrování podle ročníků a firem, automatické notifikace problémových smluv.
                 </p>
               </div>
             </div>
           </div>
         </section>
 
-        {/* --- AKO TO FUNGUJE (Proces) --- */}
+        {/* --- JAK TO FUNGUJE (Proces) --- */}
         <section className="py-20">
           <div className="max-w-7xl mx-auto px-6">
-            <h2 className="text-3xl font-bold text-center text-gray-900 mb-16">Ako funguje AI Analýza?</h2>
+            <h2 className="text-3xl font-bold text-center text-gray-900 mb-16">Jak funguje AI Analýza?</h2>
             
             <div className="flex flex-col md:flex-row items-center justify-center gap-8 relative">
               {/* Connecting Line (Desktop) */}
@@ -113,8 +113,8 @@ export default function LandingPage() {
               {/* Krok 1 */}
               <div className="bg-white p-6 rounded-xl border border-gray-200 w-full md:w-80 text-center relative">
                 <div className="w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-lg mx-auto mb-4 relative z-10">1</div>
-                <h4 className="font-bold text-lg mb-2">Upload Zmluvy</h4>
-                <p className="text-sm text-gray-500">Študent nahrá PDF alebo odfotí zmluvu mobilom.</p>
+                <h4 className="font-bold text-lg mb-2">Upload Smlouvy</h4>
+                <p className="text-sm text-gray-500">Student nahraje PDF nebo vyfotí smlouvu mobilem.</p>
               </div>
 
               {/* Krok 2 */}
@@ -122,14 +122,14 @@ export default function LandingPage() {
                  <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-blue-500 text-white px-3 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider">AI Proces</div>
                 <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold text-lg mx-auto mb-4">2</div>
                 <h4 className="font-bold text-lg mb-2">Gemini Analýza</h4>
-                <p className="text-sm text-gray-500">AI prečíta údaje: názov firmy, IČO, dátumy a validuje ich.</p>
+                <p className="text-sm text-gray-500">AI přečte údaje: název firmy, IČO, data a validuje je.</p>
               </div>
 
               {/* Krok 3 */}
               <div className="bg-white p-6 rounded-xl border border-gray-200 w-full md:w-80 text-center relative">
                 <div className="w-10 h-10 bg-green-500 text-white rounded-full flex items-center justify-center font-bold text-lg mx-auto mb-4">3</div>
-                <h4 className="font-bold text-lg mb-2">Schválenie</h4>
-                <p className="text-sm text-gray-500">Dáta sa zapíšu do databázy a priradia sa firme.</p>
+                <h4 className="font-bold text-lg mb-2">Schválení</h4>
+                <p className="text-sm text-gray-500">Data se zapíší do databáze a přiřadí se firmě.</p>
               </div>
 
             </div>
@@ -142,11 +142,11 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center">
           <div className="mb-4 md:mb-0">
             <span className="text-2xl font-bold tracking-tight">PraxiHub</span>
-            <p className="text-gray-400 text-sm mt-1">© 2025 University Systems. All rights reserved.</p>
+            <p className="text-gray-400 text-sm mt-1">© 2025 University Systems. Všechna práva vyhrazena.</p>
           </div>
           <div className="flex gap-6">
             <Link href="#" className="text-gray-400 hover:text-white transition">Podpora</Link>
-            <Link href="#" className="text-gray-400 hover:text-white transition">Ochrana údajov</Link>
+            <Link href="#" className="text-gray-400 hover:text-white transition">Ochrana údajů</Link>
             <Link href="#" className="text-gray-400 hover:text-white transition">Kontakt</Link>
           </div>
         </div>
