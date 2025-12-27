@@ -3,32 +3,50 @@
 import React, { useEffect, useState } from 'react';
 import { db, auth } from "../../../lib/firebase";
 import { collection, query, orderBy, onSnapshot } from "firebase/firestore";
+import { onAuthStateChanged } from "firebase/auth"; // Pridaný import
 import { useRouter } from "next/navigation";
 
 export default function CoordinatorDashboard() {
   const [internships, setInternships] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true); // Pridaný loading stav
   const router = useRouter();
 
   useEffect(() => {
-    // Jednoduchá ochrana - v reálnom app by sme kontrolovali rolu aj tu
-    if (!auth.currentUser) {
-        // router.push("/login"); // Commented out for smoother dev testing
-    }
+    // Čakáme na overenie prihlásenia
+    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        // Ak nie je prihlásený, presmerujeme na login (alebo len nenačítame dáta)
+        router.push("/login");
+      } else {
+        // Až keď máme usera, spustíme listener na dáta
+        const q = query(collection(db, "internships"), orderBy("createdAt", "desc"));
+        
+        const unsubscribeFirestore = onSnapshot(q, (snapshot) => {
+          const data = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          }));
+          setInternships(data);
+          setLoading(false);
+        }, (error) => {
+           console.error("Firestore error:", error);
+           // Ignorujeme permission-denied ak sa stane pri odhlasovaní
+        });
 
-    const q = query(collection(db, "internships"), orderBy("createdAt", "desc"));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      setInternships(data);
+        // Cleanup funkcia pre Firestore listener
+        return () => unsubscribeFirestore();
+      }
     });
 
-    return () => unsubscribe();
-  }, []);
+    // Cleanup funkcia pre Auth listener
+    return () => unsubscribeAuth();
+  }, [router]);
+
+  if (loading) return <div className="p-8 text-center">Načítavam dáta...</div>;
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
+      {/* ... zvyšok kódu (renderovanie tabuľky) ostáva rovnaký ... */}
       <div className="max-w-7xl mx-auto">
         <header className="mb-8 flex justify-between items-center">
           <div>
