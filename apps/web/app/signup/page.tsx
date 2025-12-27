@@ -35,11 +35,11 @@ export default function SignupPage() {
     } catch (err: any) {
       console.error(err);
       if (err.code === 'auth/email-already-in-use') {
-        setError("Email is already in use.");
+        setError("E-mail se již používá.");
       } else if (err.code === 'auth/weak-password') {
-        setError("Password should be at least 6 characters.");
+        setError("Heslo musí mít alespoň 6 znaků.");
       } else {
-        setError(err.message || "Failed to sign up.");
+        setError(err.message || "Registrace se nezdařila.");
       }
     } finally {
       setLoading(false);
@@ -50,7 +50,7 @@ export default function SignupPage() {
     <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900">
       <div className="w-full max-w-md p-8 space-y-6 bg-white rounded shadow-md dark:bg-gray-800">
         <h2 className="text-2xl font-bold text-center text-gray-900 dark:text-white">
-          Create an account
+          Vytvořit účet
         </h2>
         {error && (
           <div className="p-4 text-sm text-red-700 bg-red-100 rounded-lg dark:bg-red-200 dark:text-red-800" role="alert">
@@ -69,7 +69,7 @@ export default function SignupPage() {
               type="email"
               id="email"
               className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
-              placeholder="name@company.com"
+              placeholder="jmeno@firma.cz"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -80,7 +80,7 @@ export default function SignupPage() {
               htmlFor="password"
               className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300"
             >
-              Password
+              Heslo
             </label>
             <input
               type="password"
@@ -106,8 +106,8 @@ export default function SignupPage() {
               className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
             >
               <option value="student">Student</option>
-              <option value="company">Company</option>
-              <option value="coordinator">Coordinator</option>
+              <option value="company">Firma</option>
+              <option value="coordinator">Koordinátor</option>
             </select>
           </div>
           <button
@@ -115,13 +115,13 @@ export default function SignupPage() {
             disabled={loading}
             className="w-full px-4 py-2 text-white bg-blue-600 rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 disabled:opacity-50"
           >
-            {loading ? "Creating account..." : "Sign Up"}
+            {loading ? "Vytváření účtu..." : "Registrovat se"}
           </button>
         </form>
         <div className="text-sm text-center text-gray-500 dark:text-gray-400">
-          Already have an account?{" "}
+          Máte již účet?{" "}
           <Link href="/login" className="text-blue-600 hover:underline dark:text-blue-500">
-            Login
+            Přihlásit se
           </Link>
         </div>
       </div>
