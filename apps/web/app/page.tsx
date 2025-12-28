@@ -1,7 +1,60 @@
+'use client';
+
+import React, { useEffect, useState } from 'react';
 import Link from "next/link";
-import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { onAuthStateChanged } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
+import { auth, db } from "../lib/firebase"; // Uisti sa, že cesta k lib/firebase je správna
 
 export default function LandingPage() {
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
+
+  // --- LOGIKA PRESMEROVANIA ---
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      if (currentUser) {
+        // Používateľ je prihlásený, zistíme rolu a presmerujeme
+        try {
+          const userDocRef = doc(db, "users", currentUser.uid);
+          const userDoc = await getDoc(userDocRef);
+
+          if (userDoc.exists()) {
+            const role = userDoc.data().role;
+            if (role === "student") router.push("/student/dashboard");
+            else if (role === "company") router.push("/company/dashboard");
+            else if (role === "coordinator") router.push("/admin/dashboard");
+            else setLoading(false); // Neznáma rola, ukážeme web
+          } else {
+            setLoading(false); // Dokument chýba, ukážeme web
+          }
+        } catch (error) {
+          console.error("Chyba pri získavaní role:", error);
+          setLoading(false);
+        }
+      } else {
+        // Používateľ nie je prihlásený, ukážeme Landing Page
+        setLoading(false);
+      }
+    });
+
+    return () => unsubscribe();
+  }, [router]);
+
+  // Kým overujeme prihlásenie, zobrazíme loader (aby stránka "nepreblikla")
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="flex flex-col items-center space-y-4">
+          <div className="w-12 h-12 border-4 border-blue-600 rounded-full border-t-transparent animate-spin"></div>
+          <div className="text-gray-500 font-medium">Načítám PraxiHub...</div>
+        </div>
+      </div>
+    );
+  }
+
+  // --- SAMOTNÁ LANDING PAGE (ak nie je prihlásený) ---
   return (
     <div className="min-h-screen bg-white flex flex-col font-sans">
       
