@@ -6,6 +6,7 @@ import { collection, query, where, doc, getDoc, updateDoc, onSnapshot } from "fi
 import { onAuthStateChanged } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import StarRating from "@/components/StarRating";
+import Chatbot from "@/components/Chatbot";
 
 export default function CompanyDashboard() {
   const [user, setUser] = useState<any>(null);
@@ -174,11 +175,13 @@ export default function CompanyDashboard() {
   };
 
   const averageRating = calculateAverageRating();
+  const chatbotMessage = "Dobrý den! Zde vidíte přehled všech vašich stážistů. Kliknutím na studenta zobrazíte detaily.";
 
   if (loading && !companyIco && !user) return <div className="p-8 text-center">Načítám...</div>;
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
+      <Chatbot initialMessage={chatbotMessage} />
       <div className="max-w-6xl mx-auto">
         <header className="mb-8 flex justify-between items-center">
           <div>

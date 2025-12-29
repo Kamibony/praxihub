@@ -5,6 +5,7 @@ import { db, auth } from "../../../lib/firebase";
 import { collection, query, orderBy, onSnapshot, doc, updateDoc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import { useRouter } from "next/navigation";
+import Chatbot from "@/components/Chatbot";
 
 // Define filter type
 type FilterStatus = 'ALL' | 'PENDING_ORG_APPROVAL' | 'APPROVED' | 'NEEDS_REVIEW' | 'ANALYZING';
@@ -112,10 +113,15 @@ export default function CoordinatorDashboard() {
     }`;
   };
 
+  const pendingOrgs = internships.filter(i => i.status === 'PENDING_ORG_APPROVAL').length;
+  const pendingReview = internships.filter(i => i.status === 'NEEDS_REVIEW').length;
+  const chatbotMessage = `Vítej zpět! Aktuálně máš ke schválení ${pendingOrgs} firem a ${pendingReview} smluv čeká na kontrolu.`;
+
   if (loading) return <div className="p-8 text-center text-gray-500">Načítám data...</div>;
 
   return (
     <div className="min-h-screen bg-gray-50 p-8 font-sans">
+      <Chatbot initialMessage={chatbotMessage} />
       <div className="max-w-7xl mx-auto">
         <header className="mb-8 flex justify-between items-center">
           <div>

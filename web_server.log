@@ -4,7 +4,7 @@
 
   ▲ Next.js 14.2.3
   - Local:        http://localhost:3000
-  - Environments: .env.local
+  - Environments: .env
 
  ✓ Starting...
 Attention: Next.js now collects completely anonymous telemetry regarding usage.
@@ -12,15 +12,9 @@ This information is used to shape Next.js' roadmap and prioritize features.
 You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
 https://nextjs.org/telemetry
 
- ✓ Ready in 2.6s
- ○ Compiling /student/dashboard/preview ...
- ✓ Compiled /student/dashboard/preview in 8.5s (760 modules)
- GET /student/dashboard/preview 200 in 10007ms
- ✓ Compiled in 1611ms (286 modules)
- ✓ Compiled in 386ms (250 modules)
- ✓ Compiled in 482ms (264 modules)
- ✓ Compiled in 625ms (250 modules)
- ○ Compiling /student/dashboard/preview ...
- ✓ Compiled /student/dashboard/preview in 741ms (737 modules)
- GET /student/dashboard/preview 200 in 1091ms
- ✓ Compiled in 2.3s (250 modules)
+ ✓ Ready in 3.5s
+ ○ Compiling /chatbot-preview ...
+ ✓ Compiled /chatbot-preview in 6.8s (720 modules)
+ GET /chatbot-preview 200 in 8205ms
+ ✓ Compiled in 1514ms (266 modules)
+ ✓ Compiled in 454ms (250 modules)
