@@ -34,6 +34,14 @@ export default function CoordinatorDashboard() {
     return () => unsubscribeAuth();
   }, [router]);
 
+  const getCompanyAverageRating = (ico: string) => {
+    if (!ico) return null;
+    const companyInternships = internships.filter(i => i.organization_ico === ico && i.studentRating > 0);
+    if (companyInternships.length === 0) return null;
+    const sum = companyInternships.reduce((acc, curr) => acc + curr.studentRating, 0);
+    return (sum / companyInternships.length).toFixed(1);
+  };
+
   if (loading) return <div className="p-8 text-center text-gray-500">Načítám data...</div>;
 
   return (
@@ -105,7 +113,17 @@ export default function CoordinatorDashboard() {
                     <td className="px-6 py-4 whitespace-nowrap">
                         {item.organization_name ? (
                            <div>
-                             <div className="text-sm text-gray-900 font-medium">{item.organization_name}</div>
+                             <div className="text-sm text-gray-900 font-medium flex items-center gap-2">
+                               {item.organization_name}
+                               {item.organization_ico && (() => {
+                                 const rating = getCompanyAverageRating(item.organization_ico);
+                                 return rating ? (
+                                   <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-yellow-50 text-yellow-700 text-xs font-bold border border-yellow-200">
+                                     <span>★</span> {rating}
+                                   </span>
+                                 ) : null;
+                               })()}
+                             </div>
                              <div className="text-xs text-gray-500 font-mono">IČO: {item.organization_ico || 'N/A'}</div>
                            </div>
                         ) : (

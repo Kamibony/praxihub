@@ -5,6 +5,7 @@ import { db, auth } from "../../../lib/firebase";
 import { collection, query, where, doc, getDoc, updateDoc, onSnapshot } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import { useRouter } from "next/navigation";
+import StarRating from "@/components/StarRating";
 
 export default function CompanyDashboard() {
   const [user, setUser] = useState<any>(null);
@@ -13,6 +14,12 @@ export default function CompanyDashboard() {
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [inputIco, setInputIco] = useState("");
+
+  // Rating State
+  const [ratingInternshipId, setRatingInternshipId] = useState<string | null>(null);
+  const [companyRating, setCompanyRating] = useState(0);
+  const [companyReview, setCompanyReview] = useState("");
+
   const router = useRouter();
 
   useEffect(() => {
@@ -80,6 +87,33 @@ export default function CompanyDashboard() {
     }
   };
 
+  const handleRateStudent = async () => {
+    if (!ratingInternshipId || companyRating === 0) return;
+    try {
+      const docRef = doc(db, "internships", ratingInternshipId);
+      await updateDoc(docRef, {
+        companyRating,
+        companyReview
+      });
+      setRatingInternshipId(null);
+      setCompanyRating(0);
+      setCompanyReview("");
+      alert("Hodnocení uloženo!");
+    } catch (error) {
+      console.error("Error submitting rating:", error);
+      alert("Chyba při odesílání hodnocení.");
+    }
+  };
+
+  const calculateAverageRating = () => {
+    const ratedInternships = internships.filter(i => i.studentRating > 0);
+    if (ratedInternships.length === 0) return null;
+    const sum = ratedInternships.reduce((acc, curr) => acc + curr.studentRating, 0);
+    return (sum / ratedInternships.length).toFixed(1);
+  };
+
+  const averageRating = calculateAverageRating();
+
   if (loading && !companyIco && !user) return <div className="p-8 text-center">Načítám...</div>;
 
   return (
@@ -87,20 +121,31 @@ export default function CompanyDashboard() {
       <div className="max-w-6xl mx-auto">
         <header className="mb-8 flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Firemní Portál</h1>
-            {companyIco ? (
-              <p className="text-gray-600 mt-2 flex items-center gap-2">
-                Firma IČO: <span className="font-mono font-semibold bg-gray-200 px-2 rounded text-gray-800">{companyIco}</span>
-                <button 
-                  onClick={() => { setIsEditing(true); setInputIco(companyIco); }}
-                  className="text-xs text-blue-500 hover:underline"
-                >
-                  (Změnit)
-                </button>
-              </p>
-            ) : (
-              <p className="text-gray-600 mt-2">Management stážistů</p>
-            )}
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Firemní Portál</h1>
+              {companyIco ? (
+                <div className="flex items-center gap-4 mt-2">
+                  <p className="text-gray-600 flex items-center gap-2">
+                    Firma IČO: <span className="font-mono font-semibold bg-gray-200 px-2 rounded text-gray-800">{companyIco}</span>
+                    <button
+                      onClick={() => { setIsEditing(true); setInputIco(companyIco); }}
+                      className="text-xs text-blue-500 hover:underline"
+                    >
+                      (Změnit)
+                    </button>
+                  </p>
+                  {averageRating && (
+                    <div className="flex items-center gap-1 bg-yellow-50 px-3 py-1 rounded-full border border-yellow-200">
+                      <span className="text-yellow-500 font-bold text-lg">★</span>
+                      <span className="font-bold text-gray-800">{averageRating}</span>
+                      <span className="text-xs text-gray-500">Průměrné hodnocení od studentů</span>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <p className="text-gray-600 mt-2">Management stážistů</p>
+              )}
+            </div>
           </div>
           <button onClick={() => auth.signOut()} className="text-sm text-red-600 hover:text-red-800">Odhlásit se</button>
         </header>
@@ -139,6 +184,46 @@ export default function CompanyDashboard() {
           </div>
         )}
 
+        {/* MODAL PRO HODNOCENÍ */}
+        {ratingInternshipId && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 animate-fade-in">
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Hodnocení stážisty</h3>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Jak hodnotíte výkon studenta?</label>
+                  <StarRating rating={companyRating} setRating={setCompanyRating} />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Slovní hodnocení (pro studenta)</label>
+                  <textarea
+                    value={companyReview}
+                    onChange={(e) => setCompanyReview(e.target.value)}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                    rows={4}
+                    placeholder="Napište silné a slabé stránky..."
+                  ></textarea>
+                </div>
+                <div className="flex gap-3 justify-end mt-2">
+                  <button
+                    onClick={() => setRatingInternshipId(null)}
+                    className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+                  >
+                    Zrušit
+                  </button>
+                  <button
+                    onClick={handleRateStudent}
+                    disabled={companyRating === 0}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-bold disabled:opacity-50"
+                  >
+                    Odeslat hodnocení
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {companyIco && !isEditing && (
           <div className="grid gap-6">
             <section className="bg-white rounded-lg shadow-md border border-gray-100 overflow-hidden">
@@ -156,7 +241,7 @@ export default function CompanyDashboard() {
                               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Stážista</th>
                               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rozpoznaná Firma</th>
                               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Období</th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Stav</th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Hodnocení Studenta</th>
                           </tr>
                       </thead>
                       <tbody className="bg-white divide-y divide-gray-200">
@@ -179,9 +264,23 @@ export default function CompanyDashboard() {
                                     )}
                                   </td>
                                   <td className="px-6 py-4 whitespace-nowrap">
-                                    <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                                      Schváleno
-                                    </span>
+                                    {intern.companyRating ? (
+                                      <div className="flex items-center gap-2">
+                                        <StarRating rating={intern.companyRating} readOnly />
+                                        <span className="text-xs text-gray-500">({intern.companyRating}/5)</span>
+                                      </div>
+                                    ) : (
+                                      <button
+                                        onClick={() => {
+                                          setRatingInternshipId(intern.id);
+                                          setCompanyRating(0);
+                                          setCompanyReview("");
+                                        }}
+                                        className="text-sm bg-blue-50 text-blue-600 px-3 py-1 rounded hover:bg-blue-100 font-medium transition"
+                                      >
+                                        Hodnotit studenta
+                                      </button>
+                                    )}
                                   </td>
                               </tr>
                           ))}
