@@ -8,6 +8,7 @@ import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import StarRating from "@/components/StarRating";
+import Chatbot from "@/components/Chatbot";
 
 export default function StudentDashboard() {
   const [user, setUser] = useState<any>(null);
@@ -247,6 +248,17 @@ export default function StudentDashboard() {
     return `${day}. ${month}. ${year}`;
   };
 
+  const getChatbotMessage = () => {
+    if (!internship) return "Ahoj! Vítám tě v PraxiHubu. Začni tím, že vyplníš žádost o schválení firmy.";
+    switch (internship.status) {
+      case 'PENDING_ORG_APPROVAL': return "Právě čekáme na schválení firmy koordinátorem. Dám ti vědět, jakmile to bude hotové.";
+      case 'ORG_APPROVED': return "Skvělá zpráva! Firma byla schválena. Tvým dalším krokem je vygenerování smlouvy (sekce 'Získat smlouvu').";
+      case 'NEEDS_REVIEW': return "Analyzoval jsem tvou smlouvu. Prosím, zkontroluj níže, zda jsem všechny údaje přečetl správně.";
+      case 'APPROVED': return "Vše hotovo! Tvá praxe je schválena. Hodně štěstí!";
+      default: return undefined;
+    }
+  };
+
   // UI Components
   const UploadSection = () => {
     // Ak užívateľ nemá schválenú organizáciu, zobrazíme pôvodnú správu (defenzívne, hoci rodič to kontroluje)
@@ -400,6 +412,7 @@ export default function StudentDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50 p-8 font-sans">
+      <Chatbot initialMessage={getChatbotMessage()} />
 
       {/* SKILLS MODAL */}
       {isSkillsModalOpen && (
