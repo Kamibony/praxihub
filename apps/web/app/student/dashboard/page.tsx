@@ -34,8 +34,17 @@ export default function StudentDashboard() {
 
   const router = useRouter();
 
+  // OPRAVA: Bezpečný useEffect s cleanup logikou
   useEffect(() => {
+    let unsubscribeFirestore: (() => void) | null = null;
+
     const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
+      // 1. Vyčistiť predchádzajúci listener ak existuje
+      if (unsubscribeFirestore) {
+        unsubscribeFirestore();
+        unsubscribeFirestore = null;
+      }
+
       if (!currentUser) {
         router.push("/login");
       } else {
@@ -59,7 +68,8 @@ export default function StudentDashboard() {
           limit(1)
         );
 
-        const unsubscribeFirestore = onSnapshot(q, (snapshot) => {
+        // 2. Nastaviť nový listener a uložiť funkciu na odhlásenie
+        unsubscribeFirestore = onSnapshot(q, (snapshot) => {
           if (!snapshot.empty) {
             const data = snapshot.docs[0].data();
             const id = snapshot.docs[0].id;
@@ -84,12 +94,14 @@ export default function StudentDashboard() {
           }
           setLoadingData(false);
         });
-
-        return () => unsubscribeFirestore();
       }
     });
 
-    return () => unsubscribeAuth();
+    // 3. Cleanup pri unmount
+    return () => {
+      unsubscribeAuth();
+      if (unsubscribeFirestore) unsubscribeFirestore();
+    };
   }, [router]);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -105,7 +117,7 @@ export default function StudentDashboard() {
       await addDoc(collection(db, "internships"), {
         studentId: user.uid,
         studentEmail: user.email,
-        studentName: user.displayName || user.email, // Added for Coordinator Dashboard (Task 2)
+        studentName: user.displayName || user.email, 
         contract_url: downloadURL,
         status: "ANALYZING",
         createdAt: new Date().toISOString(),
@@ -127,7 +139,7 @@ export default function StudentDashboard() {
         ...reviewData,
         status: "APPROVED",
         is_verified: true,
-        approvedAt: new Date().toISOString() // Pridáme čas schválenia
+        approvedAt: new Date().toISOString() 
       });
       alert("Údaje potvrzeny!");
     } catch (error) {
@@ -182,7 +194,7 @@ export default function StudentDashboard() {
   const formatDateCZ = (dateString: string) => {
     if (!dateString) return "-";
     const date = new Date(dateString);
-    if (isNaN(date.getTime())) return dateString; // Fallback if invalid date
+    if (isNaN(date.getTime())) return dateString; 
     const day = date.getDate();
     const month = date.getMonth() + 1;
     const year = date.getFullYear();
@@ -236,7 +248,15 @@ export default function StudentDashboard() {
             <h1 className="text-3xl font-bold text-gray-900">Můj přehled praxe</h1>
             <p className="text-gray-600 mt-1">Vítej, {user?.displayName || user?.email}</p>
           </div>
-          <button onClick={() => auth.signOut()} className="text-sm px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 transition">Odhlásit se</button>
+          <div className="flex gap-3 items-center">
+            {/* OPRAVA: Tlačidlo pre generovanie zmluvy je teraz vždy dostupné */}
+            <Link href="/student/generate">
+              <button className="text-sm px-4 py-2 bg-blue-50 text-blue-700 border border-blue-200 rounded-lg hover:bg-blue-100 transition font-medium">
+                + Nová smlouva
+              </button>
+            </Link>
+            <button onClick={() => auth.signOut()} className="text-sm px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 transition">Odhlásit se</button>
+          </div>
         </header>
 
         <div className="grid gap-8 lg:grid-cols-3">
