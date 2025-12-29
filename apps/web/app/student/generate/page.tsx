@@ -4,7 +4,8 @@ import React, { useState } from 'react';
 import { httpsCallable } from "firebase/functions";
 import { functions, auth, db } from "../../../lib/firebase"; // adjust path if needed
 import { useRouter } from "next/navigation";
-import { addDoc, collection } from "firebase/firestore";
+import { addDoc, collection, query, where, getDocs, orderBy, limit, doc, updateDoc } from "firebase/firestore";
+import { onAuthStateChanged } from "firebase/auth";
 
 export default function GenerateContractPage() {
   const router = useRouter();
@@ -18,6 +19,39 @@ export default function GenerateContractPage() {
   });
   const [loading, setLoading] = useState(false);
   const [generatedUrl, setGeneratedUrl] = useState<string | null>(null);
+  const [internshipId, setInternshipId] = useState<string | null>(null);
+
+  React.useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      if (currentUser) {
+        // Fetch existing approved internship
+        const q = query(
+            collection(db, "internships"),
+            where("studentId", "==", currentUser.uid),
+            where("status", "==", "ORG_APPROVED"),
+            orderBy("createdAt", "desc"),
+            limit(1)
+        );
+        const snapshot = await getDocs(q);
+        if (!snapshot.empty) {
+            const docData = snapshot.docs[0].data();
+            setInternshipId(snapshot.docs[0].id);
+            setFormData(prev => ({
+                ...prev,
+                companyName: docData.organization_name || "",
+                ico: docData.organization_ico || "",
+                studentName: currentUser.displayName || currentUser.email || ""
+            }));
+        } else {
+             // Optional: Redirect or warn if no ORG_APPROVED internship found
+             // But maybe they want to generate it anyway? Requirement says "Pre-fill Data ... fetch the current user's internship"
+        }
+      } else {
+        router.push("/login");
+      }
+    });
+    return () => unsubscribe();
+  }, [router]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -38,21 +72,35 @@ export default function GenerateContractPage() {
       const { downloadURL, fileName } = result.data;
       setGeneratedUrl(downloadURL);
 
-      // Save as internship entry (NEEDS_REVIEW)
-      await addDoc(collection(db, "internships"), {
-        studentId: auth.currentUser.uid,
-        studentEmail: auth.currentUser.email,
-        studentName: formData.studentName || auth.currentUser.displayName,
-        contract_url: downloadURL,
-        fileName: fileName,
-        organization_name: formData.companyName,
-        organization_ico: formData.ico,
-        start_date: formData.startDate,
-        end_date: formData.endDate,
-        status: "NEEDS_REVIEW",
-        createdAt: new Date().toISOString(),
-        generated: true
-      });
+      if (internshipId) {
+        // UPDATE existing document
+        const docRef = doc(db, "internships", internshipId);
+        await updateDoc(docRef, {
+            contract_url: downloadURL,
+            fileName: fileName,
+            start_date: formData.startDate,
+            end_date: formData.endDate,
+            status: "NEEDS_REVIEW",
+            generated: true
+        });
+      } else {
+         // Fallback if no internship found (should we allow this? Requirements imply updating existing)
+         // But let's keep addDoc as fallback or just create new if not found
+         await addDoc(collection(db, "internships"), {
+            studentId: auth.currentUser.uid,
+            studentEmail: auth.currentUser.email,
+            studentName: formData.studentName || auth.currentUser.displayName,
+            contract_url: downloadURL,
+            fileName: fileName,
+            organization_name: formData.companyName,
+            organization_ico: formData.ico,
+            start_date: formData.startDate,
+            end_date: formData.endDate,
+            status: "NEEDS_REVIEW",
+            createdAt: new Date().toISOString(),
+            generated: true
+         });
+      }
 
       alert("Smlouva byla vygenerována a uložena!");
 
@@ -90,8 +138,9 @@ export default function GenerateContractPage() {
                 name="companyName"
                 value={formData.companyName}
                 onChange={handleChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2"
+                className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2 ${internshipId ? 'bg-gray-100' : ''}`}
                 required
+                readOnly={!!internshipId}
               />
             </div>
             <div>
@@ -101,8 +150,9 @@ export default function GenerateContractPage() {
                 name="ico"
                 value={formData.ico}
                 onChange={handleChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2"
+                className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2 ${internshipId ? 'bg-gray-100' : ''}`}
                 required
+                readOnly={!!internshipId}
               />
             </div>
             <div>

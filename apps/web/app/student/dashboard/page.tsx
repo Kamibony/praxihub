@@ -149,15 +149,26 @@ export default function StudentDashboard() {
       const downloadURL = await getDownloadURL(storageRef);
 
       // Save internship with student name for easier display in Coordinator Dashboard
-      await addDoc(collection(db, "internships"), {
-        studentId: user.uid,
-        studentEmail: user.email,
-        studentName: user.displayName || user.email, 
-        contract_url: downloadURL,
-        status: "ANALYZING",
-        createdAt: new Date().toISOString(),
-        fileName: file.name
-      });
+      if (internship && internship.id) {
+        const docRef = doc(db, "internships", internship.id);
+        await updateDoc(docRef, {
+            contract_url: downloadURL,
+            fileName: file.name,
+            status: "ANALYZING"
+        });
+      } else {
+         // Fallback - should not happen in this flow if strictly following APPROVED path
+         await addDoc(collection(db, "internships"), {
+            studentId: user.uid,
+            studentEmail: user.email,
+            studentName: user.displayName || user.email,
+            contract_url: downloadURL,
+            status: "ANALYZING",
+            createdAt: new Date().toISOString(),
+            fileName: file.name
+         });
+      }
+
     } catch (error) {
       console.error("Upload failed", error);
       alert("Chyba při nahrávání souboru.");
@@ -260,6 +271,18 @@ export default function StudentDashboard() {
             </div>
         </Link>
         </div>
+
+        <div className="mt-4">
+             <a
+               href="https://moodle.czu.cz"
+               target="_blank"
+               rel="noopener noreferrer"
+               className="text-sm text-blue-600 hover:text-blue-800 underline"
+             >
+               Stáhnout oficiální šablonu z Moodle (pro manuální vyplnění)
+             </a>
+        </div>
+
         {uploading && <p className="text-sm text-blue-600 mt-3 animate-pulse">Nahrávám a analyzuji...</p>}
     </div>
   );
