@@ -248,44 +248,96 @@ export default function StudentDashboard() {
   };
 
   // UI Components
-  const UploadSection = () => (
-    <div className="text-center py-10 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
-        <p className="text-gray-500 mb-4">
-            {internship?.status === 'ORG_APPROVED'
-             ? "Organizace byla schválena! Nyní můžete generovat a nahrát smlouvu."
-             : "Zatím nemáš žádnou aktivní praxi."}
-        </p>
-        <div className="flex justify-center gap-4">
-        <label className="inline-block">
-            <span className="sr-only">Nahrát smlouvu</span>
-            <div className="px-6 py-3 bg-blue-600 text-white rounded-lg cursor-pointer hover:bg-blue-700 transition font-medium flex items-center gap-2">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
-            Nahrát podepsanou smlouvu
+  const UploadSection = () => {
+    // Ak užívateľ nemá schválenú organizáciu, zobrazíme pôvodnú správu (defenzívne, hoci rodič to kontroluje)
+    if (internship?.status !== 'ORG_APPROVED') {
+        return (
+            <div className="text-center py-10 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
+                <p className="text-gray-500">Zatím nemáš žádnou aktivní praxi.</p>
             </div>
-            <input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={handleFileUpload} disabled={uploading} className="hidden" />
-        </label>
-        <Link href="/student/generate">
-            <div className="px-6 py-3 bg-white border border-blue-600 text-blue-600 rounded-lg cursor-pointer hover:bg-blue-50 transition font-medium flex items-center gap-2">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-            Generovat novou smlouvu
+        );
+    }
+
+    return (
+        <div className="space-y-6">
+            {/* Success Banner */}
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-start gap-3">
+                <div className="shrink-0 text-green-600 mt-0.5">
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                </div>
+                <div>
+                    <h3 className="font-bold text-green-800">Gratulujeme! Organizace byla schválena.</h3>
+                    <p className="text-green-700 text-sm mt-1">Nyní si připravte smlouvu a podepsanou ji nahrajte.</p>
+                </div>
             </div>
-        </Link>
-        </div>
 
-        <div className="mt-4">
-             <a
-               href="https://moodle.czu.cz"
-               target="_blank"
-               rel="noopener noreferrer"
-               className="text-sm text-blue-600 hover:text-blue-800 underline"
-             >
-               Stáhnout oficiální šablonu z Moodle (pro manuální vyplnění)
-             </a>
-        </div>
+            {/* Steps Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Step 1 */}
+                <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex flex-col h-full">
+                    <h4 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
+                        <span className="bg-blue-100 text-blue-700 w-6 h-6 flex items-center justify-center rounded-full text-xs">1</span>
+                        Získat smlouvu
+                    </h4>
 
-        {uploading && <p className="text-sm text-blue-600 mt-3 animate-pulse">Nahrávám a analyzuji...</p>}
-    </div>
-  );
+                    <div className="flex-1 flex flex-col gap-3">
+                        <Link href="/student/generate" className="block">
+                            <div className="w-full h-full p-4 bg-blue-50 border-2 border-blue-100 rounded-xl hover:border-blue-300 hover:bg-blue-100 transition group cursor-pointer text-center flex flex-col items-center justify-center gap-2">
+                                <div className="p-2 bg-white rounded-full text-blue-600 shadow-sm group-hover:scale-110 transition">
+                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                                </div>
+                                <span className="font-bold text-blue-700">Generovat novou smlouvu</span>
+                                <span className="text-xs text-blue-600/80">Automaticky doplní údaje</span>
+                            </div>
+                        </Link>
+
+                        <div className="text-center mt-2">
+                            <a
+                            href="https://moodle.czu.cz"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm text-gray-500 hover:text-blue-600 hover:underline flex items-center justify-center gap-1"
+                            >
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                            Stáhnout šablonu z Moodle
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Step 2 */}
+                <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex flex-col h-full">
+                    <h4 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
+                        <span className="bg-blue-100 text-blue-700 w-6 h-6 flex items-center justify-center rounded-full text-xs">2</span>
+                        Nahrát podepsaný sken
+                    </h4>
+
+                    <div className="flex-1">
+                        <label className="block w-full h-full min-h-[140px] cursor-pointer group">
+                            <input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={handleFileUpload} disabled={uploading} className="hidden" />
+                            <div className={`w-full h-full border-2 border-dashed rounded-xl flex flex-col items-center justify-center p-4 transition ${uploading ? 'bg-gray-50 border-gray-300 cursor-not-allowed' : 'border-gray-300 hover:border-blue-400 hover:bg-blue-50'}`}>
+                                {uploading ? (
+                                    <div className="text-center">
+                                        <svg className="w-8 h-8 text-blue-500 animate-spin mx-auto mb-2" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                        <span className="text-sm text-blue-600 font-medium">Nahrávám a analyzuji...</span>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <div className="p-3 bg-gray-100 rounded-full text-gray-400 mb-3 group-hover:bg-blue-100 group-hover:text-blue-500 transition">
+                                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                                        </div>
+                                        <span className="font-medium text-gray-700 group-hover:text-blue-700">Vybrat soubor</span>
+                                        <span className="text-xs text-gray-400 mt-1">PDF, JPG, PNG (max 10MB)</span>
+                                    </>
+                                )}
+                            </div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+  };
 
   const OrgRequestForm = () => (
     <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
