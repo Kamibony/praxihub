@@ -28,7 +28,14 @@ export default function CompanyDashboard() {
   const router = useRouter();
 
   useEffect(() => {
+    let unsubscribeFirestore: (() => void) | null = null;
+
     const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
+      if (unsubscribeFirestore) {
+        unsubscribeFirestore();
+        unsubscribeFirestore = null;
+      }
+
       if (!currentUser) {
         router.push("/login");
         return;
@@ -48,7 +55,7 @@ export default function CompanyDashboard() {
 
           if (userData.companyIco) {
             setCompanyIco(userData.companyIco);
-            fetchInternships(userData.companyIco);
+            unsubscribeFirestore = fetchInternships(userData.companyIco);
           } else {
             setLoading(false);
           }
@@ -59,7 +66,10 @@ export default function CompanyDashboard() {
       }
     });
 
-    return () => unsubscribeAuth();
+    return () => {
+      unsubscribeAuth();
+      if (unsubscribeFirestore) unsubscribeFirestore();
+    };
   }, [router]);
 
   const fetchInternships = (ico: string) => {
@@ -77,6 +87,16 @@ export default function CompanyDashboard() {
     });
 
     return unsubscribe;
+  };
+
+  const formatDateCZ = (dateString: string) => {
+    if (!dateString) return "-";
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return dateString;
+    const day = date.getDate();
+    const month = date.getMonth() + 1;
+    const year = date.getFullYear();
+    return `${day}. ${month}. ${year}`;
   };
 
   const handleSaveProfile = async () => {
@@ -337,7 +357,7 @@ export default function CompanyDashboard() {
                                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                     {intern.start_date ? (
                                       <>
-                                        {intern.start_date} <span className="text-gray-400">až</span> {intern.end_date}
+                                        {formatDateCZ(intern.start_date)} <span className="text-gray-400">až</span> {formatDateCZ(intern.end_date)}
                                       </>
                                     ) : (
                                       <span className="italic text-gray-400">Neurčeno</span>
