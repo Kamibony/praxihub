@@ -268,3 +268,94 @@ exports.generateContractPDF = functions.https.onCall(async (data, context) => {
     throw new functions.https.HttpsError('internal', 'Unable to generate PDF.');
   }
 });
+
+// 5. AI MATCHMAKING
+exports.findMatches = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'Must be logged in.');
+  }
+
+  const studentId = context.auth.uid;
+
+  try {
+    const userDoc = await admin.firestore().collection('users').doc(studentId).get();
+    const userData = userDoc.data();
+    const studentSkills = userData.skills || []; // Array of strings
+
+    if (!studentSkills.length) {
+       return { matches: [], message: "Zatím nemáte vyplněné dovednosti. Přidejte je na svém profilu." };
+    }
+
+    // Fetch companies (users with companyIco)
+    // Using orderBy filter to get docs where companyIco exists
+    const companiesSnapshot = await admin.firestore().collection('users')
+      .orderBy('companyIco')
+      .get();
+
+    const companies = [];
+    companiesSnapshot.forEach(doc => {
+      const d = doc.data();
+      if (d.companyIco) {
+        companies.push({
+          id: doc.id,
+          name: d.displayName || d.email || "Neznámá firma",
+          lookingFor: d.lookingFor || [], // Array of strings
+          description: d.description || "",
+          email: d.email
+        });
+      }
+    });
+
+    if (companies.length === 0) {
+      return { matches: [], message: "Zatím se neregistrovaly žádné firmy." };
+    }
+
+    // Prepare prompt for Gemini
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+
+    const prompt = `
+      Jsi expert na HR a párování uchazečů.
+
+      Student má tyto dovednosti: ${studentSkills.join(", ")}.
+
+      Zde je seznam firem a co hledají:
+      ${JSON.stringify(companies.map(c => ({
+        id: c.id,
+        name: c.name,
+        lookingFor: c.lookingFor
+      })))}
+
+      Úkol:
+      Porovnej studentovy dovednosti s požadavky firem.
+      Vrať JSON pole objektů (seřazené od nejlepší shody po nejhorší), kde každý objekt má:
+      - companyId (ID firmy ze vstupu)
+      - matchScore (číslo 0-100)
+      - reasoning (stručné vysvětlení v češtině, proč se hodí/nehodí - max 2 věty)
+
+      Vrať pouze čistý JSON, žádný markdown.
+    `;
+
+    const result = await model.generateContent(prompt);
+    const text = result.response.text().replace(/```json/g, "").replace(/```/g, "").trim();
+    const matches = JSON.parse(text);
+
+    // Merge back with company details
+    const detailedMatches = matches.map(m => {
+      const company = companies.find(c => c.id === m.companyId);
+      return {
+        ...m,
+        companyName: company?.name || "Unknown",
+        companyEmail: company?.email || "",
+        lookingFor: company?.lookingFor || []
+      };
+    });
+
+    return { matches: detailedMatches };
+
+  } catch (error) {
+    console.error("Matchmaking error:", error);
+    // Even if AI fails, return empty list or error
+    throw new functions.https.HttpsError('internal', 'Nepodařilo se provést AI párování.');
+  }
+});

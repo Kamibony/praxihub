@@ -15,6 +15,11 @@ export default function CompanyDashboard() {
   const [isEditing, setIsEditing] = useState(false);
   const [inputIco, setInputIco] = useState("");
 
+  // Looking For (Tags)
+  const [lookingFor, setLookingFor] = useState<string[]>([]);
+  const [newTag, setNewTag] = useState("");
+  const [isTagsOpen, setIsTagsOpen] = useState(false);
+
   // Rating State
   const [ratingInternshipId, setRatingInternshipId] = useState<string | null>(null);
   const [companyRating, setCompanyRating] = useState(0);
@@ -36,6 +41,11 @@ export default function CompanyDashboard() {
         
         if (userDoc.exists()) {
           const userData = userDoc.data();
+
+          if (userData.lookingFor) {
+            setLookingFor(userData.lookingFor);
+          }
+
           if (userData.companyIco) {
             setCompanyIco(userData.companyIco);
             fetchInternships(userData.companyIco);
@@ -84,6 +94,37 @@ export default function CompanyDashboard() {
     } catch (error) {
       console.error("Error updating company profile:", error);
       alert("Nepodařilo se uložit profil.");
+    }
+  };
+
+  const addTag = async () => {
+    if (!newTag.trim() || !user) return;
+    const updatedTags = [...lookingFor, newTag.trim()];
+    setLookingFor(updatedTags);
+    setNewTag("");
+
+    try {
+      const userDocRef = doc(db, "users", user.uid);
+      await updateDoc(userDocRef, {
+        lookingFor: updatedTags
+      });
+    } catch (error) {
+      console.error("Error updating tags:", error);
+    }
+  };
+
+  const removeTag = async (tagToRemove: string) => {
+    if (!user) return;
+    const updatedTags = lookingFor.filter(t => t !== tagToRemove);
+    setLookingFor(updatedTags);
+
+    try {
+      const userDocRef = doc(db, "users", user.uid);
+      await updateDoc(userDocRef, {
+        lookingFor: updatedTags
+      });
+    } catch (error) {
+      console.error("Error removing tag:", error);
     }
   };
 
@@ -182,6 +223,45 @@ export default function CompanyDashboard() {
               )}
             </div>
           </div>
+        )}
+
+        {/* LOOKING FOR TAGS (Hledáme) */}
+        {companyIco && !isEditing && (
+           <div className="bg-white border border-gray-100 p-6 rounded-xl shadow-sm mb-6">
+             <div className="flex justify-between items-start mb-4">
+               <div>
+                 <h3 className="text-lg font-semibold text-gray-800">Koho hledáme? (AI Matchmaking)</h3>
+                 <p className="text-sm text-gray-500">Zadejte technologie a dovednosti, které u stážistů preferujete (např. React, Python, Marketing).</p>
+               </div>
+               <button onClick={() => setIsTagsOpen(!isTagsOpen)} className="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                 {isTagsOpen ? "Zavřít nastavení" : "Upravit požadavky"}
+               </button>
+             </div>
+
+             <div className="flex flex-wrap gap-2">
+               {lookingFor.map((tag, idx) => (
+                 <span key={idx} className="px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full text-sm font-medium flex items-center gap-2 border border-indigo-100">
+                   {tag}
+                   {isTagsOpen && <button onClick={() => removeTag(tag)} className="text-indigo-400 hover:text-indigo-900 ml-1">×</button>}
+                 </span>
+               ))}
+               {lookingFor.length === 0 && <span className="text-gray-400 text-sm italic">Zatím jste nezadali žádné požadavky.</span>}
+             </div>
+
+             {isTagsOpen && (
+               <div className="mt-4 flex gap-2 max-w-md">
+                 <input
+                   type="text"
+                   value={newTag}
+                   onChange={(e) => setNewTag(e.target.value)}
+                   onKeyDown={(e) => e.key === 'Enter' && addTag()}
+                   placeholder="Přidat dovednost (např. SQL)"
+                   className="flex-1 border border-gray-300 rounded px-3 py-2 outline-none focus:border-indigo-500 text-sm"
+                 />
+                 <button onClick={addTag} className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded hover:bg-indigo-700">Přidat</button>
+               </div>
+             )}
+           </div>
         )}
 
         {/* MODAL PRO HODNOCENÍ */}
