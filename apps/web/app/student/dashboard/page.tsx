@@ -6,6 +6,7 @@ import { onAuthStateChanged } from "firebase/auth";
 import { collection, query, where, onSnapshot, addDoc, orderBy, limit, doc, updateDoc } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function StudentDashboard() {
   const [user, setUser] = useState<any>(null);
@@ -109,9 +110,14 @@ export default function StudentDashboard() {
   };
 
   // Helper funkcia pre formátovanie dátumu
-  const formatDate = (isoString: string) => {
-    if (!isoString) return "-";
-    return new Date(isoString).toLocaleDateString('cs-CZ', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  const formatDateCZ = (dateString: string) => {
+    if (!dateString) return "-";
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return dateString; // Fallback if invalid date
+    const day = date.getDate();
+    const month = date.getMonth() + 1;
+    const year = date.getFullYear();
+    return `${day}. ${month}. ${year}`;
   };
 
   if (loadingData) return <div className="p-8 text-center">Načítám data...</div>;
@@ -140,14 +146,22 @@ export default function StudentDashboard() {
                {!internship ? (
                  <div className="text-center py-10 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
                    <p className="text-gray-500 mb-4">Zatím nemáš žádnou aktivní praxi.</p>
-                   <label className="inline-block">
-                    <span className="sr-only">Nahrát smlouvu</span>
-                    <div className="px-6 py-3 bg-blue-600 text-white rounded-lg cursor-pointer hover:bg-blue-700 transition font-medium flex items-center gap-2">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
-                      Nahrát novou smlouvu
-                    </div>
-                    <input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={handleFileUpload} disabled={uploading} className="hidden" />
-                  </label>
+                   <div className="flex justify-center gap-4">
+                     <label className="inline-block">
+                      <span className="sr-only">Nahrát smlouvu</span>
+                      <div className="px-6 py-3 bg-blue-600 text-white rounded-lg cursor-pointer hover:bg-blue-700 transition font-medium flex items-center gap-2">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                        Nahrát novou smlouvu
+                      </div>
+                      <input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={handleFileUpload} disabled={uploading} className="hidden" />
+                    </label>
+                    <Link href="/student/generate">
+                      <div className="px-6 py-3 bg-white border border-blue-600 text-blue-600 rounded-lg cursor-pointer hover:bg-blue-50 transition font-medium flex items-center gap-2">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                        Generovat novou smlouvu
+                      </div>
+                    </Link>
+                   </div>
                   {uploading && <p className="text-sm text-blue-600 mt-3 animate-pulse">Nahrávám a analyzuji...</p>}
                  </div>
                ) : (
@@ -175,7 +189,7 @@ export default function StudentDashboard() {
                         <p className="text-sm text-gray-500">
                           {internship.status === 'ANALYZING' && 'Čekejte prosím, čtu data ze smlouvy.'}
                           {internship.status === 'NEEDS_REVIEW' && 'AI předvyplnila data. Prosím o vaši kontrolu níže.'}
-                          {internship.status === 'APPROVED' && `Schváleno dne ${formatDate(internship.approvedAt)}. E-mail odeslán firmě.`}
+                          {internship.status === 'APPROVED' && `Schváleno dne ${formatDateCZ(internship.approvedAt)}. E-mail odeslán firmě.`}
                           {internship.status === 'REJECTED' && 'Důvod: ' + (internship.ai_error_message || 'Neznámá chyba')}
                         </p>
                       </div>
@@ -246,7 +260,7 @@ export default function StudentDashboard() {
                      <svg className="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                      <div className="overflow-hidden">
                        <p className="text-sm font-medium text-gray-900 truncate">{internship.fileName}</p>
-                       <p className="text-xs text-gray-500">Nahráno: {formatDate(internship.createdAt)}</p>
+                       <p className="text-xs text-gray-500">Nahráno: {formatDateCZ(internship.createdAt)}</p>
                      </div>
                    </div>
                    <a href={internship.contract_url} target="_blank" rel="noreferrer" className="block w-full text-center py-2 border border-blue-200 text-blue-600 rounded-lg hover:bg-blue-50 text-sm font-medium transition">
@@ -266,7 +280,7 @@ export default function StudentDashboard() {
                   {/* Krok 1 */}
                   <div className="relative">
                     <div className="absolute -left-[21px] bg-blue-500 h-3 w-3 rounded-full border-2 border-white"></div>
-                    <p className="text-xs text-gray-500">{formatDate(internship.createdAt)}</p>
+                    <p className="text-xs text-gray-500">{formatDateCZ(internship.createdAt)}</p>
                     <p className="text-sm font-medium text-gray-900">Nahrání dokumentu</p>
                   </div>
                   {/* Krok 2 */}
@@ -281,7 +295,7 @@ export default function StudentDashboard() {
                   {internship.status === 'APPROVED' && (
                      <div className="relative">
                        <div className="absolute -left-[21px] bg-green-500 h-3 w-3 rounded-full border-2 border-white"></div>
-                       <p className="text-xs text-gray-500">{formatDate(internship.approvedAt)}</p>
+                       <p className="text-xs text-gray-500">{formatDateCZ(internship.approvedAt)}</p>
                        <p className="text-sm font-bold text-green-700">Schváleno studentem</p>
                      </div>
                   )}
