@@ -166,3 +166,105 @@ exports.chatWithAI = functions.https.onCall(async (data, context) => {
     throw new functions.https.HttpsError('internal', 'AI momentálně neodpovídá.');
   }
 });
+
+// 4. GENERATE CONTRACT PDF
+exports.generateContractPDF = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'The function must be called while authenticated.');
+  }
+
+  const { studentName, companyName, ico, startDate, endDate, position } = data;
+  if (!studentName || !companyName || !ico || !startDate || !endDate || !position) {
+    throw new functions.https.HttpsError('invalid-argument', 'Missing required fields.');
+  }
+
+  const { PDFDocument, StandardFonts, rgb } = require('pdf-lib');
+
+  try {
+    const pdfDoc = await PDFDocument.create();
+
+    // Embed a standard font
+    // Note: Standard fonts (Helvetica) do not support non-Latin characters (like Czech accents).
+    // For a production app with Czech text, we should embed a custom font.
+    // Here we will use Helvetica and try to strip accents if necessary, OR rely on a custom font if we could.
+    // To support Czech properly in this environment without local font files, we will try to fetch a font.
+    let font;
+    try {
+        const fontUrl = 'https://raw.githubusercontent.com/google/fonts/main/apache/roboto/Roboto-Regular.ttf';
+        const fontBytes = await axios.get(fontUrl, { responseType: 'arraybuffer' });
+        // Use a custom font to support Czech characters
+        const customFont = await pdfDoc.embedFont(fontBytes.data);
+        font = customFont;
+    } catch (fontError) {
+        console.warn("Could not load custom font, falling back to Helvetica (accents may be missing)", fontError);
+        font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+    }
+
+    const page = pdfDoc.addPage();
+    const { width, height } = page.getSize();
+    const fontSize = 12;
+
+    const drawText = (text, x, y, size = fontSize) => {
+        page.drawText(text, {
+            x,
+            y,
+            size,
+            font,
+            color: rgb(0, 0, 0),
+        });
+    };
+
+    let yPosition = height - 50;
+
+    drawText('Smlouva o praxi', 50, yPosition, 20);
+    yPosition -= 40;
+
+    drawText(`Student: ${studentName}`, 50, yPosition);
+    yPosition -= 20;
+    drawText(`Společnost: ${companyName}`, 50, yPosition);
+    yPosition -= 20;
+    drawText(`IČO: ${ico}`, 50, yPosition);
+    yPosition -= 20;
+    drawText(`Pozice: ${position}`, 50, yPosition);
+    yPosition -= 20;
+    drawText(`Termín: ${startDate} - ${endDate}`, 50, yPosition);
+    yPosition -= 40;
+
+    drawText('Potvrzujeme, že student vykoná praxi ve výše uvedeném rozsahu.', 50, yPosition);
+    yPosition -= 20;
+    drawText('Tato smlouva je generována automaticky aplikací PraxiHub.', 50, yPosition);
+
+    const pdfBytes = await pdfDoc.save();
+
+    // Upload to Firebase Storage
+    const bucket = admin.storage().bucket();
+    const fileName = `generated_contract_${Date.now()}.pdf`;
+    const filePath = `contracts/${context.auth.uid}/${fileName}`;
+    const file = bucket.file(filePath);
+
+    await file.save(pdfBytes, {
+      metadata: {
+        contentType: 'application/pdf',
+      },
+    });
+
+    // Make the file publicly accessible via a long-lived download URL (token based)
+    // Using the uuid approach for client SDK compatibility
+    // We generate a random string for the token.
+    const uuid = Math.random().toString(36).substring(2) + Date.now().toString(36);
+
+    await file.setMetadata({
+      metadata: {
+        firebaseStorageDownloadTokens: uuid,
+      },
+    });
+
+    const downloadURL = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(filePath)}?alt=media&token=${uuid}`;
+
+    return { downloadURL, fileName };
+
+  } catch (error) {
+    console.error("Error generating PDF:", error);
+    throw new functions.https.HttpsError('internal', 'Unable to generate PDF.');
+  }
+});
