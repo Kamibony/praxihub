@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { auth, db, storage } from "../../../lib/firebase";
 import { onAuthStateChanged } from "firebase/auth";
-import { collection, query, where, onSnapshot, addDoc, orderBy, limit, doc, updateDoc } from "firebase/firestore";
+import { collection, query, where, onSnapshot, addDoc, orderBy, limit, doc, updateDoc, getDoc, setDoc } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -14,6 +14,11 @@ export default function StudentDashboard() {
   const [internship, setInternship] = useState<any>(null);
   const [uploading, setUploading] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
+
+  // Skills
+  const [skills, setSkills] = useState<string[]>([]);
+  const [newSkill, setNewSkill] = useState("");
+  const [isSkillsModalOpen, setIsSkillsModalOpen] = useState(false);
   
   // State pre editáciu údajov (Review)
   const [reviewData, setReviewData] = useState({
@@ -30,12 +35,23 @@ export default function StudentDashboard() {
   const router = useRouter();
 
   useEffect(() => {
-    const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
+    const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
       if (!currentUser) {
         router.push("/login");
       } else {
         setUser(currentUser);
         
+        // Fetch user skills
+        try {
+          const userDocRef = doc(db, "users", currentUser.uid);
+          const userDoc = await getDoc(userDocRef);
+          if (userDoc.exists()) {
+            setSkills(userDoc.data().skills || []);
+          }
+        } catch (err) {
+          console.error("Error fetching skills:", err);
+        }
+
         const q = query(
           collection(db, "internships"),
           where("studentId", "==", currentUser.uid),
@@ -135,6 +151,33 @@ export default function StudentDashboard() {
     }
   };
 
+  const addSkill = async () => {
+    if (!newSkill.trim() || !user) return;
+    const updatedSkills = [...skills, newSkill.trim()];
+    setSkills(updatedSkills);
+    setNewSkill("");
+
+    try {
+      const userDocRef = doc(db, "users", user.uid);
+      await setDoc(userDocRef, { skills: updatedSkills }, { merge: true });
+    } catch (error) {
+      console.error("Error saving skill:", error);
+    }
+  };
+
+  const removeSkill = async (skillToRemove: string) => {
+    if (!user) return;
+    const updatedSkills = skills.filter(s => s !== skillToRemove);
+    setSkills(updatedSkills);
+
+    try {
+      const userDocRef = doc(db, "users", user.uid);
+      await updateDoc(userDocRef, { skills: updatedSkills });
+    } catch (error) {
+      console.error("Error removing skill:", error);
+    }
+  };
+
   // Helper funkcia pre formátovanie dátumu
   const formatDateCZ = (dateString: string) => {
     if (!dateString) return "-";
@@ -150,6 +193,43 @@ export default function StudentDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50 p-8 font-sans">
+
+      {/* SKILLS MODAL */}
+      {isSkillsModalOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+           <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
+             <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-bold text-gray-900">Moje dovednosti</h3>
+                <button onClick={() => setIsSkillsModalOpen(false)} className="text-gray-400 hover:text-gray-600">✕</button>
+             </div>
+
+             <p className="text-sm text-gray-600 mb-4">Přidej technologie a nástroje, které ovládáš (např. React, Python, Marketing...). Pomůže nám to najít ti lepší praxi.</p>
+
+             <div className="flex gap-2 mb-6">
+                <input
+                  type="text"
+                  value={newSkill}
+                  onChange={(e) => setNewSkill(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && addSkill()}
+                  className="flex-1 border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-blue-500"
+                  placeholder="Např. JavaScript"
+                />
+                <button onClick={addSkill} className="px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700">Přidat</button>
+             </div>
+
+             <div className="flex flex-wrap gap-2 max-h-60 overflow-y-auto">
+                {skills.map((skill, idx) => (
+                  <span key={idx} className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm font-medium flex items-center gap-2">
+                    {skill}
+                    <button onClick={() => removeSkill(skill)} className="text-blue-400 hover:text-blue-900">×</button>
+                  </span>
+                ))}
+                {skills.length === 0 && <p className="text-gray-400 text-sm italic">Zatím žádné dovednosti.</p>}
+             </div>
+           </div>
+        </div>
+      )}
+
       <div className="max-w-5xl mx-auto">
         <header className="mb-8 flex justify-between items-center border-b border-gray-200 pb-4">
           <div>
@@ -163,6 +243,28 @@ export default function StudentDashboard() {
           
           {/* HLAVNÁ KARTA (STAV) */}
           <div className="lg:col-span-2 space-y-6">
+
+            {/* AI MATCHMAKING & SKILLS TEASER */}
+            <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
+               <div className="relative z-10">
+                 <h2 className="text-2xl font-bold mb-2">Hledáš ideální praxi?</h2>
+                 <p className="mb-6 opacity-90 max-w-lg">Využij AI Matchmaking. Na základě tvých dovedností ti najdeme firmu, která ti sedne nejlépe.</p>
+
+                 <div className="flex flex-wrap gap-4 items-center">
+                    <Link href="/student/matchmaking">
+                      <button className="px-6 py-2 bg-white text-blue-700 font-bold rounded-lg shadow-md hover:bg-blue-50 transition">
+                         🔍 Najít praxi pomocí AI
+                      </button>
+                    </Link>
+                    <button onClick={() => setIsSkillsModalOpen(true)} className="text-sm font-medium underline hover:text-blue-100 transition">
+                      {skills.length > 0 ? `Spravovat dovednosti (${skills.length})` : "+ Přidat moje dovednosti"}
+                    </button>
+                 </div>
+               </div>
+               {/* Decorative background circle */}
+               <div className="absolute -right-10 -bottom-20 w-64 h-64 bg-white opacity-10 rounded-full blur-3xl"></div>
+            </div>
+
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                <h2 className="text-xl font-semibold text-gray-800 mb-6 flex items-center gap-2">
                  <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
