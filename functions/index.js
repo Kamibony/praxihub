@@ -168,7 +168,7 @@ exports.chatWithAI = functions.https.onCall(async (data, context) => {
 });
 
 // 4. GENERATE CONTRACT PDF
-exports.generateContractPDF = functions.https.onCall(async (data, context) => {
+exports.generateContractPDF = functions.runWith({ memory: '512MB', timeoutSeconds: 60 }).https.onCall(async (data, context) => {
   if (!context.auth) {
     throw new functions.https.HttpsError('unauthenticated', 'The function must be called while authenticated.');
   }
