@@ -11,14 +11,24 @@ export default function CoordinatorDashboard() {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
+  // OPRAVA: Bezpečný useEffect s cleanup logikou
   useEffect(() => {
+    let unsubscribeFirestore: (() => void) | null = null;
+
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+      // 1. Vyčistiť predchádzajúci listener
+      if (unsubscribeFirestore) {
+        unsubscribeFirestore();
+        unsubscribeFirestore = null;
+      }
+
       if (!user) {
         router.push("/login");
       } else {
         const q = query(collection(db, "internships"), orderBy("createdAt", "desc"));
         
-        const unsubscribeFirestore = onSnapshot(q, (snapshot) => {
+        // 2. Nastaviť nový listener a uložiť funkciu
+        unsubscribeFirestore = onSnapshot(q, (snapshot) => {
           const data = snapshot.docs.map(doc => ({
             id: doc.id,
             ...doc.data()
@@ -26,12 +36,14 @@ export default function CoordinatorDashboard() {
           setInternships(data);
           setLoading(false);
         });
-
-        return () => unsubscribeFirestore();
       }
     });
 
-    return () => unsubscribeAuth();
+    // 3. Cleanup pri unmount
+    return () => {
+      unsubscribeAuth();
+      if (unsubscribeFirestore) unsubscribeFirestore();
+    };
   }, [router]);
 
   const getCompanyAverageRating = (ico: string) => {
@@ -40,6 +52,17 @@ export default function CoordinatorDashboard() {
     if (companyInternships.length === 0) return null;
     const sum = companyInternships.reduce((acc, curr) => acc + curr.studentRating, 0);
     return (sum / companyInternships.length).toFixed(1);
+  };
+
+  // OPRAVA: Pridaná funkcia pre formátovanie dátumu (D. M. YYYY)
+  const formatDateCZ = (dateString: string) => {
+    if (!dateString) return "-";
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return dateString;
+    const day = date.getDate();
+    const month = date.getMonth() + 1;
+    const year = date.getFullYear();
+    return `${day}. ${month}. ${year}`;
   };
 
   if (loading) return <div className="p-8 text-center text-gray-500">Načítám data...</div>;
@@ -131,7 +154,8 @@ export default function CoordinatorDashboard() {
                         )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {item.start_date ? `${item.start_date} - ${item.end_date}` : '--'}
+                        {/* OPRAVA: Použitie formatDateCZ */}
+                        {item.start_date ? `${formatDateCZ(item.start_date)} - ${formatDateCZ(item.end_date)}` : '--'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`px-2.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full border ${
@@ -149,7 +173,6 @@ export default function CoordinatorDashboard() {
                         className="text-gray-400 hover:text-gray-600 inline-block align-middle"
                         title="Napsat email"
                       >
-                         {/* Email Icon */}
                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
                       </a>
                       <a 
