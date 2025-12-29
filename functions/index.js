@@ -169,6 +169,8 @@ exports.chatWithAI = functions.https.onCall(async (data, context) => {
 
 // 4. GENERATE CONTRACT PDF
 exports.generateContractPDF = functions.runWith({ memory: '512MB', timeoutSeconds: 60 }).https.onCall(async (data, context) => {
+  console.log("Starting generateContractPDF");
+
   if (!context.auth) {
     throw new functions.https.HttpsError('unauthenticated', 'The function must be called while authenticated.');
   }
@@ -178,25 +180,46 @@ exports.generateContractPDF = functions.runWith({ memory: '512MB', timeoutSecond
     throw new functions.https.HttpsError('invalid-argument', 'Missing required fields.');
   }
 
-  const { PDFDocument, StandardFonts, rgb } = require('pdf-lib');
-
   try {
+    console.log("Loading dependencies (pdf-lib, fs)...");
+    const { PDFDocument, StandardFonts, rgb } = require('pdf-lib');
+    const fs = require('fs');
+    console.log("Dependencies loaded.");
+
     const pdfDoc = await PDFDocument.create();
 
-    // Embed a standard font
-    // Note: Standard fonts (Helvetica) do not support non-Latin characters (like Czech accents).
-    // For a production app with Czech text, we should embed a custom font.
-    // Here we will use Helvetica and try to strip accents if necessary, OR rely on a custom font if we could.
-    // To support Czech properly in this environment without local font files, we will try to fetch a font.
-    let font;
+    // Font caching strategy
+    let fontBytes;
+    const fontPath = '/tmp/Roboto-Regular.ttf';
+
     try {
-        const fontUrl = 'https://raw.githubusercontent.com/google/fonts/main/apache/roboto/Roboto-Regular.ttf';
-        const fontBytes = await axios.get(fontUrl, { responseType: 'arraybuffer' });
-        // Use a custom font to support Czech characters
-        const customFont = await pdfDoc.embedFont(fontBytes.data);
-        font = customFont;
-    } catch (fontError) {
-        console.warn("Could not load custom font, falling back to Helvetica (accents may be missing)", fontError);
+        if (fs.existsSync(fontPath)) {
+            console.log("Font found in cache.");
+            fontBytes = fs.readFileSync(fontPath);
+        } else {
+            console.log("Font not found in cache. Downloading...");
+            const fontUrl = 'https://raw.githubusercontent.com/google/fonts/main/apache/roboto/Roboto-Regular.ttf';
+            const response = await axios.get(fontUrl, { responseType: 'arraybuffer' });
+            fontBytes = response.data;
+            fs.writeFileSync(fontPath, Buffer.from(fontBytes));
+            console.log("Font downloaded and saved to cache.");
+        }
+    } catch (fontFsError) {
+        console.warn("Error handling font cache/download:", fontFsError);
+    }
+
+    let font;
+    if (fontBytes) {
+        try {
+            font = await pdfDoc.embedFont(fontBytes);
+            console.log("Custom font embedded.");
+        } catch (embedError) {
+            console.error("Error embedding custom font:", embedError);
+        }
+    }
+
+    if (!font) {
+        console.warn("Using fallback font (Helvetica).");
         font = await pdfDoc.embedFont(StandardFonts.Helvetica);
     }
 
@@ -235,8 +258,10 @@ exports.generateContractPDF = functions.runWith({ memory: '512MB', timeoutSecond
     drawText('Tato smlouva je generována automaticky aplikací PraxiHub.', 50, yPosition);
 
     const pdfBytes = await pdfDoc.save();
+    console.log("PDF generated successfully.");
 
     // Upload to Firebase Storage
+    console.log("Uploading to Storage...");
     const bucket = admin.storage().bucket();
     const fileName = `generated_contract_${Date.now()}.pdf`;
     const filePath = `contracts/${context.auth.uid}/${fileName}`;
@@ -247,6 +272,7 @@ exports.generateContractPDF = functions.runWith({ memory: '512MB', timeoutSecond
         contentType: 'application/pdf',
       },
     });
+    console.log("PDF uploaded.");
 
     // Make the file publicly accessible via a long-lived download URL (token based)
     // Using the uuid approach for client SDK compatibility
@@ -260,6 +286,7 @@ exports.generateContractPDF = functions.runWith({ memory: '512MB', timeoutSecond
     });
 
     const downloadURL = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(filePath)}?alt=media&token=${uuid}`;
+    console.log("Download URL generated:", downloadURL);
 
     return { downloadURL, fileName };
 
