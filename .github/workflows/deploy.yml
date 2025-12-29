@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-    # Filter 'paths' sme vynechali, aby sa deploy spustil pri kazdej zmene
 
 jobs:
   deploy_functions:
@@ -44,8 +43,9 @@ jobs:
         with:
           node-version: '20'
 
+      # --- OPRAVA: ZMENA Z npm ci NA npm install ---
       - name: Install Dependencies
-        run: npm ci
+        run: npm install
 
       - name: Build Web App
         run: npm run build --workspace=apps/web
@@ -57,10 +57,20 @@ jobs:
           NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID }}
           NEXT_PUBLIC_FIREBASE_APP_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_APP_ID }}
 
-      - name: Move Build Output to Public
+      - name: Check Build Output & Move to Root
         run: |
-          rm -rf public
-          mv apps/web/out public
+          echo "Checking if output exists..."
+          if [ -d "apps/web/out" ]; then
+            echo "✅ Build folder found! Listing content:"
+            ls -la apps/web/out
+            echo "Moving to root 'public' folder for deployment..."
+            rm -rf public
+            mv apps/web/out public
+          else
+            echo "❌ ERROR: Build folder 'apps/web/out' does not exist!"
+            echo "Did 'next build' run successfully? Check previous step."
+            exit 1
+          fi
 
       - name: Deploy to Firebase
         uses: w9jds/firebase-action@master
