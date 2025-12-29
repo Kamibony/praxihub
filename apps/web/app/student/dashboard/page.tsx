@@ -72,9 +72,12 @@ export default function StudentDashboard() {
       const storageRef = ref(storage, `contracts/${user.uid}/${Date.now()}_${file.name}`);
       await uploadBytes(storageRef, file);
       const downloadURL = await getDownloadURL(storageRef);
+
+      // Save internship with student name for easier display in Coordinator Dashboard
       await addDoc(collection(db, "internships"), {
         studentId: user.uid,
         studentEmail: user.email,
+        studentName: user.displayName || user.email, // Added for Coordinator Dashboard (Task 2)
         contract_url: downloadURL,
         status: "ANALYZING",
         createdAt: new Date().toISOString(),
@@ -119,7 +122,7 @@ export default function StudentDashboard() {
         <header className="mb-8 flex justify-between items-center border-b border-gray-200 pb-4">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Můj přehled praxe</h1>
-            <p className="text-gray-600 mt-1">Vítej, {user?.email}</p>
+            <p className="text-gray-600 mt-1">Vítej, {user?.displayName || user?.email}</p>
           </div>
           <button onClick={() => auth.signOut()} className="text-sm px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 transition">Odhlásit se</button>
         </header>
@@ -267,7 +270,7 @@ export default function StudentDashboard() {
                     <p className="text-sm font-medium text-gray-900">Nahrání dokumentu</p>
                   </div>
                   {/* Krok 2 */}
-                  {(internship.status === 'NEEDS_REVIEW' || internship.status === 'APPROVED') && (
+                  {(internship.status === 'NEEDS_REVIEW' || internship.status === 'APPROVED' || internship.status === 'REJECTED') && (
                      <div className="relative">
                        <div className="absolute -left-[21px] bg-blue-500 h-3 w-3 rounded-full border-2 border-white"></div>
                        <p className="text-sm font-medium text-gray-900">AI Analýza dokončena</p>
@@ -280,6 +283,13 @@ export default function StudentDashboard() {
                        <div className="absolute -left-[21px] bg-green-500 h-3 w-3 rounded-full border-2 border-white"></div>
                        <p className="text-xs text-gray-500">{formatDate(internship.approvedAt)}</p>
                        <p className="text-sm font-bold text-green-700">Schváleno studentem</p>
+                     </div>
+                  )}
+                   {/* Krok 3 Rejected */}
+                   {internship.status === 'REJECTED' && (
+                     <div className="relative">
+                       <div className="absolute -left-[21px] bg-red-500 h-3 w-3 rounded-full border-2 border-white"></div>
+                       <p className="text-sm font-bold text-red-700">Zamítnuto</p>
                      </div>
                   )}
                 </div>

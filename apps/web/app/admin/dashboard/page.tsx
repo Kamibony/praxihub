@@ -89,10 +89,15 @@ export default function CoordinatorDashboard() {
                     <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold mr-3">
-                            {item.studentEmail?.charAt(0).toUpperCase()}
+                            {(item.studentName || item.studentEmail || "?").charAt(0).toUpperCase()}
                           </div>
                           <div>
-                            <div className="text-sm font-medium text-gray-900">{item.studentEmail}</div>
+                            <div className="text-sm font-medium text-gray-900">
+                              {item.studentName ? item.studentName : item.studentEmail}
+                            </div>
+                            {item.studentName && (
+                              <div className="text-xs text-gray-500">{item.studentEmail}</div>
+                            )}
                             <div className="text-xs text-gray-400">ID: {item.studentId?.substring(0,8)}...</div>
                           </div>
                         </div>
@@ -123,16 +128,17 @@ export default function CoordinatorDashboard() {
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-3">
                       <a 
                         href={`mailto:${item.studentEmail}?subject=Dotaz k praxi&body=Dobrý den, ohledně vaší smlouvy...`} 
-                        className="text-gray-400 hover:text-gray-600"
+                        className="text-gray-400 hover:text-gray-600 inline-block align-middle"
                         title="Napsat email"
                       >
-                        ✉️
+                         {/* Email Icon */}
+                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
                       </a>
                       <a 
                         href={item.contract_url} 
                         target="_blank" 
                         rel="noreferrer" 
-                        className="text-blue-600 hover:text-blue-900 hover:underline"
+                        className="text-blue-600 hover:text-blue-900 hover:underline inline-block align-middle"
                       >
                         Otevřít PDF
                       </a>
