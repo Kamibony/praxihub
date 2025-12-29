@@ -6,9 +6,14 @@ import { collection, query, orderBy, onSnapshot, doc, updateDoc } from "firebase
 import { onAuthStateChanged } from "firebase/auth";
 import { useRouter } from "next/navigation";
 
+// Define filter type
+type FilterStatus = 'ALL' | 'PENDING_ORG_APPROVAL' | 'APPROVED' | 'NEEDS_REVIEW' | 'ANALYZING';
+
 export default function CoordinatorDashboard() {
   const [internships, setInternships] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [filterStatus, setFilterStatus] = useState<FilterStatus>('ALL');
+  const [selectedInternship, setSelectedInternship] = useState<any>(null);
   const router = useRouter();
 
   // OPRAVA: Bezpečný useEffect s cleanup logikou
@@ -92,6 +97,20 @@ export default function CoordinatorDashboard() {
     }
   };
 
+  // Filter Logic
+  const filteredInternships = internships.filter(item => {
+    if (filterStatus === 'ALL') return true;
+    return item.status === filterStatus;
+  });
+
+  const getCardClasses = (status: FilterStatus) => {
+    const isActive = filterStatus === status;
+    return `bg-white p-4 rounded-lg shadow-sm border cursor-pointer transition-all duration-200 ${
+      isActive
+        ? 'border-blue-500 ring-2 ring-blue-100 transform scale-[1.02]'
+        : 'border-gray-100 hover:border-blue-300 hover:shadow-md'
+    }`;
+  };
 
   if (loading) return <div className="p-8 text-center text-gray-500">Načítám data...</div>;
 
@@ -109,25 +128,40 @@ export default function CoordinatorDashboard() {
           </div>
         </header>
 
-        {/* ŠTATISTIKY */}
+        {/* ŠTATISTIKY / FILTRE */}
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
-           <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
+           <div
+             className={getCardClasses('ALL')}
+             onClick={() => setFilterStatus('ALL')}
+           >
              <p className="text-xs text-gray-500 uppercase font-bold">Celkem smluv</p>
              <p className="text-2xl font-bold text-gray-900">{internships.length}</p>
            </div>
-           <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
-             <p className="text-xs text-gray-500 uppercase font-bold">Čeká na schválení firmy</p>
+           <div
+             className={getCardClasses('PENDING_ORG_APPROVAL')}
+             onClick={() => setFilterStatus('PENDING_ORG_APPROVAL')}
+           >
+             <p className="text-xs text-gray-500 uppercase font-bold">Žádosti o schválení</p>
              <p className="text-2xl font-bold text-blue-800">{internships.filter(i => i.status === 'PENDING_ORG_APPROVAL').length}</p>
            </div>
-           <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
+           <div
+             className={getCardClasses('APPROVED')}
+             onClick={() => setFilterStatus('APPROVED')}
+           >
              <p className="text-xs text-gray-500 uppercase font-bold">Schváleno</p>
              <p className="text-2xl font-bold text-green-600">{internships.filter(i => i.status === 'APPROVED').length}</p>
            </div>
-           <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
+           <div
+             className={getCardClasses('NEEDS_REVIEW')}
+             onClick={() => setFilterStatus('NEEDS_REVIEW')}
+           >
              <p className="text-xs text-gray-500 uppercase font-bold">Čeká na kontrolu</p>
              <p className="text-2xl font-bold text-yellow-600">{internships.filter(i => i.status === 'NEEDS_REVIEW').length}</p>
            </div>
-           <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
+           <div
+             className={getCardClasses('ANALYZING')}
+             onClick={() => setFilterStatus('ANALYZING')}
+           >
              <p className="text-xs text-gray-500 uppercase font-bold">AI zpracovává</p>
              <p className="text-2xl font-bold text-blue-600">{internships.filter(i => i.status === 'ANALYZING').length}</p>
            </div>
@@ -147,8 +181,12 @@ export default function CoordinatorDashboard() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {internships.map((item) => (
-                  <tr key={item.id} className={`hover:bg-gray-50 transition-colors ${item.status === 'PENDING_ORG_APPROVAL' ? 'bg-blue-50/30' : ''}`}>
+                {filteredInternships.map((item) => (
+                  <tr
+                    key={item.id}
+                    onClick={() => setSelectedInternship(item)}
+                    className={`cursor-pointer transition-colors ${item.status === 'PENDING_ORG_APPROVAL' ? 'bg-blue-50/30 hover:bg-blue-100/50' : 'hover:bg-blue-50'}`}
+                  >
                     <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold mr-3">
@@ -181,7 +219,13 @@ export default function CoordinatorDashboard() {
                              </div>
                              <div className="text-xs text-gray-500 font-mono">IČO: {item.organization_ico || 'N/A'}</div>
                              {item.organization_web && (
-                                <a href={item.organization_web.startsWith('http') ? item.organization_web : `https://${item.organization_web}`} target="_blank" rel="noreferrer" className="text-xs text-blue-500 hover:underline">
+                                <a
+                                  href={item.organization_web.startsWith('http') ? item.organization_web : `https://${item.organization_web}`}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="text-xs text-blue-500 hover:underline"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
                                     {item.organization_web}
                                 </a>
                              )}
@@ -191,7 +235,6 @@ export default function CoordinatorDashboard() {
                         )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {/* OPRAVA: Použitie formatDateCZ */}
                         {item.start_date ? `${formatDateCZ(item.start_date)} - ${formatDateCZ(item.end_date)}` : '--'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -211,8 +254,8 @@ export default function CoordinatorDashboard() {
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-3">
                       {item.status === 'PENDING_ORG_APPROVAL' ? (
                           <>
-                            <button onClick={() => handleApproveOrg(item.id)} className="text-green-600 hover:text-green-900 font-bold hover:underline">Schválit</button>
-                            <button onClick={() => handleRejectOrg(item.id)} className="text-red-600 hover:text-red-900 font-bold hover:underline">Zamítnout</button>
+                            <button onClick={(e) => { e.stopPropagation(); handleApproveOrg(item.id); }} className="text-green-600 hover:text-green-900 font-bold hover:underline">Schválit</button>
+                            <button onClick={(e) => { e.stopPropagation(); handleRejectOrg(item.id); }} className="text-red-600 hover:text-red-900 font-bold hover:underline">Zamítnout</button>
                           </>
                       ) : (
                           <>
@@ -220,6 +263,7 @@ export default function CoordinatorDashboard() {
                                 href={`mailto:${item.studentEmail}?subject=Dotaz k praxi&body=Dobrý den, ohledně vaší smlouvy...`}
                                 className="text-gray-400 hover:text-gray-600 inline-block align-middle"
                                 title="Napsat email"
+                                onClick={(e) => e.stopPropagation()}
                             >
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
                             </a>
@@ -229,6 +273,7 @@ export default function CoordinatorDashboard() {
                                     target="_blank"
                                     rel="noreferrer"
                                     className="text-blue-600 hover:text-blue-900 hover:underline inline-block align-middle"
+                                    onClick={(e) => e.stopPropagation()}
                                 >
                                     Otevřít PDF
                                 </a>
@@ -240,10 +285,12 @@ export default function CoordinatorDashboard() {
                     </td>
                   </tr>
                 ))}
-                {internships.length === 0 && (
+                {filteredInternships.length === 0 && (
                     <tr>
                         <td colSpan={5} className="px-6 py-10 text-center text-gray-500">
-                            Zatím žádné nahrané praxe v systému.
+                            {internships.length === 0
+                                ? "Zatím žádné nahrané praxe v systému."
+                                : "Žádné záznamy pro tento filtr."}
                         </td>
                     </tr>
                 )}
@@ -251,6 +298,127 @@ export default function CoordinatorDashboard() {
             </table>
           </div>
         </section>
+
+        {/* MODAL - DETAIL VIEW */}
+        {selectedInternship && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setSelectedInternship(null)}>
+            <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+              <header className="flex justify-between items-start p-6 border-b border-gray-100">
+                <div>
+                   <h2 className="text-2xl font-bold text-gray-900">
+                     {selectedInternship.studentName || selectedInternship.studentEmail || "Detail stáže"}
+                   </h2>
+                   <div className="mt-2">
+                      <span className={`px-2.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full border ${
+                        selectedInternship.status === 'APPROVED' ? 'bg-green-50 text-green-700 border-green-200' :
+                        selectedInternship.status === 'ORG_APPROVED' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' :
+                        selectedInternship.status === 'PENDING_ORG_APPROVAL' ? 'bg-blue-100 text-blue-800 border-blue-300' :
+                        selectedInternship.status === 'REJECTED' ? 'bg-red-50 text-red-700 border-red-200' :
+                        selectedInternship.status === 'NEEDS_REVIEW' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' :
+                        'bg-blue-50 text-blue-700 border-blue-200'
+                      }`}>
+                         {selectedInternship.status === 'PENDING_ORG_APPROVAL' ? 'Čeká na schválení' :
+                          selectedInternship.status === 'ORG_APPROVED' ? 'Firma schválena' :
+                          selectedInternship.status}
+                      </span>
+                   </div>
+                </div>
+                <button
+                  onClick={() => setSelectedInternship(null)}
+                  className="text-gray-400 hover:text-gray-600 p-2 rounded-full hover:bg-gray-100"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              </header>
+
+              <div className="p-6 space-y-6">
+                {/* Section 1: Student */}
+                <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
+                  <h3 className="text-sm font-bold text-gray-500 uppercase mb-3">Student</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-xs text-gray-500">Email</p>
+                      <p className="text-sm font-medium text-gray-900">{selectedInternship.studentEmail}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">ID studenta</p>
+                      <p className="text-sm font-medium text-gray-900 font-mono">{selectedInternship.studentId}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Section 2: Organization */}
+                <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
+                  <h3 className="text-sm font-bold text-gray-500 uppercase mb-3">Organizace</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="md:col-span-2">
+                      <p className="text-xs text-gray-500">Název firmy</p>
+                      <p className="text-lg font-bold text-gray-900">{selectedInternship.organization_name || "Neznámá firma"}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">IČO</p>
+                      <p className="text-sm font-medium text-gray-900 font-mono">{selectedInternship.organization_ico || "N/A"}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">Web</p>
+                      {selectedInternship.organization_web ? (
+                         <a
+                            href={selectedInternship.organization_web.startsWith('http') ? selectedInternship.organization_web : `https://${selectedInternship.organization_web}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-sm font-medium text-blue-600 hover:underline flex items-center gap-1"
+                         >
+                            {selectedInternship.organization_web}
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                         </a>
+                      ) : (
+                        <p className="text-sm text-gray-400 italic">Neuveden</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Section 3: Contract */}
+                <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
+                  <h3 className="text-sm font-bold text-gray-500 uppercase mb-3">Smlouva</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-xs text-gray-500">Termín praxe</p>
+                      <p className="text-sm font-medium text-gray-900">
+                        {selectedInternship.start_date ? `${formatDateCZ(selectedInternship.start_date)} - ${formatDateCZ(selectedInternship.end_date)}` : "N/A"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">Dokument</p>
+                      {selectedInternship.contract_url ? (
+                        <a
+                          href={selectedInternship.contract_url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline mt-1"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                          Stáhnout PDF
+                        </a>
+                      ) : (
+                        <p className="text-sm text-gray-400 italic">Smlouva nedostupná</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-6 border-t border-gray-100 flex justify-end">
+                <button
+                  onClick={() => setSelectedInternship(null)}
+                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-medium text-sm transition-colors"
+                >
+                  Zavřít
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
