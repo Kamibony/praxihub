@@ -4,3 +4,4 @@ tests/node_modules/
 **/node_modules/
 .next
 .expo
+tests/service-account.json
