@@ -1,20 +1,11 @@
 import type { Metadata } from "next";
-import localFont from "next/font/local";
+import { GeistSans } from "geist/font/sans"; // Importujeme z balíčka
 import "./globals.css";
-import Chatbot from "../components/Chatbot"; // Import
-
-const geistSans = localFont({
-  src: "./fonts/GeistVF.woff",
-  variable: "--font-geist-sans",
-});
-const geistMono = localFont({
-  src: "./fonts/GeistMonoVF.woff",
-  variable: "--font-geist-mono",
-});
+import Chatbot from "../components/Chatbot";
 
 export const metadata: Metadata = {
   title: "PraxiHub",
-  description: "Systém pre správu praxe",
+  description: "Systém pro správu praxe",
 };
 
 export default function RootLayout({
@@ -24,9 +15,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="cs">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      {/* className={GeistSans.className} automaticky nastaví font */}
+      <body className={GeistSans.className}>
         {children}
-        <Chatbot /> {/* Pridané sem */}
+        <Chatbot />
       </body>
     </html>
   );
