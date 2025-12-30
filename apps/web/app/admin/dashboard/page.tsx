@@ -6,6 +6,7 @@ import { collection, query, orderBy, onSnapshot, doc, updateDoc } from "firebase
 import { onAuthStateChanged } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import Chatbot from "@/components/Chatbot";
+import { Download } from 'lucide-react';
 
 // Define filter type
 type FilterStatus = 'ALL' | 'PENDING_ORG_APPROVAL' | 'APPROVED' | 'NEEDS_REVIEW' | 'ANALYZING';
@@ -71,6 +72,31 @@ export default function CoordinatorDashboard() {
     return `${day}. ${month}. ${year}`;
   };
 
+  const handleExport = () => {
+    const headers = ["Student Name", "Email", "Organization", "ICO", "Status", "Start Date", "End Date"];
+    const csvContent = [
+      headers.join(","),
+      ...internships.map(item => [
+        `"${item.studentName || ''}"`,
+        `"${item.studentEmail || ''}"`,
+        `"${item.organization_name || ''}"`,
+        `"${item.organization_ico || ''}"`,
+        `"${item.status || ''}"`,
+        `"${item.start_date ? formatDateCZ(item.start_date) : ''}"`,
+        `"${item.end_date ? formatDateCZ(item.end_date) : ''}"`
+      ].join(","))
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", "praxe_export.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   // Actions for Organization Approval
   const handleApproveOrg = async (id: string) => {
     if (!confirm("Opravdu chcete schválit tuto firmu?")) return;
@@ -90,7 +116,7 @@ export default function CoordinatorDashboard() {
     try {
         await updateDoc(doc(db, "internships", id), {
             status: 'REJECTED',
-            ai_error_message: reason // Using this field for rejection reason as per convention or add a new one? Reusing ai_error_message as generic error/reason field based on student dashboard logic.
+            ai_error_message: reason
         });
     } catch (e) {
         console.error("Error rejecting org:", e);
@@ -117,6 +143,21 @@ export default function CoordinatorDashboard() {
   const pendingReview = internships.filter(i => i.status === 'NEEDS_REVIEW').length;
   const chatbotMessage = `Vítej zpět! Aktuálně máš ke schválení ${pendingOrgs} firem a ${pendingReview} smluv čeká na kontrolu.`;
 
+  // Statistics for Overview Section
+  const approvedCount = internships.filter(i => i.status === 'APPROVED').length;
+  const totalCount = internships.length;
+  const progressPercentage = totalCount > 0 ? Math.round((approvedCount / totalCount) * 100) : 0;
+
+  const companyCounts: Record<string, number> = {};
+  internships.forEach(i => {
+    if (i.organization_name) {
+      companyCounts[i.organization_name] = (companyCounts[i.organization_name] || 0) + 1;
+    }
+  });
+  const topPartners = Object.entries(companyCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3);
+
   if (loading) return <div className="p-8 text-center text-gray-500">Načítám data...</div>;
 
   return (
@@ -130,9 +171,53 @@ export default function CoordinatorDashboard() {
           </div>
           <div className="flex items-center gap-4">
             <span className="text-sm text-gray-500">Přihlášen jako: Koordinátor</span>
-            <button onClick={() => auth.signOut()} className="text-sm px-4 py-2 bg-white border border-gray-300 rounded hover:bg-gray-50 text-gray-700">Odhlásit</button>
+            <button
+              onClick={handleExport}
+              className="flex items-center gap-2 text-sm px-4 py-2 bg-white border border-gray-300 rounded hover:bg-gray-50 text-gray-700 transition-colors"
+            >
+              <Download size={16} />
+              Exportovat CSV
+            </button>
+            <button onClick={() => auth.signOut()} className="text-sm px-4 py-2 bg-white border border-gray-300 rounded hover:bg-gray-50 text-gray-700 transition-colors">Odhlásit</button>
           </div>
         </header>
+
+        {/* OVERVIEW SECTION */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* Widget 1: Semester Progress */}
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Stav Ročníku</h3>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm text-gray-600">{progressPercentage} % splněno</span>
+                <span className="text-sm text-gray-400">{approvedCount} / {totalCount} studentů</span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2.5">
+                <div
+                  className="bg-blue-600 h-2.5 rounded-full transition-all duration-500"
+                  style={{ width: `${progressPercentage}%` }}
+                ></div>
+              </div>
+            </div>
+
+            {/* Widget 2: Top Partners */}
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Top Partneři</h3>
+              <ul className="space-y-3">
+                {topPartners.length > 0 ? (
+                  topPartners.map(([name, count], index) => (
+                    <li key={index} className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-gray-700">{index + 1}. {name}</span>
+                      <span className="text-sm bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full font-bold">{count}</span>
+                    </li>
+                  ))
+                ) : (
+                  <li className="text-sm text-gray-400 italic">Zatím žádná data</li>
+                )}
+              </ul>
+            </div>
+          </div>
+        </div>
 
         {/* ŠTATISTIKY / FILTRE */}
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
