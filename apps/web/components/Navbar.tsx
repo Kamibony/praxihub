@@ -15,18 +15,6 @@ export default function Navbar() {
   const [loading, setLoading] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Hide navbar on dashboard pages and auth pages where we want custom layout
-  const isHidden =
-    pathname.startsWith('/student') ||
-    pathname.startsWith('/company') ||
-    pathname.startsWith('/admin') ||
-    pathname === '/login' ||
-    pathname === '/signup';
-
-  if (isHidden) {
-    return null;
-  }
-
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
@@ -44,6 +32,18 @@ export default function Navbar() {
     });
     return () => unsubscribe();
   }, []);
+
+  // Hide navbar on dashboard pages and auth pages where we want custom layout
+  const isHidden =
+    pathname.startsWith('/student') ||
+    pathname.startsWith('/company') ||
+    pathname.startsWith('/admin') ||
+    pathname === '/login' ||
+    pathname === '/signup';
+
+  if (isHidden) {
+    return null;
+  }
 
   const getDashboardLink = () => {
     if (role === 'student') return '/student/dashboard';
