@@ -199,49 +199,22 @@ exports.createContractPDF = functions.runWith({ memory: '512MB', timeoutSeconds:
       return res.status(400).send({ error: 'Missing required fields.' });
     }
 
+    // Track execution step for better debugging
+    let step = "Initialization";
+
     try {
-      console.log("Loading dependencies (pdf-lib, fs)...");
+      console.log("Loading dependencies (pdf-lib)...");
       const { PDFDocument, StandardFonts, rgb } = require('pdf-lib');
-      const fs = require('fs');
+      // Removed fs and axios dependency for fonts to prevent Spark Plan issues
       console.log("Dependencies loaded.");
 
+      step = "PDF Creation";
       const pdfDoc = await PDFDocument.create();
 
-      // Font caching strategy
-      let fontBytes;
-      const fontPath = '/tmp/Roboto-Regular.ttf';
+      // Use Standard Font to avoid external network requests
+      const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
 
-      try {
-          if (fs.existsSync(fontPath)) {
-              console.log("Font found in cache.");
-              fontBytes = fs.readFileSync(fontPath);
-          } else {
-              console.log("Font not found in cache. Downloading...");
-              const fontUrl = 'https://raw.githubusercontent.com/google/fonts/main/apache/roboto/Roboto-Regular.ttf';
-              const response = await axios.get(fontUrl, { responseType: 'arraybuffer' });
-              fontBytes = response.data;
-              fs.writeFileSync(fontPath, Buffer.from(fontBytes));
-              console.log("Font downloaded and saved to cache.");
-          }
-      } catch (fontFsError) {
-          console.warn("Error handling font cache/download:", fontFsError);
-      }
-
-      let font;
-      if (fontBytes) {
-          try {
-              font = await pdfDoc.embedFont(fontBytes);
-              console.log("Custom font embedded.");
-          } catch (embedError) {
-              console.error("Error embedding custom font:", embedError);
-          }
-      }
-
-      if (!font) {
-          console.warn("Using fallback font (Helvetica).");
-          font = await pdfDoc.embedFont(StandardFonts.Helvetica);
-      }
-
+      step = "Adding Page and Text";
       const page = pdfDoc.addPage();
       const { width, height } = page.getSize();
       const fontSize = 12;
@@ -276,12 +249,16 @@ exports.createContractPDF = functions.runWith({ memory: '512MB', timeoutSeconds:
       yPosition -= 20;
       drawText('Tato smlouva je generována automaticky aplikací PraxiHub.', 50, yPosition);
 
+      step = "PDF Serialization";
       const pdfBytes = await pdfDoc.save();
       console.log("PDF generated successfully.");
 
       // Upload to Firebase Storage
+      step = "Storage Upload";
       console.log("Uploading to Storage...");
       const bucket = admin.storage().bucket();
+      console.log("Bucket name:", bucket.name); // Debug log as requested
+
       const fileName = `generated_contract_${Date.now()}.pdf`;
       const filePath = `contracts/${uid}/${fileName}`;
       const file = bucket.file(filePath);
@@ -313,7 +290,11 @@ exports.createContractPDF = functions.runWith({ memory: '512MB', timeoutSeconds:
 
     } catch (error) {
       console.error("Error generating PDF:", error);
-      return res.status(500).send({ error: 'Unable to generate PDF.' });
+      return res.status(500).json({
+        error: error.message,
+        stack: error.stack,
+        step: step || "Unknown"
+      });
     }
   });
 });
