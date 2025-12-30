@@ -60,7 +60,7 @@ export default function ManualPage() {
                 </div>
                 <h3 className="text-xl font-bold mb-4 mt-0">Student</h3>
                 <p className="text-gray-600 mb-0">
-                  Konec zmatků. Jasný postup krok za krokem, AI Matchmaking pro nalezení firmy a automatické generování smluv bez přepisování.
+                  Konec zmatků. Jasný postup krok za krokem, AI Matchmaking pro nalezení firmy a automatické generování smluv bez přepisování a možnost opravy chyb ve smlouvě.
                 </p>
               </div>
             </div>
@@ -73,7 +73,7 @@ export default function ManualPage() {
                 </div>
                 <h3 className="text-xl font-bold mb-4 mt-0">Koordinátor</h3>
                 <p className="text-gray-600 mb-0">
-                  Centrální přehled všech stáží. Schvalování firem a smluv na jedno kliknutí, automatická kontrola dat a pokročilé filtrování.
+                  Centrální přehled všech stáží. Schvalování firem a smluv na jedno kliknutí, automatická kontrola dat, <strong>export do CSV pro reporting</strong> a vizuální <strong>statistiky postupu ročníku</strong>.
                 </p>
               </div>
             </div>
@@ -86,7 +86,7 @@ export default function ManualPage() {
                 </div>
                 <h3 className="text-xl font-bold mb-4 mt-0">Firma</h3>
                 <p className="text-gray-600 mb-0">
-                  Přístup k talentům dle dovedností. Snadná digitální administrativa, stažení smluv a rychlé hodnocení studentů.
+                  Přístup k talentům. Vše na jednom místě: v <strong>detailu studenta</strong> stáhnete smlouvu a zadáte hodnocení.
                 </p>
               </div>
             </div>
@@ -154,7 +154,7 @@ export default function ManualPage() {
                 <ol className="space-y-4 list-decimal list-inside text-gray-700 marker:text-blue-600 marker:font-bold">
                   <li className="pl-2"><span className="ml-2">Vyplníte žádost o schválení firmy (IČO, Název).</span></li>
                   <li className="pl-2"><span className="ml-2">Počkáte na schválení koordinátorem (Chatbot vás upozorní).</span></li>
-                  <li className="pl-2"><span className="ml-2">Po schválení vygenerujete smlouvu, necháte podepsat a nahrajete sken.</span></li>
+                  <li className="pl-2"><span className="ml-2">Po schválení vygenerujete smlouvu, necháte podepsat a nahrajete sken. (Pokud uděláte chybu, použijte tlačítko <strong>&apos;Nová smlouva / Opravit&apos;</strong> v hlavičce).</span></li>
                 </ol>
               </div>
             </div>
@@ -169,7 +169,7 @@ export default function ManualPage() {
               </div>
               <div className="p-8">
                 <ol className="space-y-4 list-decimal list-inside text-gray-700 marker:text-indigo-600 marker:font-bold">
-                  <li className="pl-2"><span className="ml-2">V Dashboardu vidíte nové žádosti o schválení firmy.</span></li>
+                  <li className="pl-2"><span className="ml-2">V Dashboardu sledujete <strong>graf postupu ročníku</strong> a řešíte nové žádosti o schválení firmy.</span></li>
                   <li className="pl-2"><span className="ml-2">Schválíte nebo zamítnete firmu jedním kliknutím.</span></li>
                   <li className="pl-2"><span className="ml-2">Finálně zkontrolujete a schválíte nahranou smlouvu.</span></li>
                 </ol>
