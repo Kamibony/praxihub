@@ -351,62 +351,6 @@ export default function StudentDashboard() {
     );
   };
 
-  const OrgRequestForm = () => (
-    <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
-        <h3 className="text-lg font-bold text-gray-800 mb-4">Žádost o schválení organizace</h3>
-        <p className="text-gray-600 text-sm mb-6">Než začnete s generováním smlouvy, koordinátor musí schválit vámi vybranou organizaci.</p>
-
-        {internship?.status === 'REJECTED' && (
-             <div className="bg-red-50 text-red-700 p-4 rounded-lg mb-6 border border-red-200">
-                 <p className="font-bold">Vaša predchádzajúca žiadosť bola zamietnutá.</p>
-                 {internship.ai_error_message && <p className="text-sm mt-1">Důvod: {internship.ai_error_message}</p>}
-                 <p className="text-sm mt-2">Prosím, skontrolujte údaje a podajte novú žiadosť.</p>
-             </div>
-        )}
-
-        <form onSubmit={handleOrgRequestSubmit} className="space-y-4 max-w-lg">
-            <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Název organizace *</label>
-                <input
-                    type="text"
-                    value={orgRequest.name}
-                    onChange={(e) => setOrgRequest({...orgRequest, name: e.target.value})}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Např. Acme Corp s.r.o."
-                    required
-                />
-            </div>
-            <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">IČO *</label>
-                <input
-                    type="text"
-                    value={orgRequest.ico}
-                    onChange={(e) => setOrgRequest({...orgRequest, ico: e.target.value})}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="12345678"
-                    required
-                />
-            </div>
-            <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Webové stránky (nepovinné)</label>
-                <input
-                    type="text"
-                    value={orgRequest.web}
-                    onChange={(e) => setOrgRequest({...orgRequest, web: e.target.value})}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="www.example.com"
-                />
-            </div>
-            <button
-                type="submit"
-                disabled={submittingOrg}
-                className="w-full py-2 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 disabled:opacity-50 transition"
-            >
-                {submittingOrg ? "Odesílám..." : "Odeslat žádost"}
-            </button>
-        </form>
-    </div>
-  );
 
   if (loadingData) return <div className="p-8 text-center">Načítám data...</div>;
 
@@ -457,13 +401,12 @@ export default function StudentDashboard() {
             <p className="text-gray-600 mt-1">Vítej, {user?.displayName || user?.email}</p>
           </div>
           <div className="flex gap-3 items-center">
-            {/* Tlačidlo pre generovanie zmluvy je teraz podmienené stavom */}
-            {(internship?.status === 'ORG_APPROVED' || !internship) && (
-                 // Ukážeme tlačidlo iba ak je schválená alebo žiadna (ale ak žiadna, tak je tam formulár)
-                 // V novom flow tlačidlo v hlavičke možno nie je potrebné, ak je vo formulári.
-                 // Ponecháme ho skryté v počiatočnej fáze.
-                 null
-            )}
+            <Link
+              href="/student/generate"
+              className="text-blue-600 border border-blue-200 bg-white px-4 py-2 rounded-lg font-medium hover:bg-blue-50 transition inline-block text-center"
+            >
+                + Nová smlouva / Opravit
+            </Link>
 
             <button onClick={() => auth.signOut()} className="text-sm px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 transition">Odhlásit se</button>
           </div>
@@ -502,8 +445,61 @@ export default function StudentDashboard() {
                </h2>
                
                {/* LOGIC FLOW */}
-               {!internship ? (
-                 <OrgRequestForm />
+               {(!internship || internship.status === 'REJECTED') ? (
+                  <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+                      <h3 className="text-lg font-bold text-gray-800 mb-4">Žádost o schválení organizace</h3>
+                      <p className="text-gray-600 text-sm mb-6">Než začnete s generováním smlouvy, koordinátor musí schválit vámi vybranou organizaci.</p>
+
+                      {internship?.status === 'REJECTED' && (
+                          <div className="bg-red-50 text-red-700 p-4 rounded-lg mb-6 border border-red-200">
+                              <p className="font-bold">Vaša predchádzajúca žiadosť bola zamietnutá.</p>
+                              {internship.ai_error_message && <p className="text-sm mt-1">Důvod: {internship.ai_error_message}</p>}
+                              <p className="text-sm mt-2">Prosím, skontrolujte údaje a podajte novú žiadosť.</p>
+                          </div>
+                      )}
+
+                      <form onSubmit={handleOrgRequestSubmit} className="space-y-4 max-w-lg">
+                          <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">Název organizace *</label>
+                              <input
+                                  type="text"
+                                  value={orgRequest.name}
+                                  onChange={(e) => setOrgRequest({...orgRequest, name: e.target.value})}
+                                  className="w-full border border-gray-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+                                  placeholder="Např. Acme Corp s.r.o."
+                                  required
+                              />
+                          </div>
+                          <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">IČO *</label>
+                              <input
+                                  type="text"
+                                  value={orgRequest.ico}
+                                  onChange={(e) => setOrgRequest({...orgRequest, ico: e.target.value})}
+                                  className="w-full border border-gray-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+                                  placeholder="12345678"
+                                  required
+                              />
+                          </div>
+                          <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">Webové stránky (nepovinné)</label>
+                              <input
+                                  type="text"
+                                  value={orgRequest.web}
+                                  onChange={(e) => setOrgRequest({...orgRequest, web: e.target.value})}
+                                  className="w-full border border-gray-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+                                  placeholder="www.example.com"
+                              />
+                          </div>
+                          <button
+                              type="submit"
+                              disabled={submittingOrg}
+                              className="w-full py-2 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 disabled:opacity-50 transition"
+                          >
+                              {submittingOrg ? "Odesílám..." : "Odeslat žádost"}
+                          </button>
+                      </form>
+                  </div>
                ) : (
                  <>
                    {/* PENDING APPROVAL */}
@@ -515,11 +511,6 @@ export default function StudentDashboard() {
                            <h3 className="text-xl font-bold text-gray-900 mb-2">Čeká se na schválení organizace</h3>
                            <p className="text-gray-600 max-w-md mx-auto">Váš požadavek na praxi v <strong>{internship.organization_name}</strong> čeká na schválení koordinátorem. O výsledku budete informováni.</p>
                        </div>
-                   )}
-
-                   {/* REJECTED - Show Form Again */}
-                   {internship.status === 'REJECTED' && (
-                       <OrgRequestForm />
                    )}
 
                    {/* ORG APPROVED - Show Upload/Generate Buttons */}
