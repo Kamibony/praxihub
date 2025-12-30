@@ -174,9 +174,9 @@ exports.chatWithAI = functions.https.onCall(async (data, context) => {
 });
 
 // 4. GENERATE CONTRACT PDF
-exports.generateContractPDF = functions.runWith({ memory: '512MB', timeoutSeconds: 60 }).https.onRequest((req, res) => {
+exports.createContractPDF = functions.runWith({ memory: '512MB', timeoutSeconds: 60 }).https.onRequest((req, res) => {
   cors(req, res, async () => {
-    console.log("Starting generateContractPDF");
+    console.log("Starting createContractPDF");
 
     // Authenticate Request
     const authHeader = req.headers.authorization;

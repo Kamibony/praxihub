@@ -80,7 +80,7 @@ export default function GenerateContractPage() {
          throw new Error("Firebase Project ID not found in configuration.");
       }
 
-      const functionUrl = `https://${region}-${projectId}.cloudfunctions.net/generateContractPDF`;
+      const functionUrl = `https://${region}-${projectId}.cloudfunctions.net/createContractPDF`;
 
       const response = await axios.post(functionUrl, {
         data: {
