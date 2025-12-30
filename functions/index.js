@@ -2,6 +2,7 @@ const functions = require('firebase-functions/v1');
 const admin = require("firebase-admin");
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const axios = require("axios");
+const cors = require('cors')({origin: true});
 
 if (!admin.apps.length) {
   admin.initializeApp();
@@ -168,132 +169,148 @@ exports.chatWithAI = functions.https.onCall(async (data, context) => {
 });
 
 // 4. GENERATE CONTRACT PDF
-exports.generateContractPDF = functions.runWith({ memory: '512MB', timeoutSeconds: 60 }).https.onCall(async (data, context) => {
-  console.log("Starting generateContractPDF");
+exports.generateContractPDF = functions.runWith({ memory: '512MB', timeoutSeconds: 60 }).https.onRequest((req, res) => {
+  cors(req, res, async () => {
+    console.log("Starting generateContractPDF");
 
-  if (!context.auth) {
-    throw new functions.https.HttpsError('unauthenticated', 'The function must be called while authenticated.');
-  }
+    // Authenticate Request
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(403).send('Unauthorized');
+    }
+    const idToken = authHeader.split('Bearer ')[1];
+    let decodedToken;
+    try {
+      decodedToken = await admin.auth().verifyIdToken(idToken);
+    } catch (e) {
+      console.error("Error verifying token:", e);
+      return res.status(403).send('Unauthorized');
+    }
+    const uid = decodedToken.uid;
 
-  const { studentName, companyName, ico, startDate, endDate, position } = data;
-  if (!studentName || !companyName || !ico || !startDate || !endDate || !position) {
-    throw new functions.https.HttpsError('invalid-argument', 'Missing required fields.');
-  }
-
-  try {
-    console.log("Loading dependencies (pdf-lib, fs)...");
-    const { PDFDocument, StandardFonts, rgb } = require('pdf-lib');
-    const fs = require('fs');
-    console.log("Dependencies loaded.");
-
-    const pdfDoc = await PDFDocument.create();
-
-    // Font caching strategy
-    let fontBytes;
-    const fontPath = '/tmp/Roboto-Regular.ttf';
+    const data = req.body.data || req.body;
+    const { studentName, companyName, ico, startDate, endDate, position } = data;
+    if (!studentName || !companyName || !ico || !startDate || !endDate || !position) {
+      return res.status(400).send({ error: 'Missing required fields.' });
+    }
 
     try {
-        if (fs.existsSync(fontPath)) {
-            console.log("Font found in cache.");
-            fontBytes = fs.readFileSync(fontPath);
-        } else {
-            console.log("Font not found in cache. Downloading...");
-            const fontUrl = 'https://raw.githubusercontent.com/google/fonts/main/apache/roboto/Roboto-Regular.ttf';
-            const response = await axios.get(fontUrl, { responseType: 'arraybuffer' });
-            fontBytes = response.data;
-            fs.writeFileSync(fontPath, Buffer.from(fontBytes));
-            console.log("Font downloaded and saved to cache.");
-        }
-    } catch (fontFsError) {
-        console.warn("Error handling font cache/download:", fontFsError);
+      console.log("Loading dependencies (pdf-lib, fs)...");
+      const { PDFDocument, StandardFonts, rgb } = require('pdf-lib');
+      const fs = require('fs');
+      console.log("Dependencies loaded.");
+
+      const pdfDoc = await PDFDocument.create();
+
+      // Font caching strategy
+      let fontBytes;
+      const fontPath = '/tmp/Roboto-Regular.ttf';
+
+      try {
+          if (fs.existsSync(fontPath)) {
+              console.log("Font found in cache.");
+              fontBytes = fs.readFileSync(fontPath);
+          } else {
+              console.log("Font not found in cache. Downloading...");
+              const fontUrl = 'https://raw.githubusercontent.com/google/fonts/main/apache/roboto/Roboto-Regular.ttf';
+              const response = await axios.get(fontUrl, { responseType: 'arraybuffer' });
+              fontBytes = response.data;
+              fs.writeFileSync(fontPath, Buffer.from(fontBytes));
+              console.log("Font downloaded and saved to cache.");
+          }
+      } catch (fontFsError) {
+          console.warn("Error handling font cache/download:", fontFsError);
+      }
+
+      let font;
+      if (fontBytes) {
+          try {
+              font = await pdfDoc.embedFont(fontBytes);
+              console.log("Custom font embedded.");
+          } catch (embedError) {
+              console.error("Error embedding custom font:", embedError);
+          }
+      }
+
+      if (!font) {
+          console.warn("Using fallback font (Helvetica).");
+          font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+      }
+
+      const page = pdfDoc.addPage();
+      const { width, height } = page.getSize();
+      const fontSize = 12;
+
+      const drawText = (text, x, y, size = fontSize) => {
+          page.drawText(text, {
+              x,
+              y,
+              size,
+              font,
+              color: rgb(0, 0, 0),
+          });
+      };
+
+      let yPosition = height - 50;
+
+      drawText('Smlouva o praxi', 50, yPosition, 20);
+      yPosition -= 40;
+
+      drawText(`Student: ${studentName}`, 50, yPosition);
+      yPosition -= 20;
+      drawText(`Společnost: ${companyName}`, 50, yPosition);
+      yPosition -= 20;
+      drawText(`IČO: ${ico}`, 50, yPosition);
+      yPosition -= 20;
+      drawText(`Pozice: ${position}`, 50, yPosition);
+      yPosition -= 20;
+      drawText(`Termín: ${startDate} - ${endDate}`, 50, yPosition);
+      yPosition -= 40;
+
+      drawText('Potvrzujeme, že student vykoná praxi ve výše uvedeném rozsahu.', 50, yPosition);
+      yPosition -= 20;
+      drawText('Tato smlouva je generována automaticky aplikací PraxiHub.', 50, yPosition);
+
+      const pdfBytes = await pdfDoc.save();
+      console.log("PDF generated successfully.");
+
+      // Upload to Firebase Storage
+      console.log("Uploading to Storage...");
+      const bucket = admin.storage().bucket();
+      const fileName = `generated_contract_${Date.now()}.pdf`;
+      const filePath = `contracts/${uid}/${fileName}`;
+      const file = bucket.file(filePath);
+
+      await file.save(pdfBytes, {
+        metadata: {
+          contentType: 'application/pdf',
+        },
+      });
+      console.log("PDF uploaded.");
+
+      // Make the file publicly accessible via a long-lived download URL (token based)
+      // Using the uuid approach for client SDK compatibility
+      // We generate a random string for the token.
+      const uuid = Math.random().toString(36).substring(2) + Date.now().toString(36);
+
+      await file.setMetadata({
+        metadata: {
+          firebaseStorageDownloadTokens: uuid,
+        },
+      });
+
+      const downloadURL = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(filePath)}?alt=media&token=${uuid}`;
+      console.log("Download URL generated:", downloadURL);
+
+      // Return data in a format similar to what httpsCallable expects if possible, or just JSON
+      // httpsCallable expects { data: ... }
+      return res.status(200).send({ data: { downloadURL, fileName } });
+
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      return res.status(500).send({ error: 'Unable to generate PDF.' });
     }
-
-    let font;
-    if (fontBytes) {
-        try {
-            font = await pdfDoc.embedFont(fontBytes);
-            console.log("Custom font embedded.");
-        } catch (embedError) {
-            console.error("Error embedding custom font:", embedError);
-        }
-    }
-
-    if (!font) {
-        console.warn("Using fallback font (Helvetica).");
-        font = await pdfDoc.embedFont(StandardFonts.Helvetica);
-    }
-
-    const page = pdfDoc.addPage();
-    const { width, height } = page.getSize();
-    const fontSize = 12;
-
-    const drawText = (text, x, y, size = fontSize) => {
-        page.drawText(text, {
-            x,
-            y,
-            size,
-            font,
-            color: rgb(0, 0, 0),
-        });
-    };
-
-    let yPosition = height - 50;
-
-    drawText('Smlouva o praxi', 50, yPosition, 20);
-    yPosition -= 40;
-
-    drawText(`Student: ${studentName}`, 50, yPosition);
-    yPosition -= 20;
-    drawText(`Společnost: ${companyName}`, 50, yPosition);
-    yPosition -= 20;
-    drawText(`IČO: ${ico}`, 50, yPosition);
-    yPosition -= 20;
-    drawText(`Pozice: ${position}`, 50, yPosition);
-    yPosition -= 20;
-    drawText(`Termín: ${startDate} - ${endDate}`, 50, yPosition);
-    yPosition -= 40;
-
-    drawText('Potvrzujeme, že student vykoná praxi ve výše uvedeném rozsahu.', 50, yPosition);
-    yPosition -= 20;
-    drawText('Tato smlouva je generována automaticky aplikací PraxiHub.', 50, yPosition);
-
-    const pdfBytes = await pdfDoc.save();
-    console.log("PDF generated successfully.");
-
-    // Upload to Firebase Storage
-    console.log("Uploading to Storage...");
-    const bucket = admin.storage().bucket();
-    const fileName = `generated_contract_${Date.now()}.pdf`;
-    const filePath = `contracts/${context.auth.uid}/${fileName}`;
-    const file = bucket.file(filePath);
-
-    await file.save(pdfBytes, {
-      metadata: {
-        contentType: 'application/pdf',
-      },
-    });
-    console.log("PDF uploaded.");
-
-    // Make the file publicly accessible via a long-lived download URL (token based)
-    // Using the uuid approach for client SDK compatibility
-    // We generate a random string for the token.
-    const uuid = Math.random().toString(36).substring(2) + Date.now().toString(36);
-
-    await file.setMetadata({
-      metadata: {
-        firebaseStorageDownloadTokens: uuid,
-      },
-    });
-
-    const downloadURL = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(filePath)}?alt=media&token=${uuid}`;
-    console.log("Download URL generated:", downloadURL);
-
-    return { downloadURL, fileName };
-
-  } catch (error) {
-    console.error("Error generating PDF:", error);
-    throw new functions.https.HttpsError('internal', 'Unable to generate PDF.');
-  }
+  });
 });
 
 // 5. AI MATCHMAKING
