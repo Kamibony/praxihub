@@ -5,10 +5,7 @@ const axios = require("axios");
 const cors = require('cors')({origin: true});
 
 if (!admin.apps.length) {
-  admin.initializeApp({
-    credential: admin.credential.applicationDefault(),
-    storageBucket: "praxihub-app.firebasestorage.app"
-  });
+  admin.initializeApp();
 }
 
 // 1. AI ANALÝZA ZMLUVY
@@ -259,7 +256,7 @@ exports.createContractPDF = functions.runWith({ memory: '512MB', timeoutSeconds:
       // Upload to Firebase Storage
       step = "Storage Upload";
       console.log("Uploading to Storage...");
-      const bucket = admin.storage().bucket();
+      const bucket = admin.storage().bucket("praxihub-app.firebasestorage.app");
       console.log("Bucket name:", bucket.name); // Debug log as requested
 
       const fileName = `generated_contract_${Date.now()}.pdf`;
@@ -294,9 +291,9 @@ exports.createContractPDF = functions.runWith({ memory: '512MB', timeoutSeconds:
     } catch (error) {
       console.error("Error generating PDF:", error);
       return res.status(500).json({
-        error: error.message,
-        stack: error.stack,
-        step: step || "Unknown"
+        error: "PDF Generation Failed",
+        details: error.message,
+        code: error.code // helpful for storage errors
       });
     }
   });
