@@ -181,7 +181,7 @@ exports.createContractPDF = functions.runWith({ memory: '512MB', timeoutSeconds:
     // Authenticate Request
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(403).send('Unauthorized');
+      return res.status(401).send('Unauthorized');
     }
     const idToken = authHeader.split('Bearer ')[1];
     let decodedToken;
@@ -189,7 +189,7 @@ exports.createContractPDF = functions.runWith({ memory: '512MB', timeoutSeconds:
       decodedToken = await admin.auth().verifyIdToken(idToken);
     } catch (e) {
       console.error("Error verifying token:", e);
-      return res.status(403).send('Unauthorized');
+      return res.status(401).send('Unauthorized');
     }
     const uid = decodedToken.uid;
 
@@ -309,7 +309,7 @@ exports.createContractPDF = functions.runWith({ memory: '512MB', timeoutSeconds:
 
       // Return data in a format similar to what httpsCallable expects if possible, or just JSON
       // httpsCallable expects { data: ... }
-      return res.status(200).send({ data: { downloadURL, fileName } });
+      return res.status(200).json({ data: { downloadURL, fileName } });
 
     } catch (error) {
       console.error("Error generating PDF:", error);
