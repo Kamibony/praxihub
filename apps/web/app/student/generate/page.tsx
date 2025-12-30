@@ -6,6 +6,7 @@ import { functions, auth, db } from "../../../lib/firebase"; // adjust path if n
 import { useRouter } from "next/navigation";
 import { addDoc, collection, query, where, getDocs, orderBy, limit, doc, updateDoc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
+import axios from "axios";
 
 export default function GenerateContractPage() {
   const router = useRouter();
@@ -63,13 +64,36 @@ export default function GenerateContractPage() {
     setLoading(true);
 
     try {
-      const generateContractPDF = httpsCallable(functions, 'generateContractPDF');
-      const result: any = await generateContractPDF({
-        ...formData,
-        studentName: formData.studentName || auth.currentUser.displayName || auth.currentUser.email
+      const token = await auth.currentUser.getIdToken();
+      // Using axios to call the HTTP function directly to support CORS handling
+      // Note: We need the function URL. Assuming standard Firebase structure:
+      // https://<region>-<project-id>.cloudfunctions.net/generateContractPDF
+      // or using a relative path if rewritten.
+      // Since we don't have the exact URL handy in env, we construct it or use a relative path if served from same domain (unlikely for dev).
+      // We will try to rely on the firebase config 'projectId' if available or hardcode based on known project id 'praxihub-app'.
+
+      // Dynamically get project ID from the initialized auth instance
+      const projectId = auth.app.options.projectId;
+      const region = 'us-central1'; // Default region for Firebase Functions
+
+      if (!projectId) {
+         throw new Error("Firebase Project ID not found in configuration.");
+      }
+
+      const functionUrl = `https://${region}-${projectId}.cloudfunctions.net/generateContractPDF`;
+
+      const response = await axios.post(functionUrl, {
+        data: {
+          ...formData,
+          studentName: formData.studentName || auth.currentUser.displayName || auth.currentUser.email
+        }
+      }, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
       });
 
-      const { downloadURL, fileName } = result.data;
+      const { downloadURL, fileName } = response.data.data;
       setGeneratedUrl(downloadURL);
 
       if (internshipId) {
