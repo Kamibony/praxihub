@@ -21,8 +21,8 @@ export default function CompanyDashboard() {
   const [newTag, setNewTag] = useState("");
   const [isTagsOpen, setIsTagsOpen] = useState(false);
 
-  // Rating State
-  const [ratingInternshipId, setRatingInternshipId] = useState<string | null>(null);
+  // Detail Modal & Rating State
+  const [selectedInternship, setSelectedInternship] = useState<any>(null);
   const [companyRating, setCompanyRating] = useState(0);
   const [companyReview, setCompanyReview] = useState("");
 
@@ -149,17 +149,27 @@ export default function CompanyDashboard() {
     }
   };
 
+  const openModal = (internship: any) => {
+    setSelectedInternship(internship);
+    setCompanyRating(internship.companyRating || 0);
+    setCompanyReview(internship.companyReview || "");
+  };
+
+  const closeModal = () => {
+    setSelectedInternship(null);
+    setCompanyRating(0);
+    setCompanyReview("");
+  };
+
   const handleRateStudent = async () => {
-    if (!ratingInternshipId || companyRating === 0) return;
+    if (!selectedInternship || companyRating === 0) return;
     try {
-      const docRef = doc(db, "internships", ratingInternshipId);
+      const docRef = doc(db, "internships", selectedInternship.id);
       await updateDoc(docRef, {
         companyRating,
         companyReview
       });
-      setRatingInternshipId(null);
-      setCompanyRating(0);
-      setCompanyReview("");
+      // We don't close the modal so the user can continue viewing details
       alert("Hodnocení uloženo!");
     } catch (error) {
       console.error("Error submitting rating:", error);
@@ -287,40 +297,79 @@ export default function CompanyDashboard() {
            </div>
         )}
 
-        {/* MODAL PRO HODNOCENÍ */}
-        {ratingInternshipId && (
+        {/* UNIFIED DETAIL MODAL */}
+        {selectedInternship && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 animate-fade-in">
-              <h3 className="text-xl font-bold text-gray-900 mb-4">Hodnocení stážisty</h3>
-              <div className="space-y-4">
+            <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full p-6 animate-fade-in">
+              <div className="flex justify-between items-start mb-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Jak hodnotíte výkon studenta?</label>
-                  <StarRating rating={companyRating} setRating={setCompanyRating} />
+                  <h3 className="text-2xl font-bold text-gray-900">{selectedInternship.studentEmail}</h3>
+                  <p className="text-sm text-gray-500">Detail stáže a hodnocení</p>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Slovní hodnocení (pro studenta)</label>
-                  <textarea
-                    value={companyReview}
-                    onChange={(e) => setCompanyReview(e.target.value)}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                    rows={4}
-                    placeholder="Napište silné a slabé stránky..."
-                  ></textarea>
+                <button onClick={closeModal} className="text-gray-400 hover:text-gray-600">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              </div>
+
+              <div className="space-y-6">
+                {/* Section 1: Contract */}
+                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                  <h4 className="text-md font-semibold text-gray-800 mb-2">Smlouva o stáži</h4>
+                  {selectedInternship.contract_url ? (
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600 truncate mr-4">
+                        {/* Try to get filename from url, fallback to simple text */}
+                        {decodeURIComponent(selectedInternship.contract_url.split('/').pop()?.split('?')[0] || "smlouva.pdf")}
+                      </span>
+                      <a
+                        href={selectedInternship.contract_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-700 flex items-center gap-2"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                        Stáhnout smlouvu
+                      </a>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-red-500 italic">Smlouva není k dispozici ke stažení.</p>
+                  )}
                 </div>
-                <div className="flex gap-3 justify-end mt-2">
-                  <button
-                    onClick={() => setRatingInternshipId(null)}
-                    className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
-                  >
-                    Zrušit
-                  </button>
-                  <button
-                    onClick={handleRateStudent}
-                    disabled={companyRating === 0}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-bold disabled:opacity-50"
-                  >
-                    Odeslat hodnocení
-                  </button>
+
+                {/* Section 2: Rating */}
+                <div className="border-t border-gray-100 pt-6">
+                  <h4 className="text-lg font-semibold text-gray-800 mb-4">Hodnocení stážisty</h4>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Jak hodnotíte výkon studenta?</label>
+                      <StarRating rating={companyRating} setRating={setCompanyRating} />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Slovní hodnocení (pro studenta)</label>
+                      <textarea
+                        value={companyReview}
+                        onChange={(e) => setCompanyReview(e.target.value)}
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                        rows={4}
+                        placeholder="Napište silné a slabé stránky, zpětnou vazbu..."
+                      ></textarea>
+                    </div>
+                    <div className="flex gap-3 justify-end mt-2">
+                      <button
+                        onClick={closeModal}
+                        className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+                      >
+                        Zavřít
+                      </button>
+                      <button
+                        onClick={handleRateStudent}
+                        disabled={companyRating === 0}
+                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-bold disabled:opacity-50"
+                      >
+                        Uložit hodnocení
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -344,14 +393,18 @@ export default function CompanyDashboard() {
                               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Stážista</th>
                               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rozpoznaná Firma</th>
                               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Období</th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Hodnocení Studenta</th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Hodnocení / Akce</th>
                           </tr>
                       </thead>
                       <tbody className="bg-white divide-y divide-gray-200">
                           {internships.map((intern) => (
-                              <tr key={intern.id} className="hover:bg-gray-50 transition-colors">
+                              <tr
+                                key={intern.id}
+                                onClick={() => openModal(intern)}
+                                className="hover:bg-gray-50 transition-colors cursor-pointer group"
+                              >
                                   <td className="px-6 py-4 whitespace-nowrap">
-                                    <div className="text-sm font-medium text-gray-900">{intern.studentEmail}</div>
+                                    <div className="text-sm font-medium text-gray-900 group-hover:text-blue-600 transition-colors">{intern.studentEmail}</div>
                                   </td>
                                   <td className="px-6 py-4 whitespace-nowrap">
                                     <div className="text-sm text-gray-900">{intern.organization_name}</div>
@@ -373,16 +426,9 @@ export default function CompanyDashboard() {
                                         <span className="text-xs text-gray-500">({intern.companyRating}/5)</span>
                                       </div>
                                     ) : (
-                                      <button
-                                        onClick={() => {
-                                          setRatingInternshipId(intern.id);
-                                          setCompanyRating(0);
-                                          setCompanyReview("");
-                                        }}
-                                        className="text-sm bg-blue-50 text-blue-600 px-3 py-1 rounded hover:bg-blue-100 font-medium transition"
-                                      >
-                                        Hodnotit studenta
-                                      </button>
+                                      <span className="text-blue-600 text-sm font-medium opacity-80 group-hover:opacity-100">
+                                        Zobrazit detail
+                                      </span>
                                     )}
                                   </td>
                               </tr>
