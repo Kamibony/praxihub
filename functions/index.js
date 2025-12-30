@@ -5,7 +5,10 @@ const axios = require("axios");
 const cors = require('cors')({origin: true});
 
 if (!admin.apps.length) {
-  admin.initializeApp();
+  admin.initializeApp({
+    credential: admin.credential.applicationDefault(),
+    storageBucket: "praxihub-app.firebasestorage.app"
+  });
 }
 
 // 1. AI ANALÝZA ZMLUVY
