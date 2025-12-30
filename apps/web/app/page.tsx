@@ -5,7 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
-import { auth, db } from "../lib/firebase"; // Uisti sa, že cesta k lib/firebase je správna
+import { auth, db } from "../lib/firebase";
+import { GraduationCap, Building2, UserCheck, CheckCircle2, Bot, ShieldCheck } from 'lucide-react';
 
 export default function LandingPage() {
   const [loading, setLoading] = useState(true);
@@ -45,162 +46,130 @@ export default function LandingPage() {
   // Kým overujeme prihlásenie, zobrazíme loader (aby stránka "nepreblikla")
   if (loading) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="flex flex-col items-center space-y-4">
           <div className="w-12 h-12 border-4 border-blue-600 rounded-full border-t-transparent animate-spin"></div>
-          <div className="text-gray-500 font-medium">Načítám PraxiHub...</div>
+          <div className="text-slate-500 font-medium">Načítám PraxiHub...</div>
         </div>
       </div>
     );
   }
 
-  // --- SAMOTNÁ LANDING PAGE (ak nie je prihlásený) ---
+  // --- SAMOTNÁ LANDING PAGE ---
   return (
-    <div className="min-h-screen bg-white flex flex-col font-sans">
+    <div className="min-h-screen bg-slate-50 font-sans text-slate-900">
       
-      {/* --- NAVIGACE --- */}
-      <nav className="w-full py-6 px-8 flex justify-between items-center max-w-7xl mx-auto">
-        <div className="text-2xl font-bold text-blue-600 flex items-center gap-2">
-          <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-          PraxiHub
-        </div>
-        <div className="space-x-4">
-          <Link href="/login" className="text-gray-600 hover:text-gray-900 font-medium px-4 py-2">
-            Přihlásit se
-          </Link>
-          <Link href="/signup" className="bg-blue-600 text-white px-6 py-2.5 rounded-full font-medium hover:bg-blue-700 transition shadow-lg hover:shadow-xl">
-            Registrace
-          </Link>
-        </div>
-      </nav>
-
       {/* --- HERO SEKCE --- */}
-      <main className="flex-grow">
-        <section className="relative pt-20 pb-32 overflow-hidden">
+      <main className="flex-grow pt-24 pb-12 md:pt-32 md:pb-24">
+        <section className="relative overflow-hidden">
           <div className="max-w-7xl mx-auto px-6 relative z-10 text-center">
-            <span className="bg-blue-50 text-blue-700 px-4 py-1.5 rounded-full text-sm font-semibold tracking-wide uppercase mb-6 inline-block">
+            <span className="bg-blue-100 text-blue-700 px-4 py-1.5 rounded-full text-sm font-semibold tracking-wide uppercase mb-6 inline-flex items-center gap-2">
+              <Bot size={16} />
               Poháněno Google Gemini AI
             </span>
-            <h1 className="text-5xl md:text-7xl font-extrabold text-gray-900 leading-tight mb-8">
-              Budoucnost správy <br />
+            <h1 className="text-5xl md:text-7xl font-extrabold text-slate-900 leading-tight mb-8 tracking-tight">
+              PraxiHub: Budoucnost <br className="hidden md:block" />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">
-                odborných stáží
+                studentských stáží.
               </span>
             </h1>
-            <p className="text-xl text-gray-500 mb-10 max-w-2xl mx-auto leading-relaxed">
-              Zapomeňte na papírování. PraxiHub propojuje studenty, firmy a univerzitu do jednoho inteligentního ekosystému, který automatizuje byrokracii.
+            <p className="text-xl text-slate-500 mb-10 max-w-2xl mx-auto leading-relaxed">
+              Digitální platforma, která zbavuje univerzity papírování a spojuje studenty s praxí.
             </p>
             
             <div className="flex flex-col sm:flex-row justify-center gap-4">
-              <Link href="/signup" className="px-8 py-4 bg-blue-600 text-white rounded-xl text-lg font-semibold hover:bg-blue-700 transition shadow-lg hover:-translate-y-1">
-                Začít používat zdarma
+              <Link href="/login?role=student" className="px-8 py-4 bg-blue-600 text-white rounded-xl text-lg font-semibold hover:bg-blue-700 transition shadow-lg hover:-translate-y-1">
+                Jsem Student
               </Link>
-              <Link href="/login" className="px-8 py-4 bg-white text-gray-700 border border-gray-200 rounded-xl text-lg font-semibold hover:bg-gray-50 transition">
-                Mám již účet
+              <Link href="/login?role=company" className="px-8 py-4 bg-white text-slate-700 border border-slate-200 rounded-xl text-lg font-semibold hover:bg-slate-50 transition shadow-sm hover:-translate-y-1">
+                Jsem Firma
+              </Link>
+              <Link href="/manual" className="px-8 py-4 text-slate-500 font-semibold hover:text-blue-600 transition flex items-center justify-center gap-2">
+                Pro Univerzity
               </Link>
             </div>
           </div>
           
           {/* Dekorativní pozadí */}
           <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-full h-full z-0 opacity-40 pointer-events-none">
-            <div className="absolute top-20 left-10 w-72 h-72 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl animate-blob"></div>
-            <div className="absolute top-20 right-10 w-72 h-72 bg-blue-300 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-2000"></div>
-            <div className="absolute -bottom-8 left-1/2 w-72 h-72 bg-indigo-300 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-4000"></div>
+            <div className="absolute top-20 left-10 w-96 h-96 bg-blue-200/50 rounded-full mix-blend-multiply filter blur-3xl animate-blob"></div>
+            <div className="absolute top-20 right-10 w-96 h-96 bg-indigo-200/50 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-2000"></div>
           </div>
         </section>
 
-        {/* --- ÚČASTNÍCI (Karty) --- */}
-        <section className="py-20 bg-gray-50">
+        {/* --- FEATURE GRID (BENTO STYLE) --- */}
+        <section className="py-20">
           <div className="max-w-7xl mx-auto px-6">
-            <h2 className="text-3xl font-bold text-center text-gray-900 mb-16">Jeden systém, tři pohledy</h2>
-            
-            <div className="grid md:grid-cols-3 gap-8">
+            <div className="grid md:grid-cols-3 gap-6">
               {/* Karta: Student */}
-              <div className="bg-white p-8 rounded-2xl shadow-sm hover:shadow-md transition border border-gray-100 relative group overflow-hidden">
-                <div className="absolute top-0 left-0 w-2 h-full bg-blue-500 group-hover:w-full transition-all duration-300 opacity-5"></div>
-                <div className="w-14 h-14 bg-blue-100 rounded-xl flex items-center justify-center text-blue-600 mb-6 relative z-10">
-                   <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" /></svg>
+              <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 hover:border-blue-200 transition group">
+                <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600 mb-6 group-hover:scale-110 transition duration-300">
+                  <GraduationCap size={28} />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-3 relative z-10">Student</h3>
-                <p className="text-gray-600 relative z-10">
-                  Nahrávání smluv fotkou, okamžitá AI kontrola údajů a sledování stavu schválení v reálném čase. Žádné běhání po kancelářích.
-                </p>
-              </div>
-
-              {/* Karta: Firma */}
-              <div className="bg-white p-8 rounded-2xl shadow-sm hover:shadow-md transition border border-gray-100 relative group overflow-hidden">
-                <div className="absolute top-0 left-0 w-2 h-full bg-purple-500 group-hover:w-full transition-all duration-300 opacity-5"></div>
-                <div className="w-14 h-14 bg-purple-100 rounded-xl flex items-center justify-center text-purple-600 mb-6 relative z-10">
-                  <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
-                </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-3 relative z-10">Firma</h3>
-                <p className="text-gray-600 relative z-10">
-                  Přehled všech stážistů na jednom místě. Automatické párování smluv podle IČO a digitální správa dokumentace.
+                <h3 className="text-xl font-bold text-slate-900 mb-3">Pro Studenty</h3>
+                <p className="text-slate-600 leading-relaxed">
+                  Nahrajte smlouvu mobilem, AI zkontroluje údaje a automaticky vše pošle ke schválení. Žádné fronty na studijním.
                 </p>
               </div>
 
               {/* Karta: Koordinátor */}
-              <div className="bg-white p-8 rounded-2xl shadow-sm hover:shadow-md transition border border-gray-100 relative group overflow-hidden">
-                <div className="absolute top-0 left-0 w-2 h-full bg-green-500 group-hover:w-full transition-all duration-300 opacity-5"></div>
-                <div className="w-14 h-14 bg-green-100 rounded-xl flex items-center justify-center text-green-600 mb-6 relative z-10">
-                   <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>
+              <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 hover:border-indigo-200 transition group md:mt-12">
+                <div className="w-12 h-12 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600 mb-6 group-hover:scale-110 transition duration-300">
+                  <UserCheck size={28} />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-3 relative z-10">Koordinátor</h3>
-                <p className="text-gray-600 relative z-10">
-                  Absolutní přehled. Dashboard s metrikami, filtrování podle ročníků a firem, automatické notifikace problémových smluv.
+                <h3 className="text-xl font-bold text-slate-900 mb-3">Pro Koordinátory</h3>
+                <p className="text-slate-600 leading-relaxed">
+                  Dashboard s přehledem všech studentů. Schvalování na jedno kliknutí a automatické notifikace při problémech.
+                </p>
+              </div>
+
+              {/* Karta: Firma */}
+              <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 hover:border-purple-200 transition group">
+                <div className="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center text-purple-600 mb-6 group-hover:scale-110 transition duration-300">
+                  <Building2 size={28} />
+                </div>
+                <h3 className="text-xl font-bold text-slate-900 mb-3">Pro Firmy</h3>
+                <p className="text-slate-600 leading-relaxed">
+                  Efektivní nábor stážistů a digitální správa dokumentace. Všechny smlouvy a hodnocení na jednom místě.
                 </p>
               </div>
             </div>
           </div>
         </section>
 
-        {/* --- JAK TO FUNGUJE (Proces) --- */}
-        <section className="py-20">
-          <div className="max-w-7xl mx-auto px-6">
-            <h2 className="text-3xl font-bold text-center text-gray-900 mb-16">Jak funguje AI Analýza?</h2>
-            
-            <div className="flex flex-col md:flex-row items-center justify-center gap-8 relative">
-              {/* Connecting Line (Desktop) */}
-              <div className="hidden md:block absolute top-1/2 left-20 right-20 h-0.5 bg-gray-200 -z-10 transform -translate-y-1/2"></div>
-
-              {/* Krok 1 */}
-              <div className="bg-white p-6 rounded-xl border border-gray-200 w-full md:w-80 text-center relative">
-                <div className="w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-lg mx-auto mb-4 relative z-10">1</div>
-                <h4 className="font-bold text-lg mb-2">Upload Smlouvy</h4>
-                <p className="text-sm text-gray-500">Student nahraje PDF nebo vyfotí smlouvu mobilem.</p>
-              </div>
-
-              {/* Krok 2 */}
-              <div className="bg-white p-6 rounded-xl border-2 border-blue-500 shadow-lg w-full md:w-80 text-center relative transform md:-translate-y-4">
-                 <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-blue-500 text-white px-3 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider">AI Proces</div>
-                <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold text-lg mx-auto mb-4">2</div>
-                <h4 className="font-bold text-lg mb-2">Gemini Analýza</h4>
-                <p className="text-sm text-gray-500">AI přečte údaje: název firmy, IČO, data a validuje je.</p>
-              </div>
-
-              {/* Krok 3 */}
-              <div className="bg-white p-6 rounded-xl border border-gray-200 w-full md:w-80 text-center relative">
-                <div className="w-10 h-10 bg-green-500 text-white rounded-full flex items-center justify-center font-bold text-lg mx-auto mb-4">3</div>
-                <h4 className="font-bold text-lg mb-2">Schválení</h4>
-                <p className="text-sm text-gray-500">Data se zapíší do databáze a přiřadí se firmě.</p>
-              </div>
-
+        {/* --- TRUST SECTION --- */}
+        <section className="py-16 bg-white border-t border-slate-100">
+          <div className="max-w-7xl mx-auto px-6 text-center">
+            <h2 className="text-lg font-semibold text-slate-400 uppercase tracking-wider mb-8">Důvěřují nám moderní univerzity</h2>
+            <div className="flex flex-wrap justify-center items-center gap-12 opacity-50 grayscale hover:grayscale-0 transition duration-500">
+              {/* Placeholders for logos */}
+              <div className="h-12 w-32 bg-slate-200 rounded animate-pulse flex items-center justify-center text-slate-400 font-bold text-xs">UNIVERZITA A</div>
+              <div className="h-12 w-32 bg-slate-200 rounded animate-pulse flex items-center justify-center text-slate-400 font-bold text-xs">VYSOKÁ ŠKOLA B</div>
+              <div className="h-12 w-32 bg-slate-200 rounded animate-pulse flex items-center justify-center text-slate-400 font-bold text-xs">TECH INSTITUT</div>
+              <div className="h-12 w-32 bg-slate-200 rounded animate-pulse flex items-center justify-center text-slate-400 font-bold text-xs">AKADEMIE VĚD</div>
             </div>
           </div>
         </section>
       </main>
 
       {/* --- FOOTER --- */}
-      <footer className="bg-gray-900 text-white py-12">
-        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center">
-          <div className="mb-4 md:mb-0">
-            <span className="text-2xl font-bold tracking-tight">PraxiHub</span>
-            <p className="text-gray-400 text-sm mt-1">© 2025 University Systems. Všechna práva vyhrazena.</p>
+      <footer className="bg-white border-t border-slate-200 py-12">
+        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center text-white">
+               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+            </div>
+            <span className="text-xl font-bold text-slate-900">PraxiHub</span>
           </div>
-          <div className="flex gap-6">
-            <Link href="#" className="text-gray-400 hover:text-white transition">Podpora</Link>
-            <Link href="#" className="text-gray-400 hover:text-white transition">Ochrana údajů</Link>
-            <Link href="#" className="text-gray-400 hover:text-white transition">Kontakt</Link>
+
+          <div className="flex gap-8 text-sm font-medium text-slate-600">
+            <Link href="/manual" className="hover:text-blue-600 transition">Manuál</Link>
+            <Link href="/login" className="hover:text-blue-600 transition">Přihlášení</Link>
+            <Link href="#" className="hover:text-blue-600 transition">Kontakt</Link>
+          </div>
+
+          <div className="text-slate-400 text-sm">
+            © 2025 University Systems.
           </div>
         </div>
       </footer>
