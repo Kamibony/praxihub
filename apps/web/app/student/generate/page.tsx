@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useState } from 'react';
-import { httpsCallable } from "firebase/functions";
-import { functions, auth, db } from "../../../lib/firebase"; // adjust path if needed
+import React, { useState, useEffect } from 'react';
 import { useRouter } from "next/navigation";
-import { addDoc, collection, query, where, getDocs, orderBy, limit, doc, updateDoc } from "firebase/firestore";
+import { auth, db, storage } from "../../../lib/firebase";
 import { onAuthStateChanged } from "firebase/auth";
-import axios from "axios";
+import { collection, query, where, getDocs, orderBy, limit, doc, updateDoc, addDoc } from "firebase/firestore";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { PDFDocument, rgb } from 'pdf-lib';
+import fontkit from '@pdf-lib/fontkit';
 
 export default function GenerateContractPage() {
   const router = useRouter();
@@ -22,7 +23,7 @@ export default function GenerateContractPage() {
   const [generatedUrl, setGeneratedUrl] = useState<string | null>(null);
   const [internshipId, setInternshipId] = useState<string | null>(null);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
         // Fetch existing approved internship
@@ -43,9 +44,6 @@ export default function GenerateContractPage() {
                 ico: docData.organization_ico || "",
                 studentName: currentUser.displayName || currentUser.email || ""
             }));
-        } else {
-             // Optional: Redirect or warn if no ORG_APPROVED internship found
-             // But maybe they want to generate it anyway? Requirement says "Pre-fill Data ... fetch the current user's internship"
         }
       } else {
         router.push("/login");
@@ -64,38 +62,80 @@ export default function GenerateContractPage() {
     setLoading(true);
 
     try {
-      const token = await auth.currentUser.getIdToken();
-      // Using axios to call the HTTP function directly to support CORS handling
-      // Note: We need the function URL. Assuming standard Firebase structure:
-      // https://<region>-<project-id>.cloudfunctions.net/generateContractPDF
-      // or using a relative path if rewritten.
-      // Since we don't have the exact URL handy in env, we construct it or use a relative path if served from same domain (unlikely for dev).
-      // We will try to rely on the firebase config 'projectId' if available or hardcode based on known project id 'praxihub-app'.
+      // 1. Fetch Font
+      const fontUrl = 'https://fonts.gstatic.com/s/roboto/v30/KFOmCnqEu92Fr1Mu4mxK.ttf';
+      const fontBytes = await fetch(fontUrl).then(res => res.arrayBuffer());
 
-      // Dynamically get project ID from the initialized auth instance
-      const projectId = auth.app.options.projectId;
-      const region = 'us-central1'; // Default region for Firebase Functions
+      // 2. PDF Creation
+      const pdfDoc = await PDFDocument.create();
+      pdfDoc.registerFontkit(fontkit);
+      const customFont = await pdfDoc.embedFont(fontBytes);
 
-      if (!projectId) {
-         throw new Error("Firebase Project ID not found in configuration.");
-      }
+      const page = pdfDoc.addPage();
+      const { width, height } = page.getSize();
+      const fontSize = 12;
 
-      const functionUrl = `https://${region}-${projectId}.cloudfunctions.net/createContractPDF`;
-
-      const response = await axios.post(functionUrl, {
-        data: {
-          ...formData,
-          studentName: formData.studentName || auth.currentUser.displayName || auth.currentUser.email
-        }
-      }, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+      page.drawText('SMLOUVA O ODBORNÉ PRAXI', {
+        x: 50,
+        y: height - 50,
+        size: 20,
+        font: customFont,
+        color: rgb(0, 0, 0),
       });
 
-      const { downloadURL, fileName } = response.data.data;
+      page.drawText(`Student: ${formData.studentName || auth.currentUser.displayName || auth.currentUser.email}`, {
+        x: 50,
+        y: height - 100,
+        size: fontSize,
+        font: customFont,
+      });
+
+      page.drawText(`Společnost: ${formData.companyName}`, {
+        x: 50,
+        y: height - 130,
+        size: fontSize,
+        font: customFont,
+      });
+
+      page.drawText(`IČO: ${formData.ico}`, {
+        x: 50,
+        y: height - 160,
+        size: fontSize,
+        font: customFont,
+      });
+
+      page.drawText(`Pozice: ${formData.position}`, {
+        x: 50,
+        y: height - 190,
+        size: fontSize,
+        font: customFont,
+      });
+
+      page.drawText(`Termín praxe: ${formData.startDate} - ${formData.endDate}`, {
+        x: 50,
+        y: height - 220,
+        size: fontSize,
+        font: customFont,
+      });
+
+      page.drawText(`Datum vygenerování: ${new Date().toLocaleDateString('cs-CZ')}`, {
+        x: 50,
+        y: height - 280,
+        size: 10,
+        font: customFont,
+        color: rgb(0.4, 0.4, 0.4),
+      });
+
+      // 3. Upload
+      const pdfBytes = await pdfDoc.save();
+      const fileName = `contract_${Date.now()}.pdf`;
+      const storageRef = ref(storage, 'contracts/' + auth.currentUser.uid + '/' + fileName);
+
+      await uploadBytes(storageRef, pdfBytes);
+      const downloadURL = await getDownloadURL(storageRef);
       setGeneratedUrl(downloadURL);
 
+      // 4. Firestore
       if (internshipId) {
         // UPDATE existing document
         const docRef = doc(db, "internships", internshipId);
@@ -108,8 +148,7 @@ export default function GenerateContractPage() {
             generated: true
         });
       } else {
-         // Fallback if no internship found (should we allow this? Requirements imply updating existing)
-         // But let's keep addDoc as fallback or just create new if not found
+         // Create new if not found
          await addDoc(collection(db, "internships"), {
             studentId: auth.currentUser.uid,
             studentEmail: auth.currentUser.email,
@@ -130,7 +169,7 @@ export default function GenerateContractPage() {
 
     } catch (error) {
       console.error("Error generating contract:", error);
-      alert("Chyba při generování smlouvy.");
+      alert("Chyba při generování smlouvy: " + (error instanceof Error ? error.message : "Neznámá chyba"));
     } finally {
       setLoading(false);
     }
