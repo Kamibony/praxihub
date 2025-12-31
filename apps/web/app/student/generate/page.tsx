@@ -63,8 +63,9 @@ export default function GenerateContractPage() {
 
     try {
       // 1. Fetch Font
-      const fontUrl = 'https://fonts.gstatic.com/s/roboto/v30/KFOmCnqEu92Fr1Mu4mxK.ttf';
-      const fontBytes = await fetch(fontUrl).then(res => res.arrayBuffer());
+      const fontRes = await fetch('https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/fonts/Roboto/Roboto-Regular.ttf');
+      if (!fontRes.ok) throw new Error("Failed to fetch font: " + fontRes.statusText);
+      const fontBytes = await fontRes.arrayBuffer();
 
       // 2. PDF Creation
       const pdfDoc = await PDFDocument.create();
