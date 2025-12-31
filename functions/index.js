@@ -204,15 +204,19 @@ exports.createContractPDF = functions.runWith({ memory: '512MB', timeoutSeconds:
 
     try {
       console.log("Loading dependencies (pdf-lib)...");
-      const { PDFDocument, StandardFonts, rgb } = require('pdf-lib');
-      // Removed fs and axios dependency for fonts to prevent Spark Plan issues
+      const { PDFDocument, rgb } = require('pdf-lib');
+      const fontkit = require('@pdf-lib/fontkit');
       console.log("Dependencies loaded.");
+
+      // Fetch font supporting Latin-2 (Czech)
+      const fontUrl = 'https://github.com/google/fonts/raw/main/apache/roboto/Roboto-Regular.ttf';
+      const fontResponse = await axios.get(fontUrl, { responseType: 'arraybuffer' });
 
       step = "PDF Creation";
       const pdfDoc = await PDFDocument.create();
 
-      // Use Standard Font to avoid external network requests
-      const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+      pdfDoc.registerFontkit(fontkit);
+      const customFont = await pdfDoc.embedFont(fontResponse.data);
 
       step = "Adding Page and Text";
       const page = pdfDoc.addPage();
@@ -224,7 +228,7 @@ exports.createContractPDF = functions.runWith({ memory: '512MB', timeoutSeconds:
               x,
               y,
               size,
-              font,
+              font: customFont,
               color: rgb(0, 0, 0),
           });
       };
