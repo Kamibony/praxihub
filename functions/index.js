@@ -316,6 +316,11 @@ exports.findMatches = functions.https.onCall(async (data, context) => {
 
   try {
     const userDoc = await admin.firestore().collection('users').doc(studentId).get();
+
+    if (!userDoc.exists) {
+       return { matches: [], message: "Profil uživatele nebyl nalezen. Kontaktujte podporu." };
+    }
+
     const userData = userDoc.data();
     const studentSkills = userData.skills || []; // Array of strings
 
