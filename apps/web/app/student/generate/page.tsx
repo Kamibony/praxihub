@@ -75,56 +75,159 @@ export default function GenerateContractPage() {
       const page = pdfDoc.addPage();
       const { width, height } = page.getSize();
       const fontSize = 12;
+      const margin = 50;
+      let yPosition = height - 80;
 
-      page.drawText('SMLOUVA O ODBORNÉ PRAXI', {
-        x: 50,
-        y: height - 50,
-        size: 20,
+      // Header
+      const headerText = 'SMLOUVA O ODBORNÉ PRAXI';
+      const headerWidth = customFont.widthOfTextAtSize(headerText, 18);
+      page.drawText(headerText, {
+        x: (width - headerWidth) / 2,
+        y: yPosition,
+        size: 18,
         font: customFont,
         color: rgb(0, 0, 0),
       });
 
+      yPosition -= 40;
+
+      // Intro
+      page.drawText('uzavřená mezi stranami:', {
+        x: margin,
+        y: yPosition,
+        size: fontSize,
+        font: customFont,
+        color: rgb(0, 0, 0),
+      });
+
+      yPosition -= 30;
+
+      // Article I
+      page.drawText('Článek I - Smluvní strany', {
+         x: margin,
+         y: yPosition,
+         size: fontSize + 2,
+         font: customFont,
+         color: rgb(0, 0, 0),
+      });
+      yPosition -= 25;
+
       page.drawText(`Student: ${formData.studentName || auth.currentUser.displayName || auth.currentUser.email}`, {
-        x: 50,
-        y: height - 100,
+        x: margin,
+        y: yPosition,
         size: fontSize,
         font: customFont,
+        color: rgb(0, 0, 0),
       });
+      yPosition -= 20;
 
-      page.drawText(`Společnost: ${formData.companyName}`, {
-        x: 50,
-        y: height - 130,
+      page.drawText(`Společnost: ${formData.companyName}, IČO: ${formData.ico}`, {
+        x: margin,
+        y: yPosition,
         size: fontSize,
         font: customFont,
+        color: rgb(0, 0, 0),
       });
 
-      page.drawText(`IČO: ${formData.ico}`, {
-        x: 50,
-        y: height - 160,
+      yPosition -= 40;
+
+      // Article II
+      page.drawText('Článek II - Předmět smlouvy', {
+         x: margin,
+         y: yPosition,
+         size: fontSize + 2,
+         font: customFont,
+         color: rgb(0, 0, 0),
+      });
+      yPosition -= 25;
+
+      // Subject text wrapping
+      const textPart1 = "Předmětem této smlouvy je závazek studenta vykonat odbornou praxi";
+      const textPart2 = `na pozici ${formData.position} a závazek společnosti tuto praxi umožnit.`;
+
+      page.drawText(textPart1, {
+        x: margin,
+        y: yPosition,
         size: fontSize,
         font: customFont,
+        color: rgb(0, 0, 0),
       });
-
-      page.drawText(`Pozice: ${formData.position}`, {
-        x: 50,
-        y: height - 190,
+      yPosition -= 20;
+      page.drawText(textPart2, {
+        x: margin,
+        y: yPosition,
         size: fontSize,
         font: customFont,
+        color: rgb(0, 0, 0),
       });
 
-      page.drawText(`Termín praxe: ${formData.startDate} - ${formData.endDate}`, {
-        x: 50,
-        y: height - 220,
+      yPosition -= 40;
+
+      // Article III
+      page.drawText('Článek III - Doba a místo konání', {
+         x: margin,
+         y: yPosition,
+         size: fontSize + 2,
+         font: customFont,
+         color: rgb(0, 0, 0),
+      });
+      yPosition -= 25;
+
+      page.drawText(`Praxe bude probíhat v termínu od ${new Date(formData.startDate).toLocaleDateString('cs-CZ')} do ${new Date(formData.endDate).toLocaleDateString('cs-CZ')}.`, {
+        x: margin,
+        y: yPosition,
         size: fontSize,
         font: customFont,
+        color: rgb(0, 0, 0),
       });
 
-      page.drawText(`Datum vygenerování: ${new Date().toLocaleDateString('cs-CZ')}`, {
-        x: 50,
-        y: height - 280,
-        size: 10,
+      yPosition -= 80;
+
+      // Footer
+      const dateText = `V Praze dne ${new Date().toLocaleDateString('cs-CZ')}`;
+      page.drawText(dateText, {
+        x: margin,
+        y: yPosition,
+        size: fontSize,
         font: customFont,
-        color: rgb(0.4, 0.4, 0.4),
+        color: rgb(0, 0, 0),
+      });
+
+      yPosition -= 60;
+
+      // Signatures
+      // Line for Student
+      page.drawLine({
+        start: { x: margin, y: yPosition },
+        end: { x: margin + 200, y: yPosition },
+        thickness: 1,
+        color: rgb(0, 0, 0),
+      });
+
+      // Line for Company
+      page.drawLine({
+        start: { x: width - margin - 200, y: yPosition },
+        end: { x: width - margin, y: yPosition },
+        thickness: 1,
+        color: rgb(0, 0, 0),
+      });
+
+      yPosition -= 20;
+
+      page.drawText('Podpis studenta', {
+        x: margin,
+        y: yPosition,
+        size: fontSize,
+        font: customFont,
+        color: rgb(0, 0, 0),
+      });
+
+      page.drawText('Podpis zástupce společnosti', {
+        x: width - margin - 200,
+        y: yPosition,
+        size: fontSize,
+        font: customFont,
+        color: rgb(0, 0, 0),
       });
 
       // 3. Upload
