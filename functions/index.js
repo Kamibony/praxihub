@@ -323,56 +323,63 @@ exports.findMatches = functions.https.onCall(async (data, context) => {
        return { matches: [], message: "Profil uživatele nebyl nalezen. Kontaktujte podporu." };
     }
     userData = userDoc.data();
+
+    // Step 1: Deep Logging (Debug)
+    console.log("RAW User Data:", JSON.stringify(userData));
+    console.log("RAW Skills Field:", userData.skills);
   } catch (err) {
     console.error("Firestore Fetch Error:", err);
     throw new functions.https.HttpsError('internal', "Failed to fetch user profile.");
   }
 
-  // Step 2: Strict Skill Sanitization
-  let rawSkills = userData.skills || [];
-  if (!Array.isArray(rawSkills)) rawSkills = [];
-  // Filter out empty strings, nulls, and whitespace-only strings
-  const studentSkills = rawSkills
-    .map(s => String(s).trim())
-    .filter(s => s.length > 0);
+  // Step 2: Stricter Skill Validation
+  let studentSkills = [];
+  if (Array.isArray(userData.skills)) {
+    studentSkills = userData.skills
+      .map(s => String(s).trim())
+      .filter(s => s.length > 1); // Filter out single chars or empty strings
+  }
+  console.log("VALIDATED Student Skills:", studentSkills);
 
-  // Step 3: Logical Exit
-  if (studentSkills.length === 0) return { matches: [], message: "Žádné validní dovednosti." };
+  if (studentSkills.length === 0) {
+    console.log("ABORT: No valid skills found.");
+    return { matches: [], message: "Nemáte vyplněné žádné dovednosti. Pro získání doporučení si prosím doplňte profil." };
+  }
 
   // Step 4: Env Validation
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) throw new Error("CRITICAL: GEMINI_API_KEY is not set in environment.");
 
   try {
-    // Step 5: AI Execution with JSON Safety
-    // Fetch companies
+    // Step 3: Company Validation
     const companiesSnapshot = await admin.firestore().collection('users')
       .orderBy('companyIco')
       .get();
 
-    const companies = [];
-    companiesSnapshot.forEach(doc => {
+    const companies = companiesSnapshot.docs.map(doc => {
       const d = doc.data();
-      if (d.companyIco) {
-        companies.push({
-          id: doc.id,
-          name: d.displayName || d.email || "Neznámá firma",
-          lookingFor: d.lookingFor || [], // Array of strings
-          description: d.description || "",
-          email: d.email
-        });
-      }
-    });
+      // Skip empty companies
+      if (!d.companyIco) return null;
+      if (!d.description && (!d.lookingFor || d.lookingFor.length === 0)) return null;
+
+      return {
+        id: doc.id,
+        name: d.displayName || d.email || "Neznámá firma",
+        lookingFor: d.lookingFor || [], // Array of strings
+        description: d.description || "",
+        email: d.email
+      };
+    }).filter(c => c !== null);
 
     if (companies.length === 0) {
-      return { matches: [], message: "Zatím se neregistrovaly žádné firmy." };
+      return { matches: [], message: "Zatím tu nejsou žádné firmy s popisem práce." };
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-pro" });
 
     const prompt = `
-      Jsi expert na HR a párování uchazečů.
+      You are a strict matchmaking engine. use ONLY the provided JSON data. DO NOT invent or assume any skills or requirements not explicitly listed. If a profile is empty, ignore it.
 
       Student má tyto dovednosti: ${studentSkills.join(", ")}.
 
