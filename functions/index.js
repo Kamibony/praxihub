@@ -313,6 +313,7 @@ exports.findMatches = functions.https.onCall(async (data, context) => {
   }
 
   const studentId = context.auth.uid;
+  console.log("Starting matchmaking for:", studentId);
 
   try {
     const userDoc = await admin.firestore().collection('users').doc(studentId).get();
@@ -322,12 +323,19 @@ exports.findMatches = functions.https.onCall(async (data, context) => {
     }
 
     const userData = userDoc.data();
-    const studentSkills = userData.skills || []; // Array of strings
+    let studentSkills = userData.skills;
+    // Force to array if it's not one (handles null, string, undefined)
+    if (!Array.isArray(studentSkills)) {
+      console.warn("User skills is not an array:", studentSkills);
+      studentSkills = [];
+    }
+    console.log("Parsed skills length:", studentSkills.length);
 
     if (!studentSkills.length) {
        return { matches: [], message: "Zatím nemáte vyplněné dovednosti. Přidejte je na svém profilu." };
     }
 
+    console.log("Fetching companies...");
     // Fetch companies (users with companyIco)
     // Using orderBy filter to get docs where companyIco exists
     const companiesSnapshot = await admin.firestore().collection('users')
@@ -352,10 +360,16 @@ exports.findMatches = functions.https.onCall(async (data, context) => {
       return { matches: [], message: "Zatím se neregistrovaly žádné firmy." };
     }
 
+    if (!process.env.GEMINI_API_KEY) {
+       console.error("GEMINI_API_KEY is missing in environment variables!");
+       throw new functions.https.HttpsError('internal', 'Server configuration error.');
+    }
+
     // Prepare prompt for Gemini
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
 
+    console.log("Calling Gemini...");
     const prompt = `
       Jsi expert na HR a párování uchazečů.
 
