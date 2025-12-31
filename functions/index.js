@@ -315,29 +315,37 @@ exports.findMatches = functions.https.onCall(async (data, context) => {
   const studentId = context.auth.uid;
   console.log("Starting matchmaking for:", studentId);
 
+  // Step 1: Auth & Data Fetch
+  let userData;
   try {
     const userDoc = await admin.firestore().collection('users').doc(studentId).get();
-
     if (!userDoc.exists) {
        return { matches: [], message: "Profil uživatele nebyl nalezen. Kontaktujte podporu." };
     }
+    userData = userDoc.data();
+  } catch (err) {
+    console.error("Firestore Fetch Error:", err);
+    throw new functions.https.HttpsError('internal', "Failed to fetch user profile.");
+  }
 
-    const userData = userDoc.data();
-    let studentSkills = userData.skills;
-    // Force to array if it's not one (handles null, string, undefined)
-    if (!Array.isArray(studentSkills)) {
-      console.warn("User skills is not an array:", studentSkills);
-      studentSkills = [];
-    }
-    console.log("Parsed skills length:", studentSkills.length);
+  // Step 2: Strict Skill Sanitization
+  let rawSkills = userData.skills || [];
+  if (!Array.isArray(rawSkills)) rawSkills = [];
+  // Filter out empty strings, nulls, and whitespace-only strings
+  const studentSkills = rawSkills
+    .map(s => String(s).trim())
+    .filter(s => s.length > 0);
 
-    if (!studentSkills.length) {
-       return { matches: [], message: "Zatím nemáte vyplněné dovednosti. Přidejte je na svém profilu." };
-    }
+  // Step 3: Logical Exit
+  if (studentSkills.length === 0) return { matches: [], message: "Žádné validní dovednosti." };
 
-    console.log("Fetching companies...");
-    // Fetch companies (users with companyIco)
-    // Using orderBy filter to get docs where companyIco exists
+  // Step 4: Env Validation
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) throw new Error("CRITICAL: GEMINI_API_KEY is not set in environment.");
+
+  try {
+    // Step 5: AI Execution with JSON Safety
+    // Fetch companies
     const companiesSnapshot = await admin.firestore().collection('users')
       .orderBy('companyIco')
       .get();
@@ -360,16 +368,9 @@ exports.findMatches = functions.https.onCall(async (data, context) => {
       return { matches: [], message: "Zatím se neregistrovaly žádné firmy." };
     }
 
-    if (!process.env.GEMINI_API_KEY) {
-       console.error("GEMINI_API_KEY is missing in environment variables!");
-       throw new functions.https.HttpsError('internal', 'Server configuration error.');
-    }
-
-    // Prepare prompt for Gemini
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
 
-    console.log("Calling Gemini...");
     const prompt = `
       Jsi expert na HR a párování uchazečů.
 
@@ -394,7 +395,14 @@ exports.findMatches = functions.https.onCall(async (data, context) => {
 
     const result = await model.generateContent(prompt);
     const text = result.response.text().replace(/```json/g, "").replace(/```/g, "").trim();
-    const matches = JSON.parse(text);
+
+    let matches;
+    try {
+        matches = JSON.parse(text);
+    } catch (parseError) {
+        console.error("AI JSON Parse Error. Raw text:", text);
+        throw new Error("AI returned invalid JSON");
+    }
 
     // Merge back with company details
     const detailedMatches = matches.map(m => {
@@ -410,8 +418,8 @@ exports.findMatches = functions.https.onCall(async (data, context) => {
     return { matches: detailedMatches };
 
   } catch (error) {
-    console.error("Matchmaking error:", error);
-    // Even if AI fails, return empty list or error
-    throw new functions.https.HttpsError('internal', 'Nepodařilo se provést AI párování.');
+    // Step 6: Transparent Error Handling
+    console.error("Matchmaking Critical Fail:", error);
+    throw new functions.https.HttpsError('internal', `System Error: ${error.message}`);
   }
 });
