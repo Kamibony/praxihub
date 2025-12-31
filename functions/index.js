@@ -209,7 +209,7 @@ exports.createContractPDF = functions.runWith({ memory: '512MB', timeoutSeconds:
       console.log("Dependencies loaded.");
 
       // Fetch font supporting Latin-2 (Czech)
-      const fontUrl = 'https://github.com/google/fonts/raw/main/apache/roboto/Roboto-Regular.ttf';
+      const fontUrl = 'https://cdnjs.cloudflare.com/ajax/libs/roboto-fontface/0.10.0/fonts/roboto/Roboto-Regular.ttf';
       const fontResponse = await axios.get(fontUrl, { responseType: 'arraybuffer' });
 
       step = "PDF Creation";
