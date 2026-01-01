@@ -14,6 +14,14 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
+// Health Check: Verify if the config is loaded correctly
+if (!firebaseConfig.apiKey) {
+  console.error("🚨 CRITICAL ERROR: Firebase Config is missing! Check your .env.local file.");
+  console.error("Current Config State:", JSON.stringify(firebaseConfig, null, 2));
+} else {
+  console.log("✅ Firebase Config loaded successfully.");
+}
+
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 
 export const auth = getAuth(app);
