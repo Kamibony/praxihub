@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { db, auth } from "../../../lib/firebase";
+import { db, auth, functions } from "../../../lib/firebase";
+import { httpsCallable } from "firebase/functions";
 import { collection, query, orderBy, onSnapshot, doc, updateDoc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import { useRouter } from "next/navigation";
@@ -101,9 +102,8 @@ export default function CoordinatorDashboard() {
   const handleApproveOrg = async (id: string) => {
     if (!confirm("Opravdu chcete schválit tuto firmu?")) return;
     try {
-        await updateDoc(doc(db, "internships", id), {
-            status: 'ORG_APPROVED'
-        });
+        const transitionInternshipState = httpsCallable(functions, 'transitionInternshipState');
+        await transitionInternshipState({ internshipId: id, newState: 'ORG_APPROVED' });
     } catch (e) {
         console.error("Error approving org:", e);
         alert("Chyba při schvalování.");
@@ -114,10 +114,9 @@ export default function CoordinatorDashboard() {
     const reason = prompt("Zadejte důvod zamítnutí:");
     if (reason === null) return; // Cancelled
     try {
-        await updateDoc(doc(db, "internships", id), {
-            status: 'REJECTED',
-            ai_error_message: reason
-        });
+        await updateDoc(doc(db, "internships", id), { ai_error_message: reason });
+        const transitionInternshipState = httpsCallable(functions, 'transitionInternshipState');
+        await transitionInternshipState({ internshipId: id, newState: 'REJECTED' });
     } catch (e) {
         console.error("Error rejecting org:", e);
         alert("Chyba při zamítání.");

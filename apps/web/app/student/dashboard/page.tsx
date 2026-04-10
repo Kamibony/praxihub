@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { auth, db, storage } from "../../../lib/firebase";
+import { db, auth, functions, storage } from "../../../lib/firebase";
+import { httpsCallable } from "firebase/functions";
 import { onAuthStateChanged } from "firebase/auth";
 import { collection, query, where, onSnapshot, addDoc, orderBy, limit, doc, updateDoc, getDoc, setDoc } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
@@ -152,11 +153,9 @@ export default function StudentDashboard() {
       // Save internship with student name for easier display in Coordinator Dashboard
       if (internship && internship.id) {
         const docRef = doc(db, "internships", internship.id);
-        await updateDoc(docRef, {
-            contract_url: downloadURL,
-            fileName: file.name,
-            status: "ANALYZING"
-        });
+        await updateDoc(docRef, { contract_url: downloadURL, fileName: file.name });
+        const transitionInternshipState = httpsCallable(functions, 'transitionInternshipState');
+        await transitionInternshipState({ internshipId: internship.id, newState: "ANALYZING" });
       } else {
          // Fallback - should not happen in this flow if strictly following APPROVED path
          await addDoc(collection(db, "internships"), {
@@ -182,12 +181,9 @@ export default function StudentDashboard() {
     if (!internship) return;
     try {
       const docRef = doc(db, "internships", internship.id);
-      await updateDoc(docRef, {
-        ...reviewData,
-        status: "APPROVED",
-        is_verified: true,
-        approvedAt: new Date().toISOString() 
-      });
+      await updateDoc(docRef, { ...reviewData, is_verified: true, approvedAt: new Date().toISOString() });
+      const transitionInternshipState = httpsCallable(functions, 'transitionInternshipState');
+      await transitionInternshipState({ internshipId: internship.id, newState: "APPROVED" });
       alert("Údaje potvrzeny!");
     } catch (error) {
       console.error("Error confirming data:", error);

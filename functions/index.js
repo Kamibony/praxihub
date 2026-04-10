@@ -430,3 +430,88 @@ exports.findMatches = functions.https.onCall(async (data, context) => {
     throw new functions.https.HttpsError('internal', `System Error: ${error.message}`);
   }
 });
+
+
+// 6. STATE MACHINE TRANSITION
+exports.transitionInternshipState = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'Must be logged in.');
+  }
+
+  // Define valid states to replace legacy string flags
+  const validTransitions = {
+    'DRAFT': ['PENDING_INSTITUTION'],
+    'PENDING_INSTITUTION': ['CONTRACT_LOCKED', 'DRAFT'], // DRAFT allowed for rejection/corrections
+    'CONTRACT_LOCKED': ['IN_PROGRESS', 'DRAFT'],
+    'IN_PROGRESS': ['EVALUATION'],
+    'EVALUATION': ['CLOSED']
+  };
+
+  const { internshipId, newState } = data;
+
+  if (!internshipId || !newState) {
+    throw new functions.https.HttpsError('invalid-argument', 'Missing internshipId or newState.');
+  }
+
+  const db = admin.firestore();
+  const internshipRef = db.collection('internships').doc(internshipId);
+
+  try {
+    const result = await db.runTransaction(async (transaction) => {
+      const doc = await transaction.get(internshipRef);
+      if (!doc.exists) {
+        throw new functions.https.HttpsError('not-found', 'Internship not found.');
+      }
+
+      const currentData = doc.data();
+
+      // Temporarily bypass strict state machine if the current status is a legacy flag,
+      // mapping them roughly to the new states to avoid breaking everything at once.
+      // E.g. 'PENDING_ORG_APPROVAL' -> 'PENDING_INSTITUTION'
+      //      'ORG_APPROVED' -> 'CONTRACT_LOCKED'
+      //      'ANALYZING' / 'NEEDS_REVIEW' / 'APPROVED' -> 'IN_PROGRESS'
+
+      // However, for the first PR we just want to ensure the backend validates the exact requested state transition if the user is using the new flow.
+      // But since we are incrementally rolling this out, we'll allow *any* transition IF the new state is part of the 6-step state machine
+      // to act as a bridge.
+
+      const currentState = currentData.status || 'DRAFT';
+
+      const newValidStates = ['DRAFT', 'PENDING_INSTITUTION', 'CONTRACT_LOCKED', 'IN_PROGRESS', 'EVALUATION', 'CLOSED'];
+
+      // If newState is NOT part of the new 6-step flow AND NOT a legacy state we still need, block it.
+      // We will temporarily allow legacy states for backward compatibility while we refactor the frontend in the next phase.
+      const allowedLegacyStates = ['PENDING_ORG_APPROVAL', 'ORG_APPROVED', 'ANALYZING', 'NEEDS_REVIEW', 'APPROVED', 'REJECTED'];
+
+      if (!newValidStates.includes(newState) && !allowedLegacyStates.includes(newState)) {
+          throw new functions.https.HttpsError(
+            'failed-precondition',
+            `Invalid target state: ${newState}`
+          );
+      }
+
+      // Add guardrails here for the new states
+      if (newState === 'CONTRACT_LOCKED') {
+          // ensure required fields exist
+          if (!currentData.companyId) {
+              throw new functions.https.HttpsError('failed-precondition', 'Missing required fields for CONTRACT_LOCKED.');
+          }
+      }
+
+      transaction.update(internshipRef, {
+        status: newState,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      });
+
+      return { success: true, oldState: currentState, newState };
+    });
+
+    return result;
+  } catch (error) {
+    console.error("Transition Error:", error);
+    if (error instanceof functions.https.HttpsError) {
+        throw error;
+    }
+    throw new functions.https.HttpsError('internal', 'Error during state transition.');
+  }
+});
