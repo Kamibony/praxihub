@@ -1,10 +1,32 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Toto pravidlo povolí čítanie a zápis pre všetkých prihlásených používateľov.
-    // Pre produkciu neskôr môžeme pravidlá sprísniť (napr. iba vlastné dokumenty).
+
+    // Allow user to update their own profile completely
+    match /users/{userId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    match /internships/{internshipId} {
+      allow read: if request.auth != null;
+
+      // Allow creation
+      allow create: if request.auth != null;
+
+      // Restrict update: do not allow the client to update the 'status' field directly.
+      // Any attempt to modify 'status' via client-side sdk updateDoc() will be rejected.
+      // (This forces them to use the callable transitionInternshipState function)
+      allow update: if request.auth != null
+                    && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['status']));
+
+      allow delete: if request.auth != null && resource.data.studentId == request.auth.uid;
+    }
+
+    // Default fallback (block writes unless explicitly allowed above)
     match /{document=**} {
-      allow read, write: if request.auth != null;
+      allow read: if request.auth != null;
+      allow write: if false;
     }
   }
 }

@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from "next/navigation";
-import { auth, db, storage } from "../../../lib/firebase";
+import { db, auth, functions, storage } from "../../../lib/firebase";
+import { httpsCallable } from "firebase/functions";
 import { onAuthStateChanged } from "firebase/auth";
 import { collection, query, where, getDocs, orderBy, limit, doc, updateDoc, addDoc } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
@@ -248,9 +249,10 @@ export default function GenerateContractPage() {
             fileName: fileName,
             start_date: formData.startDate,
             end_date: formData.endDate,
-            status: "NEEDS_REVIEW",
             generated: true
         });
+        const transitionInternshipState = httpsCallable(functions, 'transitionInternshipState');
+        await transitionInternshipState({ internshipId: internshipId, newState: "NEEDS_REVIEW" });
       } else {
          // Create new if not found
          await addDoc(collection(db, "internships"), {
