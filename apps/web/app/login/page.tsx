@@ -1,50 +1,68 @@
 "use client";
 
-import { useState } from "react";
-import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { useState, useEffect } from "react";
+import { sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import { auth } from "../../lib/firebase";
 import Link from "next/link";
-import { Chrome } from "lucide-react";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+
+  useEffect(() => {
+    // Handle the Magic Link callback if the user clicked the link in their email
+    if (isSignInWithEmailLink(auth, window.location.href)) {
+      setLoading(true);
+      let emailForSignIn = window.localStorage.getItem('emailForSignIn');
+      if (!emailForSignIn) {
+        // User opened the link on a different device. Ask for email.
+        emailForSignIn = window.prompt('Zadejte prosím svůj e-mail pro potvrzení přihlášení.');
+      }
+
+      if (emailForSignIn) {
+        signInWithEmailLink(auth, emailForSignIn, window.location.href)
+          .then((result) => {
+            window.localStorage.removeItem('emailForSignIn');
+            router.push('/dashboard');
+          })
+          .catch((error) => {
+            console.error(error);
+            setError('Přihlášení selhalo nebo platnost odkazu vypršela.');
+            setLoading(false);
+          });
+      } else {
+        setLoading(false);
+      }
+    }
+  }, [router]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
+    setMessage("");
+
+    const actionCodeSettings = {
+      // URL you want to redirect back to. The domain (www.example.com) for this
+      // URL must be in the authorized domains list in the Firebase Console.
+      url: window.location.origin + '/login',
+      // This must be true.
+      handleCodeInApp: true,
+    };
 
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      router.push("/");
+      await sendSignInLinkToEmail(auth, email, actionCodeSettings);
+      window.localStorage.setItem('emailForSignIn', email);
+      setMessage("Odkaz pro přihlášení byl odeslán na váš e-mail.");
     } catch (err: any) {
       console.error(err);
-      if (err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found') {
-        setError("Neplatný e-mail nebo heslo.");
-      } else {
-        setError(err.message || "Přihlášení se nezdařilo.");
-      }
+      setError(err.message || "Nepodařilo se odeslat e-mail.");
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleGoogleLogin = async () => {
-    // UI only as requested, but implemented for completeness if configured
-    setLoading(true);
-    const provider = new GoogleAuthProvider();
-    try {
-        await signInWithPopup(auth, provider);
-        router.push("/");
-    } catch (error: any) {
-        console.error(error);
-        setError("Přihlášení přes Google se nezdařilo (funkce je ve vývoji).");
-        setLoading(false);
     }
   };
 
@@ -66,7 +84,6 @@ export default function LoginPage() {
              PraxiHub zjednodušuje správu stáží pro studenty, firmy i univerzity.
            </p>
         </div>
-        {/* Decorative Circles */}
         <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-blue-500 rounded-full mix-blend-screen filter blur-3xl opacity-30"></div>
         <div className="absolute -top-24 -right-24 w-64 h-64 bg-indigo-500 rounded-full mix-blend-screen filter blur-3xl opacity-30"></div>
       </div>
@@ -81,8 +98,8 @@ export default function LoginPage() {
                </div>
                <span><span className="text-blue-600">Praxi</span>Hub</span>
             </Link>
-            <h2 className="text-2xl font-bold text-slate-800">Vítejte zpět</h2>
-            <p className="text-slate-500 mt-2">Zadejte své údaje pro přihlášení</p>
+            <h2 className="text-2xl font-bold text-slate-800">Přihlášení bez hesla</h2>
+            <p className="text-slate-500 mt-2">Zadejte svůj e-mail a my vám pošleme odkaz pro přihlášení (Magic Link).</p>
           </div>
 
           {error && (
@@ -92,74 +109,39 @@ export default function LoginPage() {
             </div>
           )}
 
-          <form onSubmit={handleLogin} className="space-y-5">
-            <div>
-              <label htmlFor="email" className="block text-sm font-semibold text-slate-700 mb-2">
-                E-mail
-              </label>
-              <input
-                type="email"
-                id="email"
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition text-slate-900"
-                placeholder="jmeno@priklad.cz"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
+          {message && (
+            <div className="p-4 text-sm text-green-700 bg-green-50 border border-green-100 rounded-xl flex items-center gap-2" role="alert">
+              <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              {message}
             </div>
-            <div>
-              <div className="flex justify-between items-center mb-2">
-                <label htmlFor="password" className="block text-sm font-semibold text-slate-700">
-                  Heslo
+          )}
+
+          {!message && (
+            <form onSubmit={handleLogin} className="space-y-5">
+              <div>
+                <label htmlFor="email" className="block text-sm font-semibold text-slate-700 mb-2">
+                  E-mail
                 </label>
-                <Link href="#" className="text-sm text-blue-600 hover:text-blue-700 font-medium">
-                  Zapomněli jste heslo?
-                </Link>
+                <input
+                  type="email"
+                  id="email"
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition text-slate-900"
+                  placeholder="jmeno@priklad.cz"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
               </div>
-              <input
-                type="password"
-                id="password"
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition text-slate-900"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-3.5 px-4 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-500/20 disabled:opacity-70 disabled:cursor-not-allowed transition shadow-lg shadow-blue-600/20"
-            >
-              {loading ? "Přihlašuji..." : "Přihlásit se"}
-            </button>
-          </form>
-
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-slate-200"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white text-slate-500">nebo</span>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={handleGoogleLogin}
-            className="w-full py-3 px-4 bg-white border border-slate-200 text-slate-700 font-semibold rounded-xl hover:bg-slate-50 hover:border-slate-300 focus:outline-none focus:ring-4 focus:ring-slate-200 transition flex items-center justify-center gap-3"
-          >
-             <Chrome size={20} className="text-slate-900" />
-             Přihlásit přes Google
-          </button>
-
-          <p className="text-center text-slate-500 text-sm">
-            Nemáte ještě účet?{" "}
-            <Link href="/signup" className="text-blue-600 font-bold hover:text-blue-700 transition">
-              Zaregistrujte se zde
-            </Link>
-          </p>
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-3.5 px-4 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-500/20 disabled:opacity-70 disabled:cursor-not-allowed transition shadow-lg shadow-blue-600/20"
+              >
+                {loading ? "Zpracovávám..." : "Odeslat přihlašovací odkaz"}
+              </button>
+            </form>
+          )}
         </div>
       </div>
     </div>

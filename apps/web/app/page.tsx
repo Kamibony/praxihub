@@ -28,7 +28,8 @@ export default function LandingPage() {
             else if (role === "coordinator") router.push("/admin/dashboard");
             else setLoading(false); // Neznáma rola, ukážeme web
           } else {
-            setLoading(false); // Dokument chýba, ukážeme web
+            // Používateľ prihlásený ale bez profilu
+            router.push('/onboarding');
           }
         } catch (error) {
           console.error("Chyba pri získavaní role:", error);

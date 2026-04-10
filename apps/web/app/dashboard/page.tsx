@@ -36,8 +36,8 @@ export default function DashboardRouter() {
             router.push('/login');
           }
         } else {
-          // User document not found
-          router.push('/login');
+          // User document not found, need onboarding
+          router.push('/onboarding');
         }
       } catch (error) {
         console.error('Error fetching user role:', error);
@@ -53,7 +53,7 @@ export default function DashboardRouter() {
       <div className="text-center">
         <Loader2 className="mx-auto h-12 w-12 animate-spin text-blue-600" />
         <h2 className="mt-4 text-lg font-semibold text-gray-900">Načítání...</h2>
-        <p className="text-sm text-gray-500">Přesměrovávám na váš dashboard</p>
+        <p className="text-sm text-gray-500">Přesměrovávám...</p>
       </div>
     </div>
   );
