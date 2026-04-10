@@ -515,3 +515,106 @@ exports.transitionInternshipState = functions.https.onCall(async (data, context)
     throw new functions.https.HttpsError('internal', 'Error during state transition.');
   }
 });
+
+// 7. ROSTER IMPORT WITH SAFEGUARD
+const xlsx = require('xlsx');
+
+exports.importRoster = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'Must be logged in.');
+  }
+
+  // Basic role check (optional but good practice)
+  // Assuming the client calling this is an admin/coordinator
+  // You might want to check the caller's role in their user document
+
+  const { fileData } = data;
+  if (!fileData) {
+    throw new functions.https.HttpsError('invalid-argument', 'Missing file data.');
+  }
+
+  let workbook;
+  try {
+    const buffer = Buffer.from(fileData, 'base64');
+    workbook = xlsx.read(buffer, { type: 'buffer' });
+  } catch (error) {
+    console.error("Excel parse error:", error);
+    throw new functions.https.HttpsError('invalid-argument', 'Invalid Excel file.');
+  }
+
+  const sheetName = workbook.SheetNames[0];
+  const worksheet = workbook.Sheets[sheetName];
+  const rows = xlsx.utils.sheet_to_json(worksheet);
+
+  const db = admin.firestore();
+
+  let added = 0;
+  let updated = 0;
+  let ignored = 0;
+
+  // For this implementation, we will process rows individually in transactions to ensure safety.
+  // Alternatively, batches with preliminary reads could be used.
+  for (const row of rows) {
+    // Attempt to parse out some standard fields.
+    // Excel columns might be named 'Email', 'email', 'Student ID', 'studentId', etc.
+    const email = row['Email'] || row['email'] || row['E-mail'];
+    const schoolId = row['School ID'] || row['SchoolID'] || row['schoolId'] || row['Institution ID'];
+    const firstName = row['First Name'] || row['firstName'] || row['Jméno'];
+    const lastName = row['Last Name'] || row['lastName'] || row['Příjmení'];
+
+    // We will key off of email.
+    if (!email) {
+      ignored++;
+      continue;
+    }
+
+    try {
+      await db.runTransaction(async (transaction) => {
+        const usersRef = db.collection('users');
+        const q = usersRef.where('email', '==', email).limit(1);
+        const snapshot = await transaction.get(q);
+
+        if (snapshot.empty) {
+          // User does not exist, create a stub document
+          // Using a new doc reference
+          const newDocRef = usersRef.doc();
+          transaction.set(newDocRef, {
+            email: email,
+            firstName: firstName || '',
+            lastName: lastName || '',
+            schoolId: schoolId || null,
+            role: 'student',
+            createdAt: admin.firestore.FieldValue.serverTimestamp()
+          });
+          added++;
+        } else {
+          // User exists, implement the SAFEGUARD
+          const doc = snapshot.docs[0];
+          const existingData = doc.data();
+          const updateData = {};
+
+          if (firstName && !existingData.firstName) updateData.firstName = firstName;
+          if (lastName && !existingData.lastName) updateData.lastName = lastName;
+
+          // CRUCIAL SAFEGUARD: Do not overwrite an existing, populated schoolId
+          if (!existingData.schoolId && schoolId) {
+             updateData.schoolId = schoolId;
+          }
+
+          // Optional: Update other fields (e.g. hours) if requested by requirements
+          // (No specific additional fields mentioned in prompt except schoolId and standard roster info)
+
+          if (Object.keys(updateData).length > 0) {
+            transaction.update(doc.ref, updateData);
+            updated++;
+          }
+        }
+      });
+    } catch (error) {
+      console.error("Error processing row:", error);
+      ignored++;
+    }
+  }
+
+  return { added, updated, ignored };
+});

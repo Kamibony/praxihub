@@ -8,5 +8,22 @@
   ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
-  }
+  },
+  "description": "",
+  "main": "verify_font.js",
+  "directories": {
+    "test": "tests"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Kamibony/praxihub.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Kamibony/praxihub/issues"
+  },
+  "homepage": "https://github.com/Kamibony/praxihub#readme"
 }
