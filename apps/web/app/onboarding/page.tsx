@@ -119,6 +119,8 @@ export default function OnboardingPage() {
                 <option value="student">Student</option>
                 <option value="company">Firma</option>
                 <option value="coordinator">Koordinátor</option>
+                <option value="mentor">Mentor / Učitel</option>
+                <option value="institution">Instituce</option>
               </select>
               <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-500">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
@@ -128,6 +130,8 @@ export default function OnboardingPage() {
               {role === 'student' && "Jako student můžete žádat o stáže, nahrávat smlouvy a hodnotit praxi."}
               {role === 'company' && "Jako firma můžete přijímat stážisty, spravovat smlouvy a přidávat nabídky."}
               {role === 'coordinator' && "Jako koordinátor máte přehled o všech stážích a schvalujete je."}
+              {role === 'mentor' && "Jako mentor můžete schvalovat odpracované hodiny a hodnotit studenty."}
+              {role === 'institution' && "Jako instituce spravujete své mentory a celkový průběh praxí."}
             </p>
           </div>
 
