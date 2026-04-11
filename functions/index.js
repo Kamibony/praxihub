@@ -1,6 +1,6 @@
 const functions = require('firebase-functions/v1');
 const admin = require("firebase-admin");
-const { GoogleGenerativeAI } = require("@google/generative-ai");
+const { GoogleGenerativeAI, SchemaType } = require("@google/generative-ai");
 const axios = require("axios");
 const cors = require('cors')({origin: true});
 
@@ -617,4 +617,112 @@ exports.importRoster = functions.https.onCall(async (data, context) => {
   }
 
   return { added, updated, ignored };
+});
+
+
+exports.evaluateReflection = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError(
+      "unauthenticated",
+      "Musíte být přihlášeni pro hodnocení reflexe."
+    );
+  }
+
+  const { internshipId, reflectionText } = data;
+
+  if (!internshipId || !reflectionText) {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "Chybí povinné parametry: internshipId a reflectionText."
+    );
+  }
+
+  const db = admin.firestore();
+  const internshipRef = db.collection("internships").doc(internshipId);
+  const internshipDoc = await internshipRef.get();
+
+  if (!internshipDoc.exists) {
+    throw new functions.https.HttpsError(
+      "not-found",
+      "Praxe nebyla nalezena."
+    );
+  }
+
+  const internshipData = internshipDoc.data();
+
+  if (internshipData.studentId !== context.auth.uid) {
+    throw new functions.https.HttpsError(
+      "permission-denied",
+      "Nemáte oprávnění hodnotit tuto praxi."
+    );
+  }
+
+  if (internshipData.status !== "EVALUATION") {
+    throw new functions.https.HttpsError(
+      "failed-precondition",
+      "Praxe není ve stavu hodnocení (EVALUATION)."
+    );
+  }
+
+  try {
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    const model = genAI.getGenerativeModel({
+      model: "gemini-2.5-flash",
+      generationConfig: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: SchemaType.OBJECT,
+          properties: {
+            evaluation: {
+              type: SchemaType.OBJECT,
+              properties: {
+                isPass: {
+                  type: SchemaType.BOOLEAN,
+                  description: "Zda reflexe splňuje metodiku (MŠMT KRAU) pro úspěšné hodnocení."
+                },
+                score: {
+                  type: SchemaType.INTEGER,
+                  description: "Bodové hodnocení od 0 do 100."
+                },
+                feedback: {
+                  type: SchemaType.STRING,
+                  description: "Konkrétní zpětná vazba pro studenta na základě státních metodik."
+                }
+              },
+              required: ["isPass", "score", "feedback"]
+            }
+          },
+          required: ["evaluation"]
+        }
+      }
+    });
+
+    const systemPrompt = `Jste hodnotitel studentských reflexí odborné praxe.
+Hodnoťte text přesně podle státních metodik MŠMT KRAU.
+Výstup musí být striktně ve formátu JSON, obsahující objekt 'evaluation' s 'isPass' (boolean), 'score' (0-100) a 'feedback' (string).`;
+
+    const result = await model.generateContent(`${systemPrompt}\n\nText reflexe:\n${reflectionText}`);
+    const responseText = result.response.text();
+    const evaluationData = JSON.parse(responseText);
+
+    const evaluationResult = evaluationData.evaluation;
+
+    const updateData = {
+      evaluationResult: evaluationResult
+    };
+
+    if (evaluationResult.isPass) {
+      updateData.status = "CLOSED";
+    }
+
+    await internshipRef.update(updateData);
+
+    return evaluationData;
+  } catch (error) {
+    console.error("Chyba při hodnocení reflexe:", error);
+    throw new functions.https.HttpsError(
+      "internal",
+      "Nastala chyba při zpracování s AI: " + error.message
+    );
+  }
 });
