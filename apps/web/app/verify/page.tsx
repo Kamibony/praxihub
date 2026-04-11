@@ -1,14 +1,16 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
-import { db } from '../../../lib/firebase';
+import { useSearchParams } from 'next/navigation';
+import { db } from '../../lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import { CheckCircle, XCircle } from 'lucide-react';
 
-export default function VerifyCertificatePage() {
-    const params = useParams();
-    const snapshotId = params.snapshotId as string;
+import { Suspense } from 'react';
+
+function VerifyCertificateContent() {
+    const searchParams = useSearchParams();
+    const snapshotId = searchParams.get('id');
 
     const [loading, setLoading] = useState(true);
     const [snapshot, setSnapshot] = useState<any>(null);
@@ -16,7 +18,11 @@ export default function VerifyCertificatePage() {
 
     useEffect(() => {
         const fetchSnapshot = async () => {
-            if (!snapshotId) return;
+            if (!snapshotId) {
+                setError('Certifikát nenalezen. Záznam neexistuje nebo je neplatný.');
+                setLoading(false);
+                return;
+            }
             try {
                 const docRef = doc(db, 'archived_internships', snapshotId);
                 const docSnap = await getDoc(docRef);
@@ -123,5 +129,17 @@ export default function VerifyCertificatePage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function VerifyCertificatePage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+            </div>
+        }>
+            <VerifyCertificateContent />
+        </Suspense>
     );
 }

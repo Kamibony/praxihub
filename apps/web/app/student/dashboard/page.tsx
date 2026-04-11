@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { db, auth, functions, storage } from "../../../lib/firebase";
 import { httpsCallable } from "firebase/functions";
 import { onAuthStateChanged } from "firebase/auth";
@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import StarRating from "@/components/StarRating";
 import Chatbot from "@/components/Chatbot";
+import { Mic, MicOff } from 'lucide-react';
 
 export default function StudentDashboard() {
   const [user, setUser] = useState<any>(null);
@@ -45,6 +46,10 @@ export default function StudentDashboard() {
   // State for AI Evaluation
   const [reflectionText, setReflectionText] = useState("");
   const [evaluating, setEvaluating] = useState(false);
+
+  // State for Voice Dictation
+  const [isRecording, setIsRecording] = useState(false);
+  const recognitionRef = useRef<any>(null);
 
   const router = useRouter();
 
@@ -261,6 +266,62 @@ export default function StudentDashboard() {
     }
   };
 
+  // Web Speech API Logic
+  useEffect(() => {
+    if (typeof window !== 'undefined' && ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)) {
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      recognitionRef.current = new SpeechRecognition();
+      recognitionRef.current.continuous = true;
+      recognitionRef.current.interimResults = true;
+      recognitionRef.current.lang = 'cs-CZ';
+
+      recognitionRef.current.onresult = (event: any) => {
+        let finalTranscript = '';
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          if (event.results[i].isFinal) {
+            finalTranscript += event.results[i][0].transcript;
+          }
+        }
+        if (finalTranscript) {
+          setReflectionText((prev) => prev + (prev.endsWith(' ') || prev === '' ? '' : ' ') + finalTranscript);
+        }
+      };
+
+      recognitionRef.current.onerror = (event: any) => {
+        console.error("Speech recognition error", event.error);
+        setIsRecording(false);
+      };
+
+      recognitionRef.current.onend = () => {
+        setIsRecording(false);
+      };
+    }
+
+    return () => {
+      if (recognitionRef.current) {
+         recognitionRef.current.stop();
+      }
+    };
+  }, []);
+
+  const toggleRecording = () => {
+    if (isRecording) {
+      recognitionRef.current?.stop();
+      setIsRecording(false);
+    } else {
+      if (!recognitionRef.current) {
+        alert("Váš prohlížeč nepodporuje rozpoznávání řeči.");
+        return;
+      }
+      try {
+        recognitionRef.current.start();
+        setIsRecording(true);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  };
+
   // Helper funkcia pre formátovanie dátumu
   const formatDateCZ = (dateString: string) => {
     if (!dateString) return "-";
@@ -419,20 +480,20 @@ export default function StudentDashboard() {
       )}
 
       <div className="max-w-5xl mx-auto">
-        <header className="mb-8 flex justify-between items-center border-b border-gray-200 pb-4">
+        <header className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center border-b border-gray-200 pb-4 gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Můj přehled praxe</h1>
-            <p className="text-gray-600 mt-1">Vítej, {user?.displayName || user?.email}</p>
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Můj přehled praxe</h1>
+            <p className="text-gray-600 mt-1 text-sm md:text-base">Vítej, {user?.displayName || user?.email}</p>
           </div>
-          <div className="flex gap-3 items-center">
+          <div className="flex flex-col sm:flex-row gap-3 items-stretch w-full md:w-auto">
             <Link
               href="/student/generate"
-              className="text-blue-600 border border-blue-200 bg-white px-4 py-2 rounded-lg font-medium hover:bg-blue-50 transition inline-block text-center"
+              className="text-blue-600 border border-blue-200 bg-white px-4 py-3 md:py-2 rounded-lg font-medium hover:bg-blue-50 transition block text-center"
             >
                 + Nová smlouva / Opravit
             </Link>
 
-            <button onClick={() => auth.signOut()} className="text-sm px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 transition">Odhlásit se</button>
+            <button onClick={() => auth.signOut()} className="text-sm px-4 py-3 md:py-2 border border-gray-300 rounded-lg hover:bg-gray-100 transition">Odhlásit se</button>
           </div>
         </header>
 
@@ -669,17 +730,26 @@ export default function StudentDashboard() {
                                         </div>
                                     )}
 
-                                    <textarea
-                                        value={reflectionText}
-                                        onChange={(e) => setReflectionText(e.target.value)}
-                                        rows={6}
-                                        className="w-full p-3 border border-indigo-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm mb-4"
-                                        placeholder="Zde napište svou reflexi..."
-                                    />
+                                    <div className="relative mb-4">
+                                        <textarea
+                                            value={reflectionText}
+                                            onChange={(e) => setReflectionText(e.target.value)}
+                                            rows={6}
+                                            className="w-full p-3 pr-12 border border-indigo-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
+                                            placeholder="Zde napište svou reflexi..."
+                                        />
+                                        <button
+                                            onClick={toggleRecording}
+                                            className={`absolute bottom-3 right-3 p-2 rounded-full transition-colors ${isRecording ? 'bg-red-100 text-red-600 animate-pulse' : 'bg-indigo-100 text-indigo-600 hover:bg-indigo-200'}`}
+                                            title="Diktovat hlasem"
+                                        >
+                                            {isRecording ? <MicOff size={20} /> : <Mic size={20} />}
+                                        </button>
+                                    </div>
                                     <button
                                         onClick={handleEvaluateReflection}
                                         disabled={evaluating || reflectionText.trim().length === 0}
-                                        className="px-6 py-2 bg-indigo-600 text-white rounded-lg font-bold shadow-sm hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                                        className="w-full sm:w-auto px-6 py-3 bg-indigo-600 text-white rounded-lg font-bold shadow-sm hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
                                     >
                                         {evaluating ? 'Hodnocení...' : 'Odeslat k hodnocení AI'}
                                     </button>

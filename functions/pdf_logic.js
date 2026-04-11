@@ -37,7 +37,7 @@ async function createCertificatePdf(snapshotData, snapshotId) {
     page.drawText(dateText, { x: 50, y: height - 300, size: 12, font: customFont });
     page.drawText(`ID záznamu: ${snapshotId}`, { x: 50, y: height - 320, size: 10, font: customFont });
 
-    const qrCodeDataUrl = await QRCode.toDataURL(`https://praxihub.cz/verify/${snapshotId}`);
+    const qrCodeDataUrl = await QRCode.toDataURL(`https://praxihub-app.web.app/verify?id=${snapshotId}`);
     const qrImage = await pdfDoc.embedPng(qrCodeDataUrl);
 
     page.drawImage(qrImage, {
