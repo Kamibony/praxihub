@@ -7,7 +7,9 @@ import { collection, query, orderBy, onSnapshot, doc, updateDoc } from "firebase
 import { onAuthStateChanged } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import Chatbot from "@/components/Chatbot";
-import { Download, Upload } from 'lucide-react';
+import { Download, Upload, FileText, Trash2 } from 'lucide-react';
+import { ref, uploadBytes, listAll, getDownloadURL, deleteObject } from "firebase/storage";
+import { storage } from "../../../lib/firebase";
 
 // Define filter type
 type FilterStatus = 'ALL' | 'PENDING_ORG_APPROVAL' | 'APPROVED' | 'NEEDS_REVIEW' | 'ANALYZING';
@@ -19,6 +21,15 @@ export default function CoordinatorDashboard() {
   const [selectedInternship, setSelectedInternship] = useState<any>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadResult, setUploadResult] = useState<{success?: boolean, message?: string} | null>(null);
+
+  // View mode state
+  const [viewMode, setViewMode] = useState<'INTERNSHIPS' | 'DOCUMENTS'>('INTERNSHIPS');
+
+  // Global Documents state
+  const [globalDocs, setGlobalDocs] = useState<{name: string, url: string, path: string}[]>([]);
+  const [loadingDocs, setLoadingDocs] = useState(false);
+  const [uploadingDoc, setUploadingDoc] = useState(false);
+
   const router = useRouter();
 
   // OPRAVA: Bezpečný useEffect s cleanup logikou
@@ -55,6 +66,66 @@ export default function CoordinatorDashboard() {
       if (unsubscribeFirestore) unsubscribeFirestore();
     };
   }, [router]);
+
+  // Load Global Documents
+  useEffect(() => {
+    if (viewMode === 'DOCUMENTS') {
+      fetchGlobalDocs();
+    }
+  }, [viewMode]);
+
+  const fetchGlobalDocs = async () => {
+    setLoadingDocs(true);
+    try {
+      const listRef = ref(storage, 'global_documents');
+      const res = await listAll(listRef);
+      const docs = await Promise.all(res.items.map(async (itemRef) => {
+        const url = await getDownloadURL(itemRef);
+        return {
+          name: itemRef.name,
+          url,
+          path: itemRef.fullPath
+        };
+      }));
+      setGlobalDocs(docs);
+    } catch (error) {
+      console.error("Error fetching global docs:", error);
+    } finally {
+      setLoadingDocs(false);
+    }
+  };
+
+  const handleGlobalDocUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingDoc(true);
+    try {
+      const storageRef = ref(storage, `global_documents/${file.name}`);
+      await uploadBytes(storageRef, file);
+      alert("Dokument úspěšně nahrán.");
+      fetchGlobalDocs();
+    } catch (error) {
+      console.error("Upload failed", error);
+      alert("Chyba při nahrávání dokumentu.");
+    } finally {
+      setUploadingDoc(false);
+      e.target.value = '';
+    }
+  };
+
+  const handleGlobalDocDelete = async (path: string) => {
+    if (!confirm("Opravdu chcete smazat tento dokument?")) return;
+    try {
+      const docRef = ref(storage, path);
+      await deleteObject(docRef);
+      alert("Dokument byl smazán.");
+      fetchGlobalDocs();
+    } catch (error) {
+      console.error("Delete failed", error);
+      alert("Chyba při mazání dokumentu.");
+    }
+  };
 
   const getCompanyAverageRating = (ico: string) => {
     if (!ico) return null;
@@ -200,16 +271,16 @@ export default function CoordinatorDashboard() {
   if (loading) return <div className="p-8 text-center text-gray-500">Načítám data...</div>;
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8 font-sans">
+    <div className="min-h-screen bg-gray-50 p-4 md:p-8 font-sans">
       <Chatbot initialMessage={chatbotMessage} />
       <div className="max-w-7xl mx-auto">
-        <header className="mb-6 flex justify-between items-center">
+        <header className="mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Centrální přehled praxí</h1>
-            <p className="text-gray-600 mt-2">Manažment a monitoring všech smluv</p>
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Centrální přehled praxí</h1>
+            <p className="text-gray-600 mt-2 text-sm md:text-base">Manažment a monitoring všech smluv a dokumentů</p>
           </div>
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-gray-500">Přihlášen jako: Koordinátor</span>
+          <div className="flex flex-wrap items-center gap-2 md:gap-4 w-full md:w-auto">
+            <span className="text-sm text-gray-500 hidden md:inline">Přihlášen jako: Koordinátor</span>
 
             <label className={`flex items-center gap-2 text-sm px-4 py-2 border rounded transition-colors cursor-pointer ${uploading ? 'bg-gray-100 text-gray-400 border-gray-200' : 'bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100'}`}>
               <Upload size={16} />
@@ -230,11 +301,104 @@ export default function CoordinatorDashboard() {
               <Download size={16} />
               Exportovat CSV
             </button>
-            <button onClick={() => auth.signOut()} className="text-sm px-4 py-2 bg-white border border-gray-300 rounded hover:bg-gray-50 text-gray-700 transition-colors">Odhlásit</button>
+            <button onClick={() => auth.signOut()} className="text-sm px-4 py-3 md:py-2 bg-white border border-gray-300 rounded-lg md:rounded hover:bg-gray-50 text-gray-700 transition-colors w-full md:w-auto">Odhlásit</button>
           </div>
         </header>
 
-        {uploadResult && (
+        {/* Tab Navigation */}
+        <div className="flex gap-2 mb-6 border-b border-gray-200">
+          <button
+            onClick={() => setViewMode('INTERNSHIPS')}
+            className={`py-3 px-6 text-sm font-medium border-b-2 transition-colors ${viewMode === 'INTERNSHIPS' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
+          >
+            Přehled praxí
+          </button>
+          <button
+            onClick={() => setViewMode('DOCUMENTS')}
+            className={`py-3 px-6 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${viewMode === 'DOCUMENTS' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
+          >
+            <FileText size={16} />
+            Globální Dokumenty
+          </button>
+        </div>
+
+        {viewMode === 'DOCUMENTS' ? (
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">Správa Globálních Dokumentů</h2>
+                <p className="text-gray-500 text-sm mt-1">Zde můžete nahrát šablony, KRAU metodiky a další veřejné soubory pro studenty.</p>
+              </div>
+              <label className={`flex items-center gap-2 text-sm px-4 py-3 md:py-2 border rounded-lg cursor-pointer transition-colors w-full md:w-auto justify-center ${uploadingDoc ? 'bg-gray-100 text-gray-400 border-gray-200' : 'bg-blue-600 border-blue-700 text-white hover:bg-blue-700'}`}>
+                <Upload size={16} />
+                {uploadingDoc ? 'Nahrávám...' : 'Nahrát dokument'}
+                <input
+                  type="file"
+                  className="hidden"
+                  onChange={handleGlobalDocUpload}
+                  disabled={uploadingDoc}
+                />
+              </label>
+            </div>
+
+            {loadingDocs ? (
+              <div className="text-center py-8 text-gray-500">Načítám dokumenty...</div>
+            ) : globalDocs.length === 0 ? (
+              <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
+                <FileText className="mx-auto h-12 w-12 text-gray-400 mb-3" />
+                <h3 className="text-sm font-medium text-gray-900">Žádné dokumenty</h3>
+                <p className="mt-1 text-sm text-gray-500">Zatím nebyly nahrány žádné globální dokumenty.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {globalDocs.map((doc, idx) => (
+                  <div key={idx} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-sm transition-all bg-gray-50">
+                    <div className="flex items-center gap-3 overflow-hidden">
+                      <div className="p-2 bg-blue-100 text-blue-600 rounded-lg shrink-0">
+                        <FileText size={20} />
+                      </div>
+                      <a href={doc.url} target="_blank" rel="noreferrer" className="text-sm font-medium text-gray-900 truncate hover:text-blue-600 hover:underline block" title={doc.name}>
+                        {doc.name}
+                      </a>
+                    </div>
+                    <button
+                      onClick={() => handleGlobalDocDelete(doc.path)}
+                      className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors shrink-0"
+                      title="Smazat dokument"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : (
+          <>
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+              <div className="flex items-center gap-2 w-full md:w-auto">
+                <label className={`flex-1 md:flex-none flex items-center justify-center gap-2 text-sm px-4 py-3 md:py-2 border rounded-lg md:rounded transition-colors cursor-pointer ${uploading ? 'bg-gray-100 text-gray-400 border-gray-200' : 'bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100'}`}>
+                  <Upload size={16} />
+                  {uploading ? 'Nahrávám...' : 'Import Roster'}
+                  <input
+                    type="file"
+                    accept=".xlsx, .xls"
+                    className="hidden"
+                    onChange={handleFileUpload}
+                    disabled={uploading}
+                  />
+                </label>
+                <button
+                  onClick={handleExport}
+                  className="flex-1 md:flex-none flex items-center justify-center gap-2 text-sm px-4 py-3 md:py-2 bg-white border border-gray-300 rounded-lg md:rounded hover:bg-gray-50 text-gray-700 transition-colors"
+                >
+                  <Download size={16} />
+                  Export CSV
+                </button>
+              </div>
+            </div>
+
+            {uploadResult && (
           <div className={`mb-6 p-4 rounded-lg border ${uploadResult.success ? 'bg-green-50 border-green-200 text-green-800' : 'bg-red-50 border-red-200 text-red-800'} flex justify-between items-center`}>
             <span>{uploadResult.message}</span>
             <button onClick={() => setUploadResult(null)} className="text-sm opacity-70 hover:opacity-100 text-current underline">
@@ -244,8 +408,8 @@ export default function CoordinatorDashboard() {
         )}
 
         {/* OVERVIEW SECTION */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {/* Widget 1: Semester Progress */}
             <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Stav Ročníku</h3>
@@ -450,6 +614,8 @@ export default function CoordinatorDashboard() {
             </table>
           </div>
         </section>
+          </>
+        )}
 
         {/* MODAL - DETAIL VIEW */}
         {selectedInternship && (
