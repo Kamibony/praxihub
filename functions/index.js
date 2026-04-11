@@ -870,36 +870,28 @@ exports.generatePayrollReport = functions.https.onCall(async (data, context) => 
   }
 
   try {
-    const internshipsSnapshot = await admin.firestore().collection('internships').get();
     const mentorsData = {}; // mentorId -> { name, hours }
 
     // Fetch all mentors to get their names
     const usersSnapshot = await admin.firestore().collection('users').where('role', '==', 'mentor').get();
     const mentorNames = {};
     usersSnapshot.forEach(doc => {
-      const data = doc.data();
-      mentorNames[doc.id] = data.displayName || data.email || 'Neznámý mentor';
+      const userData = doc.data();
+      mentorNames[doc.id] = userData.displayName || userData.email || 'Neznámý mentor';
     });
 
-    for (const doc of internshipsSnapshot.docs) {
-      const internshipData = doc.data();
-      const mentorId = internshipData.mentorId;
+    // Use collection group query to get all approved time logs across all internships efficiently
+    const timeLogsSnapshot = await admin.firestore()
+      .collectionGroup('time_logs')
+      .where('status', '==', 'approved')
+      .get();
 
-      if (!mentorId) continue;
+    timeLogsSnapshot.forEach(logDoc => {
+      const logData = logDoc.data();
+      const mentorId = logData.mentorId;
+      const hours = logData.hours || 0;
 
-      const timeLogsSnapshot = await admin.firestore()
-        .collection('internships')
-        .doc(doc.id)
-        .collection('time_logs')
-        .where('status', '==', 'approved')
-        .get();
-
-      let approvedHours = 0;
-      timeLogsSnapshot.forEach(logDoc => {
-        approvedHours += (logDoc.data().hours || 0);
-      });
-
-      if (approvedHours > 0) {
+      if (mentorId && hours > 0) {
         if (!mentorsData[mentorId]) {
           mentorsData[mentorId] = {
             mentorId: mentorId,
@@ -907,9 +899,9 @@ exports.generatePayrollReport = functions.https.onCall(async (data, context) => 
             totalHours: 0
           };
         }
-        mentorsData[mentorId].totalHours += approvedHours;
+        mentorsData[mentorId].totalHours += hours;
       }
-    }
+    });
 
     return Object.values(mentorsData);
   } catch (error) {

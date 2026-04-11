@@ -92,6 +92,7 @@ export default function StudentDashboard() {
         hours: Number(newLogHours),
         description: newLogDescription,
         status: 'pending',
+        mentorId: internship.mentorId || null,
         createdAt: new Date().toISOString()
       });
 
