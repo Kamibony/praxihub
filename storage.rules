@@ -5,5 +5,10 @@ service firebase.storage {
       allow read: if request.auth != null && request.auth.uid == userId;
       allow write: if request.auth != null && request.auth.uid == userId;
     }
+    match /certificates/{fileName} {
+      allow get: if true; // Public access to certificates so the verify page works
+      allow list: if false;
+      allow write: if false; // Only backend writes these
+    }
   }
 }

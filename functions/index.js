@@ -747,6 +747,36 @@ Veškeré texty pro zpětnou vazbu (reasoning) musí být napsány v profesioná
 
     if (evaluationResult.isPass) {
       updateData.status = "CLOSED";
+
+      // 1. Create Snapshot Data
+      const snapshotId = internshipRef.id + '_' + Date.now();
+      const snapshotData = {
+        ...internshipData,
+        evaluationResult: evaluationResult,
+        status: "CLOSED",
+        snapshotCreatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        originalInternshipId: internshipRef.id,
+      };
+
+      // 2. Generate PDF with QR Code
+      const { createCertificatePdf } = require('./pdf_logic');
+      const pdfBytes = await createCertificatePdf(snapshotData, snapshotId);
+
+      // 3. Upload to Storage
+      const bucketName = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "praxihub-app.firebasestorage.app";
+      const bucket = admin.storage().bucket(bucketName);
+      const file = bucket.file(`certificates/${snapshotId}.pdf`);
+      await file.save(Buffer.from(pdfBytes), {
+        metadata: { contentType: 'application/pdf' }
+      });
+
+      const certificateUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/certificates%2F${snapshotId}.pdf?alt=media`;
+      snapshotData.certificateUrl = certificateUrl;
+      updateData.certificateUrl = certificateUrl;
+      updateData.snapshotId = snapshotId;
+
+      // 4. Save to archived_internships
+      await db.collection("archived_internships").doc(snapshotId).set(snapshotData);
     }
 
     await internshipRef.update(updateData);
