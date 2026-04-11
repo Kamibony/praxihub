@@ -43,6 +43,14 @@ export default function StudentDashboard() {
   const [studentRating, setStudentRating] = useState(0);
   const [studentReview, setStudentReview] = useState("");
 
+
+  // State for Time Logs
+  const [timeLogs, setTimeLogs] = useState<any[]>([]);
+  const [newLogDate, setNewLogDate] = useState("");
+  const [newLogHours, setNewLogHours] = useState("");
+  const [newLogDescription, setNewLogDescription] = useState("");
+  const [submittingLog, setSubmittingLog] = useState(false);
+
   // State for AI Evaluation
   const [reflectionText, setReflectionText] = useState("");
   const [evaluating, setEvaluating] = useState(false);
@@ -52,6 +60,52 @@ export default function StudentDashboard() {
   const recognitionRef = useRef<any>(null);
 
   const router = useRouter();
+
+  // Fetch time logs
+  useEffect(() => {
+    if (!internship?.id) return;
+
+    const logsRef = collection(db, "internships", internship.id, "time_logs");
+    const q = query(logsRef, orderBy("date", "desc"));
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const logsData = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setTimeLogs(logsData);
+    });
+
+    return () => unsubscribe();
+  }, [internship?.id]);
+
+  const handleTimeLogSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!internship?.id || !newLogDate || !newLogHours || !newLogDescription) return;
+
+    setSubmittingLog(true);
+    try {
+      const logsRef = collection(db, "internships", internship.id, "time_logs");
+      await addDoc(logsRef, {
+        date: newLogDate,
+        hours: Number(newLogHours),
+        description: newLogDescription,
+        status: 'pending',
+        createdAt: new Date().toISOString()
+      });
+
+      setNewLogDate("");
+      setNewLogHours("");
+      setNewLogDescription("");
+    } catch (error) {
+      console.error("Error adding time log: ", error);
+      alert("Chyba při ukládání záznamu.");
+    } finally {
+      setSubmittingLog(false);
+    }
+  };
+
+
 
   // OPRAVA: Bezpečný useEffect s cleanup logikou
   useEffect(() => {
@@ -812,6 +866,81 @@ export default function StudentDashboard() {
                                     )}
                                 </div>
                             )}
+
+
+                            {/* EVIDENCE HODIN (Time Logs) */}
+                            <div className="bg-blue-50 p-6 rounded-lg border border-blue-200 mb-6">
+                                <h3 className="font-bold text-blue-900 text-lg mb-4 flex items-center gap-2">
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                    Evidence hodin
+                                </h3>
+
+                                <form onSubmit={handleTimeLogSubmit} className="mb-6 bg-white p-4 rounded-lg border border-blue-100 shadow-sm">
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                                        <div>
+                                            <label className="block text-xs font-bold text-blue-800 uppercase mb-1">Datum</label>
+                                            <input
+                                                type="date"
+                                                required
+                                                value={newLogDate}
+                                                onChange={e => setNewLogDate(e.target.value)}
+                                                className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-900"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-blue-800 uppercase mb-1">Počet hodin</label>
+                                            <input
+                                                type="number"
+                                                step="0.5"
+                                                min="0.5"
+                                                required
+                                                value={newLogHours}
+                                                onChange={e => setNewLogHours(e.target.value)}
+                                                className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-900"
+                                            />
+                                        </div>
+                                        <div className="md:col-span-3">
+                                            <label className="block text-xs font-bold text-blue-800 uppercase mb-1">Popis činnosti</label>
+                                            <textarea
+                                                required
+                                                rows={2}
+                                                value={newLogDescription}
+                                                onChange={e => setNewLogDescription(e.target.value)}
+                                                className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-900"
+                                                placeholder="Co jste dělali?"
+                                            />
+                                        </div>
+                                    </div>
+                                    <button
+                                        type="submit"
+                                        disabled={submittingLog}
+                                        className="px-4 py-2 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 disabled:opacity-50 transition"
+                                    >
+                                        {submittingLog ? "Ukládám..." : "Přidat záznam"}
+                                    </button>
+                                </form>
+
+                                <div className="space-y-3">
+                                    <h4 className="font-semibold text-blue-900">Historie záznamů</h4>
+                                    {timeLogs.length === 0 ? (
+                                        <p className="text-sm text-blue-700 italic">Zatím nebyly zapsány žádné hodiny.</p>
+                                    ) : (
+                                        timeLogs.map(log => (
+                                            <div key={log.id} className="bg-white p-4 rounded-lg border border-blue-100 flex flex-col sm:flex-row justify-between sm:items-center gap-2 shadow-sm">
+                                                <div>
+                                                    <p className="font-bold text-slate-900">{new Date(log.date).toLocaleDateString('cs-CZ')} <span className="text-blue-600 ml-2">{log.hours} h</span></p>
+                                                    <p className="text-sm text-slate-600">{log.description}</p>
+                                                </div>
+                                                <div className="shrink-0">
+                                                    {log.status === 'pending' && <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-bold rounded-full">Čeká na schválení</span>}
+                                                    {log.status === 'approved' && <span className="px-2 py-1 bg-green-100 text-green-800 text-xs font-bold rounded-full">Schváleno</span>}
+                                                    {log.status === 'rejected' && <span className="px-2 py-1 bg-red-100 text-red-800 text-xs font-bold rounded-full">Zamítnuto</span>}
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            </div>
 
                             {/* HODNOCENÍ PRAXE (Dostupné pro APPROVED, EVALUATION, CLOSED) */}
                             <div className="bg-purple-50 p-6 rounded-lg border border-purple-200">
