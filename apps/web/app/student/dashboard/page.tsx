@@ -638,8 +638,34 @@ export default function StudentDashboard() {
                                     </p>
 
                                     {internship.evaluationResult && !internship.evaluationResult.isPass && (
-                                        <div className="bg-red-50 text-red-700 p-3 rounded mb-4 text-sm border border-red-200">
-                                            <strong>Hodnocení AI ({internship.evaluationResult.score}/100):</strong> {internship.evaluationResult.feedback}
+                                        <div className="bg-red-50 text-red-700 p-4 rounded mb-4 text-sm border border-red-200">
+                                            <p className="font-bold mb-2">Hodnocení AI – Reflexe nesplňuje metodiku (MŠMT KRAU)</p>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+                                                {internship.evaluationResult.didacticCompetence && (
+                                                    <div className="bg-white p-3 rounded border border-red-100">
+                                                        <span className="font-bold text-red-800">Oborově-předmětová a didaktická kom. ({internship.evaluationResult.didacticCompetence.score}/100):</span>
+                                                        <p className="text-red-600 mt-1">{internship.evaluationResult.didacticCompetence.reasoning}</p>
+                                                    </div>
+                                                )}
+                                                {internship.evaluationResult.pedagogicalCompetence && (
+                                                    <div className="bg-white p-3 rounded border border-red-100">
+                                                        <span className="font-bold text-red-800">Pedagogická a psychologická kom. ({internship.evaluationResult.pedagogicalCompetence.score}/100):</span>
+                                                        <p className="text-red-600 mt-1">{internship.evaluationResult.pedagogicalCompetence.reasoning}</p>
+                                                    </div>
+                                                )}
+                                                {internship.evaluationResult.socialCompetence && (
+                                                    <div className="bg-white p-3 rounded border border-red-100">
+                                                        <span className="font-bold text-red-800">Komunikativní a sociální kom. ({internship.evaluationResult.socialCompetence.score}/100):</span>
+                                                        <p className="text-red-600 mt-1">{internship.evaluationResult.socialCompetence.reasoning}</p>
+                                                    </div>
+                                                )}
+                                                {internship.evaluationResult.reflectiveCompetence && (
+                                                    <div className="bg-white p-3 rounded border border-red-100">
+                                                        <span className="font-bold text-red-800">Profesní a sebereflektivní kom. ({internship.evaluationResult.reflectiveCompetence.score}/100):</span>
+                                                        <p className="text-red-600 mt-1">{internship.evaluationResult.reflectiveCompetence.reasoning}</p>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
                                     )}
 
@@ -671,9 +697,34 @@ export default function StudentDashboard() {
                                         Gratulujeme! Vaše reflexe byla schválena a praxe je oficiálně uzavřena.
                                     </p>
                                     {internship.evaluationResult && (
-                                        <div className="bg-white p-4 rounded-lg border border-green-100 text-sm">
-                                            <p className="font-bold text-green-700 mb-1">Zpětná vazba od AI Sensei (Skóre: {internship.evaluationResult.score}/100)</p>
-                                            <p className="text-gray-700 italic">"{internship.evaluationResult.feedback}"</p>
+                                        <div className="bg-white p-4 rounded-lg border border-green-100 text-sm mt-4">
+                                            <p className="font-bold text-green-700 mb-3 text-base">Zpětná vazba od AI Sensei (dle MŠMT KRAU)</p>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                {internship.evaluationResult.didacticCompetence && (
+                                                    <div className="bg-green-50 p-3 rounded border border-green-200">
+                                                        <span className="font-bold text-green-800">Oborově-předmětová a didaktická kom. ({internship.evaluationResult.didacticCompetence.score}/100):</span>
+                                                        <p className="text-gray-700 mt-1 italic">"{internship.evaluationResult.didacticCompetence.reasoning}"</p>
+                                                    </div>
+                                                )}
+                                                {internship.evaluationResult.pedagogicalCompetence && (
+                                                    <div className="bg-green-50 p-3 rounded border border-green-200">
+                                                        <span className="font-bold text-green-800">Pedagogická a psychologická kom. ({internship.evaluationResult.pedagogicalCompetence.score}/100):</span>
+                                                        <p className="text-gray-700 mt-1 italic">"{internship.evaluationResult.pedagogicalCompetence.reasoning}"</p>
+                                                    </div>
+                                                )}
+                                                {internship.evaluationResult.socialCompetence && (
+                                                    <div className="bg-green-50 p-3 rounded border border-green-200">
+                                                        <span className="font-bold text-green-800">Komunikativní a sociální kom. ({internship.evaluationResult.socialCompetence.score}/100):</span>
+                                                        <p className="text-gray-700 mt-1 italic">"{internship.evaluationResult.socialCompetence.reasoning}"</p>
+                                                    </div>
+                                                )}
+                                                {internship.evaluationResult.reflectiveCompetence && (
+                                                    <div className="bg-green-50 p-3 rounded border border-green-200">
+                                                        <span className="font-bold text-green-800">Profesní a sebereflektivní kom. ({internship.evaluationResult.reflectiveCompetence.score}/100):</span>
+                                                        <p className="text-gray-700 mt-1 italic">"{internship.evaluationResult.reflectiveCompetence.reasoning}"</p>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
                                     )}
                                 </div>

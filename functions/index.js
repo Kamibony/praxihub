@@ -678,18 +678,46 @@ exports.evaluateReflection = functions.https.onCall(async (data, context) => {
               properties: {
                 isPass: {
                   type: SchemaType.BOOLEAN,
-                  description: "Zda reflexe splňuje metodiku (MŠMT KRAU) pro úspěšné hodnocení."
+                  description: "Zda reflexe celkově splňuje metodiku (MŠMT KRAU) pro úspěšné hodnocení."
                 },
-                score: {
-                  type: SchemaType.INTEGER,
-                  description: "Bodové hodnocení od 0 do 100."
+                didacticCompetence: {
+                  type: SchemaType.OBJECT,
+                  description: "Oborově-předmětová a didaktická kompetence",
+                  properties: {
+                    score: { type: SchemaType.INTEGER, description: "Bodové hodnocení od 0 do 100." },
+                    reasoning: { type: SchemaType.STRING, description: "Zdůvodnění v profesionální češtině." }
+                  },
+                  required: ["score", "reasoning"]
                 },
-                feedback: {
-                  type: SchemaType.STRING,
-                  description: "Konkrétní zpětná vazba pro studenta na základě státních metodik."
+                pedagogicalCompetence: {
+                  type: SchemaType.OBJECT,
+                  description: "Pedagogická a psychologická kompetence",
+                  properties: {
+                    score: { type: SchemaType.INTEGER, description: "Bodové hodnocení od 0 do 100." },
+                    reasoning: { type: SchemaType.STRING, description: "Zdůvodnění v profesionální češtině." }
+                  },
+                  required: ["score", "reasoning"]
+                },
+                socialCompetence: {
+                  type: SchemaType.OBJECT,
+                  description: "Komunikativní a sociální kompetence",
+                  properties: {
+                    score: { type: SchemaType.INTEGER, description: "Bodové hodnocení od 0 do 100." },
+                    reasoning: { type: SchemaType.STRING, description: "Zdůvodnění v profesionální češtině." }
+                  },
+                  required: ["score", "reasoning"]
+                },
+                reflectiveCompetence: {
+                  type: SchemaType.OBJECT,
+                  description: "Profesní a sebereflektivní kompetence",
+                  properties: {
+                    score: { type: SchemaType.INTEGER, description: "Bodové hodnocení od 0 do 100." },
+                    reasoning: { type: SchemaType.STRING, description: "Zdůvodnění v profesionální češtině." }
+                  },
+                  required: ["score", "reasoning"]
                 }
               },
-              required: ["isPass", "score", "feedback"]
+              required: ["isPass", "didacticCompetence", "pedagogicalCompetence", "socialCompetence", "reflectiveCompetence"]
             }
           },
           required: ["evaluation"]
@@ -697,9 +725,15 @@ exports.evaluateReflection = functions.https.onCall(async (data, context) => {
       }
     });
 
-    const systemPrompt = `Jste hodnotitel studentských reflexí odborné praxe.
-Hodnoťte text přesně podle státních metodik MŠMT KRAU.
-Výstup musí být striktně ve formátu JSON, obsahující objekt 'evaluation' s 'isPass' (boolean), 'score' (0-100) a 'feedback' (string).`;
+    const systemPrompt = `Jste expertní hodnotitel studentských reflexí odborné praxe.
+Hodnoťte text striktně podle 4 pilířů státní metodiky MŠMT KRAU:
+1. Oborově-předmětová a didaktická kompetence (didacticCompetence) - Hodnocení cílů, SMART plánování a výukových materiálů.
+2. Pedagogická a psychologická kompetence (pedagogicalCompetence) - Hodnocení průběhu hodiny, struktury a aktivizace studentů.
+3. Komunikativní a sociální kompetence (socialCompetence) - Hodnocení osobnosti učitele, komunikace a klimatu třídy.
+4. Profesní a sebereflektivní kompetence (reflectiveCompetence) - Hodnocení hloubky a kritického myšlení samotné reflexe.
+
+Váš výstup musí být výhradně validní JSON objekt.
+Veškeré texty pro zpětnou vazbu (reasoning) musí být napsány v profesionální a gramaticky bezchybné češtině.`;
 
     const result = await model.generateContent(`${systemPrompt}\n\nText reflexe:\n${reflectionText}`);
     const responseText = result.response.text();
