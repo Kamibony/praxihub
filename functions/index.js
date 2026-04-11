@@ -861,3 +861,59 @@ exports.signContract = functions.https.onCall(async (data, context) => {
     return { success: true, message: `Úspěšně podepsáno jako ${role}.` };
   });
 });
+
+
+// 10. PAYROLL REPORT (Mzdové výkazy)
+exports.generatePayrollReport = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError("unauthenticated", "Musíte být přihlášeni.");
+  }
+
+  try {
+    const internshipsSnapshot = await admin.firestore().collection('internships').get();
+    const mentorsData = {}; // mentorId -> { name, hours }
+
+    // Fetch all mentors to get their names
+    const usersSnapshot = await admin.firestore().collection('users').where('role', '==', 'mentor').get();
+    const mentorNames = {};
+    usersSnapshot.forEach(doc => {
+      const data = doc.data();
+      mentorNames[doc.id] = data.displayName || data.email || 'Neznámý mentor';
+    });
+
+    for (const doc of internshipsSnapshot.docs) {
+      const internshipData = doc.data();
+      const mentorId = internshipData.mentorId;
+
+      if (!mentorId) continue;
+
+      const timeLogsSnapshot = await admin.firestore()
+        .collection('internships')
+        .doc(doc.id)
+        .collection('time_logs')
+        .where('status', '==', 'approved')
+        .get();
+
+      let approvedHours = 0;
+      timeLogsSnapshot.forEach(logDoc => {
+        approvedHours += (logDoc.data().hours || 0);
+      });
+
+      if (approvedHours > 0) {
+        if (!mentorsData[mentorId]) {
+          mentorsData[mentorId] = {
+            mentorId: mentorId,
+            mentorName: mentorNames[mentorId] || 'Neznámý mentor',
+            totalHours: 0
+          };
+        }
+        mentorsData[mentorId].totalHours += approvedHours;
+      }
+    }
+
+    return Object.values(mentorsData);
+  } catch (error) {
+    console.error("Error generating payroll report:", error);
+    throw new functions.https.HttpsError("internal", "Nepodařilo se vygenerovat mzdový výkaz.");
+  }
+});

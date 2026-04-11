@@ -24,7 +24,10 @@ export default function CoordinatorDashboard() {
   const [uploadResult, setUploadResult] = useState<{success?: boolean, message?: string} | null>(null);
 
   // View mode state
-  const [viewMode, setViewMode] = useState<'INTERNSHIPS' | 'DOCUMENTS'>('INTERNSHIPS');
+  const [viewMode, setViewMode] = useState<'INTERNSHIPS' | 'DOCUMENTS' | 'COMPLIANCE'>('INTERNSHIPS');
+
+  // Institutions (Compliance) state
+  const [institutions, setInstitutions] = useState<any[]>([]);
 
   // Global Documents state
   const [globalDocs, setGlobalDocs] = useState<{name: string, url: string, path: string}[]>([]);
@@ -68,10 +71,21 @@ export default function CoordinatorDashboard() {
     };
   }, [router]);
 
-  // Load Global Documents
+  // Load Global Documents and Institutions
   useEffect(() => {
     if (viewMode === 'DOCUMENTS') {
       fetchGlobalDocs();
+    }
+    if (viewMode === 'COMPLIANCE') {
+      // Setup listener for institutions
+      const q = query(collection(db, "users"), orderBy("createdAt", "desc"));
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        const insts = snapshot.docs
+          .map(doc => ({ id: doc.id, ...doc.data() }))
+          .filter((u: any) => u.role === 'institution');
+        setInstitutions(insts);
+      });
+      return () => unsubscribe();
     }
   }, [viewMode]);
 
@@ -210,6 +224,52 @@ export default function CoordinatorDashboard() {
     document.body.removeChild(link);
   };
 
+  const [exportingPayroll, setExportingPayroll] = useState(false);
+  const handlePayrollExport = async () => {
+    setExportingPayroll(true);
+    try {
+      const generatePayrollReport = httpsCallable(functions, 'generatePayrollReport');
+      const result = await generatePayrollReport();
+      const data = result.data as { mentorName: string, mentorId: string, totalHours: number }[];
+
+      const headers = ["Jméno mentora", "ID mentora", "Celkový počet schválených hodin"];
+      const csvContent = [
+        headers.join(","),
+        ...data.map(item => [
+          `"${item.mentorName || ''}"`,
+          `"${item.mentorId || ''}"`,
+          `"${item.totalHours || 0}"`
+        ].join(","))
+      ].join("\n");
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", "mzdove_vykazy.csv");
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error("Chyba při exportu mzdových výkazů:", error);
+      alert("Nepodařilo se exportovat mzdové výkazy.");
+    } finally {
+      setExportingPayroll(false);
+    }
+  };
+
+  const updateFrameworkAgreement = async (institutionId: string, dateStr: string) => {
+    try {
+      const userRef = doc(db, 'users', institutionId);
+      await updateDoc(userRef, {
+        frameworkAgreementExpiration: dateStr
+      });
+    } catch (error) {
+      console.error("Error updating framework agreement:", error);
+      alert("Nepodařilo se aktualizovat datum expirace.");
+    }
+  };
+
   // Actions for Organization Approval
   const handleApproveOrg = async (id: string) => {
     if (!confirm("Opravdu chcete schválit tuto firmu?")) return;
@@ -269,6 +329,17 @@ export default function CoordinatorDashboard() {
     .sort((a, b) => b[1] - a[1])
     .slice(0, 3);
 
+  // Compliance Alerts logic
+  const now = new Date();
+  const thirtyDaysFromNow = new Date();
+  thirtyDaysFromNow.setDate(now.getDate() + 30);
+
+  const complianceAlerts = institutions.filter(inst => {
+    if (!inst.frameworkAgreementExpiration) return true; // Missing date = alert
+    const expDate = new Date(inst.frameworkAgreementExpiration);
+    return expDate <= thirtyDaysFromNow; // Expired or expiring within 30 days
+  });
+
   if (loading) return <div className="p-8 text-center text-gray-500">Načítám data...</div>;
 
   return (
@@ -302,6 +373,14 @@ export default function CoordinatorDashboard() {
               <Download size={16} />
               Exportovat CSV
             </button>
+            <button
+              onClick={handlePayrollExport}
+              disabled={exportingPayroll}
+              className={`flex items-center gap-2 text-sm px-4 py-2 bg-green-50 border border-green-200 rounded text-green-700 hover:bg-green-100 transition-colors ${exportingPayroll ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
+              <Download size={16} />
+              {exportingPayroll ? 'Exportuji...' : 'Mzdové výkazy'}
+            </button>
             <button onClick={() => auth.signOut()} className="text-sm px-4 py-3 md:py-2 bg-white border border-gray-300 rounded-lg md:rounded hover:bg-gray-50 text-gray-700 transition-colors w-full md:w-auto">Odhlásit</button>
           </div>
         </header>
@@ -321,7 +400,32 @@ export default function CoordinatorDashboard() {
             <FileText size={16} />
             Globální Dokumenty
           </button>
+          <button
+            onClick={() => setViewMode('COMPLIANCE')}
+            className={`py-3 px-6 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${viewMode === 'COMPLIANCE' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
+          >
+            Spolupracující instituce
+          </button>
         </div>
+
+        {/* Compliance Alerts Notification */}
+        {complianceAlerts.length > 0 && viewMode === 'INTERNSHIPS' && (
+          <div className="mb-6 bg-red-50 border border-red-200 p-4 rounded-xl shadow-sm">
+            <h3 className="text-red-800 font-bold flex items-center gap-2 mb-2">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+              Upozornění na shodu (Compliance Alerts)
+            </h3>
+            <p className="text-red-700 text-sm mb-3">Následující instituce mají chybějící nebo brzy expirující rámcovou smlouvu (do 30 dnů):</p>
+            <ul className="list-disc list-inside text-sm text-red-600">
+              {complianceAlerts.map(inst => (
+                <li key={inst.id}>{inst.displayName || inst.email || "Neznámá instituce"} {inst.frameworkAgreementExpiration ? `(Expirace: ${new Date(inst.frameworkAgreementExpiration).toLocaleDateString('cs-CZ')})` : '(Chybí datum)'}</li>
+              ))}
+            </ul>
+            <button onClick={() => setViewMode('COMPLIANCE')} className="mt-3 text-sm bg-red-100 hover:bg-red-200 text-red-800 px-3 py-1.5 rounded transition-colors">
+              Přejít do správy institucí
+            </button>
+          </div>
+        )}
 
         {viewMode === 'DOCUMENTS' ? (
           <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
@@ -373,6 +477,47 @@ export default function CoordinatorDashboard() {
                 ))}
               </div>
             )}
+          </div>
+        ) : viewMode === 'COMPLIANCE' ? (
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+            <h2 className="text-xl font-bold text-gray-900 mb-2">Spolupracující instituce</h2>
+            <p className="text-gray-500 text-sm mb-6">Správa rámcových smluv a partnerských institucí.</p>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Název instituce</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Expirace rámcové smlouvy</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {institutions.map(inst => (
+                    <tr key={inst.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        {inst.displayName || "Neznámá instituce"}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {inst.email}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <input
+                          type="date"
+                          className="px-3 py-1.5 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                          value={inst.frameworkAgreementExpiration || ''}
+                          onChange={(e) => updateFrameworkAgreement(inst.id, e.target.value)}
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                  {institutions.length === 0 && (
+                    <tr>
+                      <td colSpan={3} className="px-6 py-8 text-center text-gray-500 text-sm">Zatím nejsou zaregistrovány žádné instituce.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         ) : (
           <>
