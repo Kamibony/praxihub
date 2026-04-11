@@ -790,3 +790,74 @@ Veškeré texty pro zpětnou vazbu (reasoning) musí být napsány v profesioná
     );
   }
 });
+
+exports.signContract = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError("unauthenticated", "Musíte být přihlášeni.");
+  }
+
+  const { internshipId, role } = data;
+  if (!internshipId || !role) {
+    throw new functions.https.HttpsError("invalid-argument", "Chybí internshipId nebo role.");
+  }
+
+  if (!['student', 'coordinator', 'company'].includes(role)) {
+    throw new functions.https.HttpsError("invalid-argument", "Neplatná role.");
+  }
+
+  const db = admin.firestore();
+  const internshipRef = db.collection("internships").doc(internshipId);
+
+  return await db.runTransaction(async (transaction) => {
+    const doc = await transaction.get(internshipRef);
+    if (!doc.exists) {
+      throw new functions.https.HttpsError("not-found", "Praxe nebyla nalezena.");
+    }
+
+    const internshipData = doc.data();
+
+    // Check permissions
+    if (role === 'student' && internshipData.studentId !== context.auth.uid) {
+      throw new functions.https.HttpsError("permission-denied", "Nemáte oprávnění podepsat za studenta.");
+    }
+    // Simplification: In a real app we would check if context.auth.uid is the actual coordinator or company user assigned.
+    // For now, we trust the caller's role if it matches the general requirements. We could verify the user's role from the users collection.
+    const userDoc = await transaction.get(db.collection("users").doc(context.auth.uid));
+    const userData = userDoc.exists ? userDoc.data() : {};
+
+    if (role === 'coordinator' && userData.role !== 'admin' && userData.role !== 'coordinator') {
+      throw new functions.https.HttpsError("permission-denied", "Nemáte oprávnění podepsat za koordinátora.");
+    }
+
+    if (role === 'company' && userData.role !== 'company' && internshipData.companyId !== context.auth.uid && internshipData.mentorId !== context.auth.uid) {
+      throw new functions.https.HttpsError("permission-denied", "Nemáte oprávnění podepsat za společnost.");
+    }
+
+    const ipAddress = context.rawRequest ? context.rawRequest.ip : 'unknown';
+    const serverTimestamp = admin.firestore.FieldValue.serverTimestamp();
+
+    const signatureData = {
+      userId: context.auth.uid,
+      timestamp: serverTimestamp,
+      ipAddress: ipAddress
+    };
+
+    const updateData = {};
+    updateData[`signatures.${role}`] = signatureData;
+
+    transaction.update(internshipRef, updateData);
+
+    // Create audit log
+    const auditLogRef = db.collection("audit_logs").doc();
+    transaction.set(auditLogRef, {
+      action: 'SIGN_CONTRACT',
+      internshipId: internshipId,
+      role: role,
+      userId: context.auth.uid,
+      ipAddress: ipAddress,
+      timestamp: serverTimestamp
+    });
+
+    return { success: true, message: `Úspěšně podepsáno jako ${role}.` };
+  });
+});

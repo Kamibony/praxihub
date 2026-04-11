@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import StarRating from "@/components/StarRating";
 import Chatbot from "@/components/Chatbot";
+import ContractSignature from "@/components/ContractSignature";
 import { Mic, MicOff } from 'lucide-react';
 
 export default function StudentDashboard() {
@@ -1016,9 +1017,16 @@ export default function StudentDashboard() {
                        <p className="text-xs text-gray-500">Nahráno: {formatDateCZ(internship.createdAt)}</p>
                      </div>
                    </div>
-                   <a href={internship.contract_url} target="_blank" rel="noreferrer" className="block w-full text-center py-2 border border-blue-200 text-blue-600 rounded-lg hover:bg-blue-50 text-sm font-medium transition">
+                   <a href={internship.contract_url} target="_blank" rel="noreferrer" className="block w-full text-center py-2 border border-blue-200 text-blue-600 rounded-lg hover:bg-blue-50 text-sm font-medium transition mb-4">
                      Stáhnout originál
                    </a>
+                   <div className="mt-4 border-t pt-4">
+                     <ContractSignature
+                       internshipId={internship.id}
+                       role="student"
+                       signatures={internship.signatures}
+                     />
+                   </div>
                 </div>
               ) : (
                 <p className="text-sm text-gray-500 italic">

@@ -7,6 +7,7 @@ import { collection, query, orderBy, onSnapshot, doc, updateDoc } from "firebase
 import { onAuthStateChanged } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import Chatbot from "@/components/Chatbot";
+import ContractSignature from "@/components/ContractSignature";
 import { Download, Upload, FileText, Trash2 } from 'lucide-react';
 import { ref, uploadBytes, listAll, getDownloadURL, deleteObject } from "firebase/storage";
 import { storage } from "../../../lib/firebase";
@@ -709,15 +710,22 @@ export default function CoordinatorDashboard() {
                     <div>
                       <p className="text-xs text-gray-500">Dokument</p>
                       {selectedInternship.contract_url ? (
-                        <a
-                          href={selectedInternship.contract_url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline mt-1"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                          Stáhnout PDF
-                        </a>
+                        <>
+                          <a
+                            href={selectedInternship.contract_url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline mt-1 mb-4"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                            Stáhnout PDF
+                          </a>
+                          <ContractSignature
+                            internshipId={selectedInternship.id}
+                            role="coordinator"
+                            signatures={selectedInternship.signatures}
+                          />
+                        </>
                       ) : (
                         <p className="text-sm text-gray-400 italic">Smlouva nedostupná</p>
                       )}

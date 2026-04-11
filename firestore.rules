@@ -21,6 +21,11 @@ service cloud.firestore {
                     && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['status']));
 
       allow delete: if request.auth != null && resource.data.studentId == request.auth.uid;
+
+      match /time_logs/{logId} {
+        allow create, read: if request.auth != null && request.auth.uid == get(/databases/$(database)/documents/internships/$(internshipId)).data.studentId;
+        allow read, update: if request.auth != null && request.auth.uid == get(/databases/$(database)/documents/internships/$(internshipId)).data.mentorId;
+      }
     }
 
     // Allow public read for snapshots so verification page works without auth
