@@ -725,7 +725,9 @@ exports.evaluateReflection = functions.https.onCall(async (data, context) => {
       }
     });
 
-    const systemPrompt = `Jste expertní hodnotitel studentských reflexí odborné praxe.
+    // Fetch dynamic rules
+    const krauDoc = await db.collection("system_configs").doc("ai_krau_rules").get();
+    let krauRules = `Jste expertní hodnotitel studentských reflexí odborné praxe.
 Hodnoťte text striktně podle 4 pilířů státní metodiky MŠMT KRAU:
 1. Oborově-předmětová a didaktická kompetence (didacticCompetence) - Hodnocení cílů, SMART plánování a výukových materiálů.
 2. Pedagogická a psychologická kompetence (pedagogicalCompetence) - Hodnocení průběhu hodiny, struktury a aktivizace studentů.
@@ -734,6 +736,12 @@ Hodnoťte text striktně podle 4 pilířů státní metodiky MŠMT KRAU:
 
 Váš výstup musí být výhradně validní JSON objekt.
 Veškeré texty pro zpětnou vazbu (reasoning) musí být napsány v profesionální a gramaticky bezchybné češtině.`;
+
+    if (krauDoc.exists) {
+        krauRules = krauDoc.data().content + "\n\nVáš výstup musí být výhradně validní JSON objekt.\nVeškeré texty pro zpětnou vazbu (reasoning) musí být napsány v profesionální a gramaticky bezchybné češtině.";
+    }
+
+    const systemPrompt = krauRules;
 
     const result = await model.generateContent(`${systemPrompt}\n\nText reflexe:\n${reflectionText}`);
     const responseText = result.response.text();
@@ -907,5 +915,137 @@ exports.generatePayrollReport = functions.https.onCall(async (data, context) => 
   } catch (error) {
     console.error("Error generating payroll report:", error);
     throw new functions.https.HttpsError("internal", "Nepodařilo se vygenerovat mzdový výkaz.");
+  }
+});
+
+// --- 8. TEST AI REFLECTION EVALUATION (Admin Playground) ---
+exports.testEvaluateReflection = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError(
+      "unauthenticated",
+      "Musíte být přihlášeni."
+    );
+  }
+
+  // Check admin role here
+  const userDoc = await admin.firestore().collection('users').doc(context.auth.uid).get();
+  if (!userDoc.exists || (userDoc.data().role !== 'admin' && userDoc.data().role !== 'coordinator')) {
+    throw new functions.https.HttpsError("permission-denied", "Nemáte oprávnění.");
+  }
+
+  const { reflectionText, rulesText } = data;
+
+  if (!reflectionText || !rulesText) {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "Chybí povinné parametry: reflectionText a rulesText."
+    );
+  }
+
+  try {
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    const model = genAI.getGenerativeModel({
+      model: "gemini-2.5-flash",
+      generationConfig: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: SchemaType.OBJECT,
+          properties: {
+            evaluation: {
+              type: SchemaType.OBJECT,
+              properties: {
+                isPass: {
+                  type: SchemaType.BOOLEAN,
+                  description: "Zda reflexe celkově splňuje metodiku (MŠMT KRAU) pro úspěšné hodnocení."
+                },
+                didacticCompetence: {
+                  type: SchemaType.OBJECT,
+                  description: "Oborově-předmětová a didaktická kompetence",
+                  properties: {
+                    score: { type: SchemaType.INTEGER, description: "Bodové hodnocení od 0 do 100." },
+                    reasoning: { type: SchemaType.STRING, description: "Zdůvodnění v profesionální češtině." }
+                  },
+                  required: ["score", "reasoning"]
+                },
+                pedagogicalCompetence: {
+                  type: SchemaType.OBJECT,
+                  description: "Pedagogická a psychologická kompetence",
+                  properties: {
+                    score: { type: SchemaType.INTEGER, description: "Bodové hodnocení od 0 do 100." },
+                    reasoning: { type: SchemaType.STRING, description: "Zdůvodnění v profesionální češtině." }
+                  },
+                  required: ["score", "reasoning"]
+                },
+                socialCompetence: {
+                  type: SchemaType.OBJECT,
+                  description: "Komunikativní a sociální kompetence",
+                  properties: {
+                    score: { type: SchemaType.INTEGER, description: "Bodové hodnocení od 0 do 100." },
+                    reasoning: { type: SchemaType.STRING, description: "Zdůvodnění v profesionální češtině." }
+                  },
+                  required: ["score", "reasoning"]
+                },
+                reflectiveCompetence: {
+                  type: SchemaType.OBJECT,
+                  description: "Profesní a sebereflektivní kompetence",
+                  properties: {
+                    score: { type: SchemaType.INTEGER, description: "Bodové hodnocení od 0 do 100." },
+                    reasoning: { type: SchemaType.STRING, description: "Zdůvodnění v profesionální češtině." }
+                  },
+                  required: ["score", "reasoning"]
+                }
+              },
+              required: ["isPass", "didacticCompetence", "pedagogicalCompetence", "socialCompetence", "reflectiveCompetence"]
+            }
+          },
+          required: ["evaluation"]
+        }
+      }
+    });
+
+    let systemPrompt = rulesText + "\n\nVáš výstup musí být výhradně validní JSON objekt.\nVeškeré texty pro zpětnou vazbu (reasoning) musí být napsány v profesionální a gramaticky bezchybné češtině.";
+
+    const result = await model.generateContent(`${systemPrompt}\n\nText reflexe:\n${reflectionText}`);
+    const responseText = result.response.text();
+    const evaluationData = JSON.parse(responseText);
+
+    return evaluationData;
+  } catch (error) {
+    console.error("Chyba pri testovaní AI hodnocení:", error);
+    throw new functions.https.HttpsError("internal", "Nepodařilo se ohodnotit reflexi", error.message);
+  }
+});
+
+// --- 9. UPDATE SYSTEM CONFIG ---
+exports.updateSystemConfig = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError("unauthenticated", "Musíte být přihlášeni.");
+  }
+
+  const userDoc = await admin.firestore().collection('users').doc(context.auth.uid).get();
+  if (!userDoc.exists || (userDoc.data().role !== 'admin' && userDoc.data().role !== 'coordinator')) {
+    throw new functions.https.HttpsError("permission-denied", "Nemáte oprávnění.");
+  }
+
+  const { docId, content, title, isCritical } = data;
+
+  if (!docId || !content) {
+    throw new functions.https.HttpsError("invalid-argument", "Chybí povinné parametry.");
+  }
+
+  try {
+    await admin.firestore().collection('system_configs').doc(docId).set({
+      id: docId,
+      title: title || docId,
+      content: content,
+      lastUpdated: admin.firestore.FieldValue.serverTimestamp(),
+      updatedBy: context.auth.uid,
+      isCritical: isCritical || false
+    }, { merge: true });
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error updating config:", error);
+    throw new functions.https.HttpsError("internal", "Nepodařilo se uložit konfiguraci.", error.message);
   }
 });
