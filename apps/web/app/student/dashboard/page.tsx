@@ -721,8 +721,8 @@ export default function StudentDashboard() {
                             </div>
                         )}
 
-                        {/* SCHVÁLENÉ ÚDAJE (Iba ak APPROVED) */}
-                        {internship.status === 'APPROVED' && (
+                        {/* SCHVÁLENÉ ÚDAJE (Iba ak APPROVED alebo EVALUATION alebo CLOSED) */}
+                        {(internship.status === 'APPROVED' || internship.status === 'EVALUATION' || internship.status === 'CLOSED') && (
                             <div className="space-y-6">
                             <div className="bg-white rounded-lg border border-gray-100 overflow-hidden">
                                 <table className="min-w-full divide-y divide-gray-200 text-sm">
@@ -870,7 +870,8 @@ export default function StudentDashboard() {
                             )}
 
 
-                            {/* EVIDENCE HODIN (Time Logs) */}
+                            {/* EVIDENCE HODIN (Time Logs) - Zobrazia sa len ak je APPROVED alebo EVALUATION alebo CLOSED */}
+                            {(internship.status === 'APPROVED' || internship.status === 'EVALUATION' || internship.status === 'CLOSED') && (
                             <div className="bg-blue-50 p-6 rounded-lg border border-blue-200 mb-6">
                                 <h3 className="font-bold text-blue-900 text-lg mb-4 flex items-center gap-2">
                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
@@ -943,6 +944,7 @@ export default function StudentDashboard() {
                                     )}
                                 </div>
                             </div>
+                            )}
 
                             {/* HODNOCENÍ PRAXE (Dostupné pro APPROVED, EVALUATION, CLOSED) */}
                             <div className="bg-purple-50 p-6 rounded-lg border border-purple-200">

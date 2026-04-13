@@ -24,8 +24,28 @@ if (!firebaseConfig.apiKey) {
 
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 
+import { connectAuthEmulator, signInWithCustomToken } from "firebase/auth";
+import { connectFirestoreEmulator } from "firebase/firestore";
+import { connectStorageEmulator } from "firebase/storage";
+import { connectFunctionsEmulator } from "firebase/functions";
+
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
 export const functions = getFunctions(app, "us-central1"); // Export functions
+
+// Connect to Emulators if configured
+if (process.env.NEXT_PUBLIC_USE_FIREBASE_EMULATOR === 'true') {
+  connectAuthEmulator(auth, "http://127.0.0.1:9099", { disableWarnings: true });
+  connectFirestoreEmulator(db, "127.0.0.1", 8080);
+  connectStorageEmulator(storage, "127.0.0.1", 9199);
+  connectFunctionsEmulator(functions, "127.0.0.1", 5001);
+  console.log("🔌 Connected to Firebase Local Emulators");
+}
+
+if (typeof window !== 'undefined') {
+  (window as any).firebaseAuth = auth;
+  (window as any).firebaseSignInWithCustomToken = signInWithCustomToken;
+}
+
 export default app;
