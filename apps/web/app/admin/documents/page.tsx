@@ -6,6 +6,7 @@ import { doc, getDoc, serverTimestamp } from "firebase/firestore";
 import { httpsCallable } from "firebase/functions";
 import { Save, Play, AlertTriangle, FileText, Database, Archive } from 'lucide-react';
 import Navbar from "@/components/Navbar";
+import Link from 'next/link';
 
 export default function DocumentCenter() {
   const [rules, setRules] = useState('');
@@ -69,7 +70,15 @@ export default function DocumentCenter() {
     <div className="min-h-screen bg-slate-50">
       <Navbar />
       <div className="pt-24 pb-12 px-6 max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold text-slate-900 mb-2">Admin Document Center</h1>
+        <div className="flex justify-between items-start mb-2">
+          <h1 className="text-3xl font-bold text-slate-900">Admin Document Center</h1>
+          <Link
+            href="/admin/dashboard"
+            className="text-sm font-medium text-slate-600 hover:text-blue-600 transition"
+          >
+            &larr; Zpět na Dashboard
+          </Link>
+        </div>
         <p className="text-slate-600 mb-8">Centrální správa dokumentů, šablon a AI metodiky.</p>
 
         <div className="flex gap-2 mb-6 border-b border-slate-200 overflow-x-auto">

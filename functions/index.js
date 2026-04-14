@@ -1017,6 +1017,34 @@ exports.testEvaluateReflection = functions.https.onCall(async (data, context) =>
 });
 
 // --- 9. UPDATE SYSTEM CONFIG ---
+exports.resolveLoginIdentifier = functions.https.onCall(async (data, context) => {
+  const { identifier } = data;
+  if (!identifier) {
+    throw new functions.https.HttpsError('invalid-argument', 'Chybí e-mail nebo Univerzitní ID.');
+  }
+
+  // If identifier contains @, assume it's an email
+  if (identifier.includes('@')) {
+    const email = identifier.trim().toLowerCase();
+    const querySnapshot = await db.collection("users").where("email", "==", email).get();
+    if (querySnapshot.empty) {
+        throw new functions.https.HttpsError('not-found', 'Přístup odepřen. Váš e-mail není v systému registrován.');
+    }
+    return { email };
+  } else {
+    // Assume it's a University ID
+    const universityId = identifier.trim();
+    const querySnapshot = await db.collection("users").where("universityId", "==", universityId).get();
+
+    if (querySnapshot.empty) {
+        throw new functions.https.HttpsError('not-found', 'Přístup odepřen. Vaše Univerzitní ID nebylo nalezeno.');
+    }
+    // Return the first match (should be unique)
+    const userDoc = querySnapshot.docs[0];
+    return { email: userDoc.data().email };
+  }
+});
+
 exports.updateSystemConfig = functions.https.onCall(async (data, context) => {
   if (!context.auth) {
     throw new functions.https.HttpsError("unauthenticated", "Musíte být přihlášeni.");
