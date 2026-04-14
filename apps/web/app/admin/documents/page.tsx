@@ -269,11 +269,17 @@ export default function DocumentCenter() {
             {importStats && (
               <div className="mt-8 bg-green-50 border border-green-200 rounded-lg p-4 text-green-800">
                 <h3 className="font-bold mb-2">Import úspěšně dokončen</h3>
-                <ul className="list-disc pl-5 text-sm space-y-1">
+                <ul className="list-disc pl-5 text-sm space-y-1 mb-4">
                   <li>Přidáno studentů: {importStats.added}</li>
                   <li>Aktualizováno studentů: {importStats.updated}</li>
                   <li>Ignorováno řádků: {importStats.ignored}</li>
                 </ul>
+                <Link
+                  href="/admin/users"
+                  className="inline-flex items-center gap-2 text-sm font-semibold bg-white px-4 py-2 border border-green-300 rounded-lg text-green-700 hover:bg-green-100 transition"
+                >
+                  Přejít na Správu uživatelů
+                </Link>
               </div>
             )}
           </div>
