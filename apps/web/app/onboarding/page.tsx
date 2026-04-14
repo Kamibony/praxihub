@@ -9,10 +9,10 @@ import { onAuthStateChanged, updateProfile } from "firebase/auth";
 export default function OnboardingPage() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  const [role, setRole] = useState("student");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [user, setUser] = useState<any>(null);
+  const [role, setRole] = useState("student");
   const router = useRouter();
 
   useEffect(() => {
@@ -26,7 +26,15 @@ export default function OnboardingPage() {
       // Check if user already exists
       const userDoc = await getDoc(doc(db, "users", currentUser.uid));
       if (userDoc.exists()) {
-        router.push("/dashboard");
+        const data = userDoc.data();
+        if (data.firstName && data.lastName) {
+          router.push("/dashboard");
+        } else {
+          // Pre-fill role if set
+          if (data.role) {
+            setRole(data.role);
+          }
+        }
       }
     });
 
@@ -108,32 +116,6 @@ export default function OnboardingPage() {
             </div>
           </div>
 
-          <div>
-            <label className="block mb-2 text-sm font-semibold text-slate-700">Role</label>
-            <div className="relative">
-              <select
-                value={role}
-                onChange={(e) => setRole(e.target.value)}
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-900 transition appearance-none"
-              >
-                <option value="student">Student</option>
-                <option value="company">Firma</option>
-                <option value="coordinator">Koordinátor</option>
-                <option value="mentor">Mentor / Učitel</option>
-                <option value="institution">Instituce</option>
-              </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-500">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
-              </div>
-            </div>
-            <p className="mt-2 text-sm text-slate-500 bg-slate-50 p-3 rounded-lg border border-slate-100">
-              {role === 'student' && "Jako student můžete žádat o stáže, nahrávat smlouvy a hodnotit praxi."}
-              {role === 'company' && "Jako firma můžete přijímat stážisty, spravovat smlouvy a přidávat nabídky."}
-              {role === 'coordinator' && "Jako koordinátor máte přehled o všech stážích a schvalujete je."}
-              {role === 'mentor' && "Jako mentor můžete schvalovat odpracované hodiny a hodnotit studenty."}
-              {role === 'institution' && "Jako instituce spravujete své mentory a celkový průběh praxí."}
-            </p>
-          </div>
 
           <button
             type="submit"

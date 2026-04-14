@@ -3,11 +3,12 @@
 import { useState, useEffect } from "react";
 import { sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink } from "firebase/auth";
 import { useRouter } from "next/navigation";
-import { auth } from "../../lib/firebase";
+import { auth, functions } from "../../lib/firebase";
+import { httpsCallable } from "firebase/functions";
 import Link from "next/link";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
@@ -46,21 +47,25 @@ export default function LoginPage() {
     setError("");
     setMessage("");
 
-    const actionCodeSettings = {
-      // URL you want to redirect back to. The domain (www.example.com) for this
-      // URL must be in the authorized domains list in the Firebase Console.
-      url: window.location.origin + '/login',
-      // This must be true.
-      handleCodeInApp: true,
-    };
-
     try {
-      await sendSignInLinkToEmail(auth, email, actionCodeSettings);
-      window.localStorage.setItem('emailForSignIn', email);
+      // 1. Resolve identifier to email and check if user exists (Whitelist check)
+      const resolveIdentifierFn = httpsCallable(functions, 'resolveLoginIdentifier');
+      const resolveResult = await resolveIdentifierFn({ identifier });
+      const resolvedEmail = (resolveResult.data as any).email;
+
+      // 2. Prepare Magic Link settings
+      const actionCodeSettings = {
+        url: window.location.origin + '/login',
+        handleCodeInApp: true,
+      };
+
+      // 3. Send Magic Link
+      await sendSignInLinkToEmail(auth, resolvedEmail, actionCodeSettings);
+      window.localStorage.setItem('emailForSignIn', resolvedEmail);
       setMessage("Odkaz pro přihlášení byl odeslán na váš e-mail.");
     } catch (err: any) {
       console.error(err);
-      setError(err.message || "Nepodařilo se odeslat e-mail.");
+      setError(err.message || "Nepodařilo se odeslat e-mail. Zkontrolujte, zda jste zadali správné údaje.");
     } finally {
       setLoading(false);
     }
@@ -119,16 +124,16 @@ export default function LoginPage() {
           {!message && (
             <form onSubmit={handleLogin} className="space-y-5">
               <div>
-                <label htmlFor="email" className="block text-sm font-semibold text-slate-700 mb-2">
-                  E-mail
+                <label htmlFor="identifier" className="block text-sm font-semibold text-slate-700 mb-2">
+                  E-mail nebo Univerzitní ID
                 </label>
                 <input
-                  type="email"
-                  id="email"
+                  type="text"
+                  id="identifier"
                   className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition text-slate-900"
-                  placeholder="jmeno@priklad.cz"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="jmeno@priklad.cz nebo 123456"
+                  value={identifier}
+                  onChange={(e) => setIdentifier(e.target.value)}
                   required
                 />
               </div>

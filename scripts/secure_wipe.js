@@ -43,7 +43,7 @@ async function deleteUsers(nextPageToken) {
     const uids = [];
     listUsersResult.users.forEach((userRecord) => {
         // KEEP THE ADMIN ACCOUNT
-        if (userRecord.email !== "admin@praxihub.cz" && userRecord.email !== "anet@praxihub.cz") {
+        if (userRecord.email !== "admin@praxihub.cz" && userRecord.email !== "anet@praxihub.cz" && userRecord.email !== "praxihub@gmail.com") {
              uids.push(userRecord.uid);
         }
     });

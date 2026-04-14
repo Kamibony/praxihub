@@ -8,7 +8,7 @@ import { onAuthStateChanged } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import Chatbot from "@/components/Chatbot";
 import ContractSignature from "@/components/ContractSignature";
-import { Download, Upload, FileText, Trash2 } from 'lucide-react';
+import { Download, Upload, FileText, Trash2, Database } from 'lucide-react';
 import { ref, uploadBytes, listAll, getDownloadURL, deleteObject } from "firebase/storage";
 import { storage } from "../../../lib/firebase";
 
@@ -352,6 +352,13 @@ export default function CoordinatorDashboard() {
             <p className="text-gray-600 mt-2 text-sm md:text-base">Manažment a monitoring všech smluv a dokumentů</p>
           </div>
           <div className="flex flex-wrap items-center gap-2 md:gap-4 w-full md:w-auto">
+            <button
+              onClick={() => router.push('/admin/documents')}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded font-bold shadow hover:bg-indigo-700 transition text-sm"
+            >
+              <Database size={16} />
+              Centrum dokumentů
+            </button>
             <span className="text-sm text-gray-500 hidden md:inline">Přihlášen jako: Koordinátor</span>
 
             <label className={`flex items-center gap-2 text-sm px-4 py-2 border rounded transition-colors cursor-pointer ${uploading ? 'bg-gray-100 text-gray-400 border-gray-200' : 'bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100'}`}>
