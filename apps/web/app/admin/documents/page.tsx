@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { db, functions } from "../../../lib/firebase";
 import { doc, getDoc, serverTimestamp } from "firebase/firestore";
+import { ref, uploadBytes } from "firebase/storage";
+import { storage } from "../../../lib/firebase";
 import { httpsCallable } from "firebase/functions";
 import { Save, Play, AlertTriangle, FileText, Database, Archive } from 'lucide-react';
 import Navbar from "@/components/Navbar";
@@ -16,15 +18,26 @@ export default function DocumentCenter() {
   const [testResult, setTestResult] = useState<any>(null);
   const [testReflection, setTestReflection] = useState('');
   const [activeTab, setActiveTab] = useState<'AI' | 'IMPORT' | 'TEMPLATES' | 'COMPLIANCE'>('AI');
+  const [importFormat, setImportFormat] = useState('UPV');
+  const [importing, setImporting] = useState(false);
+  const [importStats, setImportStats] = useState<any>(null);
+
+  const [uploadingTemplate, setUploadingTemplate] = useState(false);
+  const [uploadingCompliance, setUploadingCompliance] = useState(false);
 
   useEffect(() => {
     const fetchRules = async () => {
-      const docRef = doc(db, 'system_configs', 'ai_krau_rules');
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
-        setRules(docSnap.data().content);
+      try {
+        const docRef = doc(db, 'system_configs', 'ai_krau_rules');
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          setRules(docSnap.data().content);
+        }
+      } catch (e) {
+        console.error('Error fetching rules', e);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
     fetchRules();
   }, []);
@@ -63,6 +76,47 @@ export default function DocumentCenter() {
     }
     setTesting(false);
   };
+
+
+  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setImporting(true);
+    setImportStats(null);
+    try {
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+        const base64Data = (event.target?.result as string).split(',')[1];
+        const importFn = httpsCallable(functions, 'importRoster');
+        const res = await importFn({ fileData: base64Data, format: importFormat });
+        setImportStats(res.data);
+        setImporting(false);
+      };
+      reader.readAsDataURL(file);
+    } catch (error) {
+      console.error("Import failed", error);
+      alert('Chyba při importu.');
+      setImporting(false);
+    }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, pathPrefix: string, setUploading: (v: boolean) => void) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      const storageRef = ref(storage, `global_documents/${pathPrefix}/${file.name}`);
+      await uploadBytes(storageRef, file);
+      alert('Soubor úspěšně nahrán.');
+    } catch (err) {
+      console.error(err);
+      alert('Chyba při nahrávání souboru.');
+    }
+    setUploading(false);
+  };
+
 
   if (loading) return <div className="p-8">Načítám...</div>;
 
@@ -176,27 +230,84 @@ export default function DocumentCenter() {
         </div>
         )}
 
-        {activeTab === 'IMPORT' && (
-          <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-200 flex flex-col items-center justify-center text-center h-64">
-             <Database size={48} className="text-slate-300 mb-4" />
-             <h2 className="text-xl font-bold text-slate-700">Data Import Engine</h2>
-             <p className="text-slate-500 mt-2">Nástroj pro bezpečný import dat z Excelu (UPV2) bude brzy zprovozněn.</p>
+                {activeTab === 'IMPORT' && (
+          <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-200">
+            <div className="flex items-center gap-3 mb-6 border-b border-slate-100 pb-4">
+              <Database size={24} className="text-blue-600" />
+              <h2 className="text-xl font-bold text-slate-800">Data Import Engine</h2>
+            </div>
+
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-slate-700 mb-2">Formát importu</label>
+              <select
+                value={importFormat}
+                onChange={(e) => setImportFormat(e.target.value)}
+                className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+              >
+                <option value="UPV">Odbor Učitelství (UPV) - Komplexní formát</option>
+                <option value="KP">Odbor Kariérové poradenství (KP) - Standardní formát</option>
+              </select>
+            </div>
+
+            <div className="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center bg-slate-50 relative hover:bg-slate-100 transition">
+              <input
+                type="file"
+                accept=".xlsx,.xls"
+                onChange={handleImport}
+                disabled={importing}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
+              />
+              <div className="flex flex-col items-center pointer-events-none">
+                <Database size={48} className="text-slate-400 mb-4" />
+                <p className="font-medium text-slate-700 text-lg">
+                  {importing ? 'Zpracovávám data...' : 'Klikněte nebo přetáhněte Excel soubor'}
+                </p>
+                <p className="text-sm text-slate-500 mt-2">Podporované formáty: .xlsx, .xls</p>
+              </div>
+            </div>
+
+            {importStats && (
+              <div className="mt-8 bg-green-50 border border-green-200 rounded-lg p-4 text-green-800">
+                <h3 className="font-bold mb-2">Import úspěšně dokončen</h3>
+                <ul className="list-disc pl-5 text-sm space-y-1">
+                  <li>Přidáno studentů: {importStats.added}</li>
+                  <li>Aktualizováno studentů: {importStats.updated}</li>
+                  <li>Ignorováno řádků: {importStats.ignored}</li>
+                </ul>
+              </div>
+            )}
           </div>
         )}
 
-        {activeTab === 'TEMPLATES' && (
-          <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-200 flex flex-col items-center justify-center text-center h-64">
-             <FileText size={48} className="text-slate-300 mb-4" />
-             <h2 className="text-xl font-bold text-slate-700">Template Manager</h2>
-             <p className="text-slate-500 mt-2">Správa statických šablon (PDF, manuály) ve Firebase Storage bude integrována sem.</p>
+                {activeTab === 'TEMPLATES' && (
+          <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-200 flex flex-col items-center justify-center text-center h-64 relative hover:bg-slate-50 transition">
+             <input
+                type="file"
+                onChange={(e) => handleFileUpload(e, 'templates', setUploadingTemplate)}
+                disabled={uploadingTemplate}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
+              />
+             <FileText size={48} className="text-slate-300 mb-4 pointer-events-none" />
+             <h2 className="text-xl font-bold text-slate-700 pointer-events-none">Template Manager</h2>
+             <p className="text-slate-500 mt-2 pointer-events-none">
+               {uploadingTemplate ? 'Nahrávám...' : 'Klikněte pro nahrání šablony (PDF, DOCX) do Firebase Storage.'}
+             </p>
           </div>
         )}
 
-        {activeTab === 'COMPLIANCE' && (
-          <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-200 flex flex-col items-center justify-center text-center h-64">
-             <Archive size={48} className="text-slate-300 mb-4" />
-             <h2 className="text-xl font-bold text-slate-700">Compliance Archive</h2>
-             <p className="text-slate-500 mt-2">Archiv rámcových smluv s institucemi se připravuje.</p>
+                {activeTab === 'COMPLIANCE' && (
+          <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-200 flex flex-col items-center justify-center text-center h-64 relative hover:bg-slate-50 transition">
+             <input
+                type="file"
+                onChange={(e) => handleFileUpload(e, 'compliance', setUploadingCompliance)}
+                disabled={uploadingCompliance}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
+              />
+             <Archive size={48} className="text-slate-300 mb-4 pointer-events-none" />
+             <h2 className="text-xl font-bold text-slate-700 pointer-events-none">Compliance Archive</h2>
+             <p className="text-slate-500 mt-2 pointer-events-none">
+               {uploadingCompliance ? 'Nahrávám...' : 'Klikněte pro nahrání rámcové smlouvy do Firebase Storage.'}
+             </p>
           </div>
         )}
 

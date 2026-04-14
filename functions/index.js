@@ -524,11 +524,7 @@ exports.importRoster = functions.https.onCall(async (data, context) => {
     throw new functions.https.HttpsError('unauthenticated', 'Must be logged in.');
   }
 
-  // Basic role check (optional but good practice)
-  // Assuming the client calling this is an admin/coordinator
-  // You might want to check the caller's role in their user document
-
-  const { fileData } = data;
+  const { fileData, format } = data;
   if (!fileData) {
     throw new functions.https.HttpsError('invalid-argument', 'Missing file data.');
   }
@@ -544,75 +540,147 @@ exports.importRoster = functions.https.onCall(async (data, context) => {
 
   const sheetName = workbook.SheetNames[0];
   const worksheet = workbook.Sheets[sheetName];
-  const rows = xlsx.utils.sheet_to_json(worksheet);
-
   const db = admin.firestore();
 
   let added = 0;
   let updated = 0;
   let ignored = 0;
 
-  // For this implementation, we will process rows individually in transactions to ensure safety.
-  // Alternatively, batches with preliminary reads could be used.
-  for (const row of rows) {
-    // Attempt to parse out some standard fields.
-    // Excel columns might be named 'Email', 'email', 'Student ID', 'studentId', etc.
-    const email = row['Email'] || row['email'] || row['E-mail'];
-    const schoolId = row['School ID'] || row['SchoolID'] || row['schoolId'] || row['Institution ID'];
-    const firstName = row['First Name'] || row['firstName'] || row['Jméno'];
-    const lastName = row['Last Name'] || row['lastName'] || row['Příjmení'];
+  // Helper to normalize names
+  const normalizeName = (name) => {
+    if (!name) return '';
+    return name
+      .replace(/Bc\.|Mgr\.|Ing\.|Ph\.D\.|prof\.|doc\./gi, '')
+      .replace(/,/g, '')
+      .trim()
+      .replace(/\s+/g, ' ');
+  };
 
-    // We will key off of email.
-    if (!email) {
+  const processUser = async (userObj) => {
+    if (!userObj.name) {
       ignored++;
-      continue;
+      return;
     }
+
+    const normalizedName = normalizeName(userObj.name);
 
     try {
       await db.runTransaction(async (transaction) => {
         const usersRef = db.collection('users');
-        const q = usersRef.where('email', '==', email).limit(1);
+        // Simple search by normalized name or ID for UPSERT. Note: Firestore queries inside transactions require care.
+        // We do a simple get based on a where clause.
+        const q = usersRef.where('normalizedName', '==', normalizedName).limit(1);
         const snapshot = await transaction.get(q);
 
-        if (snapshot.empty) {
-          // User does not exist, create a stub document
-          // Using a new doc reference
-          const newDocRef = usersRef.doc();
-          transaction.set(newDocRef, {
-            email: email,
-            firstName: firstName || '',
-            lastName: lastName || '',
-            schoolId: schoolId || null,
+        if (!snapshot.empty) {
+          // Update existing
+          const userDoc = snapshot.docs[0];
+          transaction.update(userDoc.ref, {
+            schoolId: userObj.schoolId || userDoc.data().schoolId,
+            year: userObj.year || userDoc.data().year,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp()
+          });
+
+          // Ensure an initial internship record is created/updated for the imported student
+          const internshipsRef = userDoc.ref.collection('internships').doc('current');
+          transaction.set(internshipsRef, {
+            status: 'DRAFT',
+            updatedAt: admin.firestore.FieldValue.serverTimestamp()
+          }, { merge: true });
+
+          updated++;
+        } else {
+          // Create new
+          const newUserRef = usersRef.doc();
+          transaction.set(newUserRef, {
+            name: userObj.name,
+            normalizedName: normalizedName,
             role: 'student',
+            schoolId: userObj.schoolId || null,
+            year: userObj.year || null,
+            email: `${normalizedName.replace(/\s+/g, '.').toLowerCase()}@placeholder.com`, // Mock email
             createdAt: admin.firestore.FieldValue.serverTimestamp()
           });
+
+          // Add default internships subcollection
+          const internshipsRef = newUserRef.collection('internships').doc('current');
+          transaction.set(internshipsRef, {
+            status: 'DRAFT',
+            createdAt: admin.firestore.FieldValue.serverTimestamp()
+          });
+
           added++;
-        } else {
-          // User exists, implement the SAFEGUARD
-          const doc = snapshot.docs[0];
-          const existingData = doc.data();
-          const updateData = {};
-
-          if (firstName && !existingData.firstName) updateData.firstName = firstName;
-          if (lastName && !existingData.lastName) updateData.lastName = lastName;
-
-          // CRUCIAL SAFEGUARD: Do not overwrite an existing, populated schoolId
-          if (!existingData.schoolId && schoolId) {
-             updateData.schoolId = schoolId;
-          }
-
-          // Optional: Update other fields (e.g. hours) if requested by requirements
-          // (No specific additional fields mentioned in prompt except schoolId and standard roster info)
-
-          if (Object.keys(updateData).length > 0) {
-            transaction.update(doc.ref, updateData);
-            updated++;
-          }
         }
       });
-    } catch (error) {
-      console.error("Error processing row:", error);
+    } catch (e) {
+      console.error('Transaction failed for user', userObj.name, e);
       ignored++;
+    }
+  };
+
+  if (format === 'UPV') {
+    // Logic A: The "UPV" Format
+    const rawData = xlsx.utils.sheet_to_json(worksheet, { header: 1 });
+    let headerRowIdx = -1;
+    let schoolColIdx = -1;
+    let nameColIdx = -1;
+
+    // Dynamically find the header row by searching for "Škola" and "1. týden"
+    for (let i = 0; i < rawData.length; i++) {
+      const row = rawData[i];
+      if (!row) continue;
+
+      const hasSkola = row.some(cell => typeof cell === 'string' && cell.toLowerCase().includes('škola'));
+      const hasTyden = row.some(cell => typeof cell === 'string' && cell.toLowerCase().includes('1. týden'));
+
+      if (hasSkola && hasTyden) {
+        headerRowIdx = i;
+        schoolColIdx = row.findIndex(cell => typeof cell === 'string' && cell.toLowerCase().includes('škola'));
+        // Find where names start (simplified: assuming column before '1. týden')
+        const tydenColIdx = row.findIndex(cell => typeof cell === 'string' && cell.toLowerCase().includes('1. týden'));
+        nameColIdx = tydenColIdx - 1;
+        break;
+      }
+    }
+
+    if (headerRowIdx !== -1 && schoolColIdx !== -1 && nameColIdx !== -1) {
+      let activeSchoolId = null; // Rolling State for merged cells
+
+      for (let i = headerRowIdx + 1; i < rawData.length; i++) {
+        const row = rawData[i];
+        if (!row || row.length === 0) continue;
+
+        // Carry down the last known school
+        if (row[schoolColIdx]) {
+          activeSchoolId = row[schoolColIdx];
+        }
+
+        const rawName = row[nameColIdx];
+        if (rawName && typeof rawName === 'string') {
+          await processUser({
+            name: rawName.trim(),
+            schoolId: activeSchoolId
+          });
+        }
+      }
+    } else {
+      throw new functions.https.HttpsError('invalid-argument', 'Could not find required headers in UPV format.');
+    }
+  } else {
+    // Logic B: The "KP" Format (Standard)
+    const rows = xlsx.utils.sheet_to_json(worksheet);
+    for (const row of rows) {
+      const name = row['Name'] || row['Jméno'] || row['Student'];
+      const year = row['Year'] || row['Ročník'];
+      const schoolId = row['Location'] || row['Škola'] || row['Místo'];
+
+      if (name) {
+        await processUser({
+          name: name.trim(),
+          year: year,
+          schoolId: schoolId
+        });
+      }
     }
   }
 
