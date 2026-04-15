@@ -11,7 +11,9 @@ import Navbar from "@/components/Navbar";
 import Link from 'next/link';
 
 export default function DocumentCenter() {
-  const [rules, setRules] = useState('');
+  const [rulesUpv, setRulesUpv] = useState('');
+  const [rulesKpv, setRulesKpv] = useState('');
+  const [activeRuleTab, setActiveRuleTab] = useState<'UPV' | 'KPV'>('UPV');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
@@ -28,10 +30,23 @@ export default function DocumentCenter() {
   useEffect(() => {
     const fetchRules = async () => {
       try {
-        const docRef = doc(db, 'system_configs', 'ai_krau_rules');
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          setRules(docSnap.data().content);
+        const docRefUpv = doc(db, 'system_configs', 'ai_rules_upv');
+        const docSnapUpv = await getDoc(docRefUpv);
+        if (docSnapUpv.exists()) {
+          setRulesUpv(docSnapUpv.data().content);
+        } else {
+            // Fallback for legacy data
+            const docRefLegacy = doc(db, 'system_configs', 'ai_krau_rules');
+            const docSnapLegacy = await getDoc(docRefLegacy);
+            if (docSnapLegacy.exists()) {
+                setRulesUpv(docSnapLegacy.data().content);
+            }
+        }
+
+        const docRefKpv = doc(db, 'system_configs', 'ai_rules_kpv');
+        const docSnapKpv = await getDoc(docRefKpv);
+        if (docSnapKpv.exists()) {
+          setRulesKpv(docSnapKpv.data().content);
         }
       } catch (e) {
         console.error('Error fetching rules', e);
@@ -43,15 +58,19 @@ export default function DocumentCenter() {
   }, []);
 
   const handleSave = async () => {
-    if (!confirm("Upozornění: Změna těchto pravidel okamžitě ovlivní, jak umělá inteligence hodnotí všechny budoucí reflexe studentů. Opravdu chcete změny uložit?")) return;
+    if (!confirm("Upozornění: Změna těchto pravidel okamžitě ovlivní, jak umělá inteligence hodnotí všechny budoucí reflexe studentů pro zvolený obor. Opravdu chcete změny uložit?")) return;
 
     setSaving(true);
     try {
       const updateFn = httpsCallable(functions, 'updateSystemConfig');
+      const docId = activeRuleTab === 'UPV' ? 'ai_rules_upv' : 'ai_rules_kpv';
+      const content = activeRuleTab === 'UPV' ? rulesUpv : rulesKpv;
+      const title = activeRuleTab === 'UPV' ? 'Metodika UPV (Učitelství)' : 'Metodika KPV (Poradenství)';
+
       await updateFn({
-        docId: "ai_krau_rules",
-        title: "KRAU MŠMT Hodnotící Metodika",
-        content: rules,
+        docId: docId,
+        title: title,
+        content: content,
         isCritical: true
       });
       alert('Pravidla byla úspěšně uložena.');
@@ -68,7 +87,8 @@ export default function DocumentCenter() {
     setTestResult(null);
     try {
       const evaluateFn = httpsCallable(functions, 'testEvaluateReflection');
-      const res = await evaluateFn({ reflectionText: testReflection, rulesText: rules });
+      const currentRules = activeRuleTab === 'UPV' ? rulesUpv : rulesKpv;
+      const res = await evaluateFn({ reflectionText: testReflection, rulesText: currentRules });
       setTestResult(res.data);
     } catch (e) {
       console.error(e);
@@ -171,11 +191,27 @@ export default function DocumentCenter() {
           <div className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Editor */}
             <div className="flex flex-col h-[600px]">
-              <label className="block text-sm font-medium text-slate-700 mb-2">Pravidla a metodika (Markdown)</label>
+              <div className="flex justify-between items-center mb-2">
+                <label className="block text-sm font-medium text-slate-700">Pravidla a metodika (Markdown)</label>
+                <div className="flex bg-slate-100 rounded-lg p-1">
+                  <button
+                    onClick={() => setActiveRuleTab('UPV')}
+                    className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${activeRuleTab === 'UPV' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                  >
+                    UPV (Učitelství)
+                  </button>
+                  <button
+                    onClick={() => setActiveRuleTab('KPV')}
+                    className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${activeRuleTab === 'KPV' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                  >
+                    KPV (Poradenství)
+                  </button>
+                </div>
+              </div>
               <textarea
                 className="flex-1 w-full p-4 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none font-mono text-sm"
-                value={rules}
-                onChange={(e) => setRules(e.target.value)}
+                value={activeRuleTab === 'UPV' ? rulesUpv : rulesKpv}
+                onChange={(e) => activeRuleTab === 'UPV' ? setRulesUpv(e.target.value) : setRulesKpv(e.target.value)}
               />
               <button
                 onClick={handleSave}

@@ -834,23 +834,32 @@ exports.evaluateReflection = functions.https.onCall(async (data, context) => {
       }
     });
 
-    // Fetch dynamic rules
-    const krauDoc = await db.collection("system_configs").doc("ai_krau_rules").get();
-    let krauRules = `Jste expertní hodnotitel studentských reflexí odborné praxe.
-Hodnoťte text striktně podle 4 pilířů státní metodiky MŠMT KRAU:
-1. Oborově-předmětová a didaktická kompetence (didacticCompetence) - Hodnocení cílů, SMART plánování a výukových materiálů.
-2. Pedagogická a psychologická kompetence (pedagogicalCompetence) - Hodnocení průběhu hodiny, struktury a aktivizace studentů.
-3. Komunikativní a sociální kompetence (socialCompetence) - Hodnocení osobnosti učitele, komunikace a klimatu třídy.
-4. Profesní a sebereflektivní kompetence (reflectiveCompetence) - Hodnocení hloubky a kritického myšlení samotné reflexe.
+    // Fetch dynamic rules based on major
+    const major = internshipData.studentMajor || 'UPV';
+    const configDocId = major === 'KPV' ? 'ai_rules_kpv' : 'ai_rules_upv';
+
+    let krauDoc = await db.collection("system_configs").doc(configDocId).get();
+
+    // Fallback to legacy rules if UPV rules not set yet
+    if (!krauDoc.exists && major === 'UPV') {
+        krauDoc = await db.collection("system_configs").doc("ai_krau_rules").get();
+    }
+
+    let rulesContent = `Jste expertní hodnotitel studentských reflexí odborné praxe.
+Hodnoťte text striktně podle 4 pilířů metodiky:
+1. Oborově-předmětová a didaktická kompetence (didacticCompetence)
+2. Pedagogická a psychologická kompetence (pedagogicalCompetence)
+3. Komunikativní a sociální kompetence (socialCompetence)
+4. Profesní a sebereflektivní kompetence (reflectiveCompetence)
 
 Váš výstup musí být výhradně validní JSON objekt.
 Veškeré texty pro zpětnou vazbu (reasoning) musí být napsány v profesionální a gramaticky bezchybné češtině.`;
 
     if (krauDoc.exists) {
-        krauRules = krauDoc.data().content + "\n\nVáš výstup musí být výhradně validní JSON objekt.\nVeškeré texty pro zpětnou vazbu (reasoning) musí být napsány v profesionální a gramaticky bezchybné češtině.";
+        rulesContent = krauDoc.data().content + "\n\nVáš výstup musí být výhradně validní JSON objekt.\nVeškeré texty pro zpětnou vazbu (reasoning) musí být napsány v profesionální a gramaticky bezchybné češtině.";
     }
 
-    const systemPrompt = krauRules;
+    const systemPrompt = rulesContent;
 
     const result = await model.generateContent(`${systemPrompt}\n\nText reflexe:\n${reflectionText}`);
     const responseText = result.response.text();
