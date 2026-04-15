@@ -667,7 +667,7 @@ exports.importRoster = functions.https.onCall(async (data, context) => {
       throw new functions.https.HttpsError('invalid-argument', 'Could not find required headers in UPV format.');
     }
   } else {
-    // Logic B: The "KP" Format (Standard) - Fuzzy Matching
+    // Logic B: The "KP" Format (Standard) - Fuzzy Matching with Dynamic Headers
     const normalizeHeader = (header) => {
       if (!header || typeof header !== 'string') return '';
       return header
@@ -678,50 +678,68 @@ exports.importRoster = functions.https.onCall(async (data, context) => {
         .replace(/\s+/g, ' ');
     };
 
-    const nameAliases = ['jmeno', 'prijmeni', 'student', 'osoba', 'name', 'jmeno a prijmeni', 'student/ka'];
+    const nameAliases = ['jmeno', 'prijmeni', 'student', 'osoba', 'name', 'jmeno a prijmeni', 'student/ka', 'prijmennni'];
     const yearAliases = ['rocnik', 'rok', 'year', 'trida'];
-    const locationAliases = ['lokace', 'skola', 'misto', 'location', 'ustav', 'organizace'];
+    const locationAliases = ['lokace', 'skola', 'misto', 'location', 'ustav', 'organizace', 'nazev', 'zeme'];
 
     const rawRows = xlsx.utils.sheet_to_json(worksheet, { header: 1 });
-    if (rawRows.length > 0) {
-      const headers = rawRows[0];
-      let nameColIdx = -1;
-      let yearColIdx = -1;
-      let locationColIdx = -1;
+    let headerRowIdx = -1;
+    let nameColIdx = -1;
+    let yearColIdx = -1;
+    let locationColIdx = -1;
 
-      for (let i = 0; i < headers.length; i++) {
-        const normHeader = normalizeHeader(headers[i]);
+    // Scan first 15 rows for the header
+    for (let rowIndex = 0; rowIndex < Math.min(15, rawRows.length); rowIndex++) {
+      const row = rawRows[rowIndex];
+      if (!row || row.length === 0) continue;
+
+      let tempNameColIdx = -1;
+      for (let i = 0; i < row.length; i++) {
+        const normHeader = normalizeHeader(row[i]);
         if (nameAliases.includes(normHeader) || nameAliases.some(alias => normHeader.includes(alias))) {
-          if (nameColIdx === -1) nameColIdx = i; // prioritize first match
-        }
-        if (yearAliases.includes(normHeader) || yearAliases.some(alias => normHeader.includes(alias))) {
-          if (yearColIdx === -1) yearColIdx = i;
-        }
-        if (locationAliases.includes(normHeader) || locationAliases.some(alias => normHeader.includes(alias))) {
-          if (locationColIdx === -1) locationColIdx = i;
+          tempNameColIdx = i;
+          break;
         }
       }
 
-      if (nameColIdx !== -1) {
-        for (let i = 1; i < rawRows.length; i++) {
-          const row = rawRows[i];
-          if (!row || row.length === 0) continue;
+      if (tempNameColIdx !== -1) {
+        headerRowIdx = rowIndex;
+        nameColIdx = tempNameColIdx;
 
-          const name = row[nameColIdx];
-          const year = yearColIdx !== -1 ? row[yearColIdx] : null;
-          const schoolId = locationColIdx !== -1 ? row[locationColIdx] : null;
-
-          if (name && typeof name === 'string') {
-            await processUser({
-              name: name.trim(),
-              year: year,
-              schoolId: schoolId
-            });
+        // Find other columns in this header row
+        for (let i = 0; i < row.length; i++) {
+          if (i === nameColIdx) continue;
+          const normHeader = normalizeHeader(row[i]);
+          if (yearColIdx === -1 && (yearAliases.includes(normHeader) || yearAliases.some(alias => normHeader.includes(alias)))) {
+            yearColIdx = i;
+          }
+          if (locationColIdx === -1 && (locationAliases.includes(normHeader) || locationAliases.some(alias => normHeader.includes(alias)))) {
+            locationColIdx = i;
           }
         }
-      } else {
-        throw new functions.https.HttpsError('invalid-argument', 'Could not find a valid Name/Student column in KP format.');
+        break;
       }
+    }
+
+    if (headerRowIdx !== -1 && nameColIdx !== -1) {
+      for (let i = headerRowIdx + 1; i < rawRows.length; i++) {
+        const row = rawRows[i];
+        if (!row || row.length === 0) continue;
+
+        const name = row[nameColIdx];
+        const year = yearColIdx !== -1 ? row[yearColIdx] : null;
+        const schoolId = locationColIdx !== -1 ? row[locationColIdx] : null;
+
+        if (name && typeof name === 'string') {
+          await processUser({
+            name: name.trim(),
+            year: year,
+            schoolId: schoolId
+          });
+        }
+      }
+    } else {
+      throw new functions.https.HttpsError('invalid-argument', 'Could not find a valid Name/Student column in KP format.');
     }
   }
 
