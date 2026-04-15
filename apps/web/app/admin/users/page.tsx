@@ -2,13 +2,26 @@
 
 import React, { useEffect, useState } from 'react';
 import { db, auth } from "../../../lib/firebase";
-import { collection, query, onSnapshot, orderBy } from "firebase/firestore";
+import { collection, query, onSnapshot, orderBy, doc, deleteDoc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Users, Search, Filter } from 'lucide-react';
 
 export default function UserManagementPage() {
+  const handleDeleteUser = async (userId: string, userName: string) => {
+    if (window.confirm(`Opravdu chcete smazat uživatele ${userName || 'Bez jména'}? Tato akce je nevratná.`)) {
+      try {
+        await deleteDoc(doc(db, "users", userId));
+        // Note: In a full app, you might also want to delete the user from Firebase Auth using an Admin SDK cloud function.
+        // For cleaning up ghost accounts in Firestore during this database wipe phase, deleting the doc is often the primary goal.
+      } catch (error) {
+        console.error("Chyba při mazání uživatele:", error);
+        alert("Nepodařilo se smazat uživatele.");
+      }
+    }
+  };
+
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -121,6 +134,7 @@ export default function UserManagementPage() {
                   <th className="px-6 py-4">Zaměření (Major)</th>
                   <th className="px-6 py-4">Ročník</th>
                   <th className="px-6 py-4">Škola / Organizace</th>
+                  <th className="px-6 py-4 text-right">Akce</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -142,6 +156,14 @@ export default function UserManagementPage() {
                       </td>
                       <td className="px-6 py-4 text-slate-600">
                         {u.schoolId || u.companyName || u.organizationName || '-'}
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <button
+                          onClick={() => handleDeleteUser(u.id, u.name || u.displayName)}
+                          className="text-red-600 hover:text-red-800 text-sm font-medium transition"
+                        >
+                          Odstranit
+                        </button>
                       </td>
                     </tr>
                   ))
