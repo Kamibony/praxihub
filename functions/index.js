@@ -946,6 +946,15 @@ exports.signContract = functions.https.onCall(async (data, context) => {
     if (role === 'student' && internshipData.studentId !== context.auth.uid) {
       throw new functions.https.HttpsError("permission-denied", "Nemáte oprávnění podepsat za studenta.");
     }
+
+    // Check if the internship requires tripartite signature
+    const major = internshipData.studentMajor || internshipData.major || "UPV";
+    if (major === "UPV") {
+      throw new functions.https.HttpsError(
+        "failed-precondition",
+        "Pro obor UPV není elektronický podpis podporován/vyžadován."
+      );
+    }
     // Simplification: In a real app we would check if context.auth.uid is the actual coordinator or company user assigned.
     // For now, we trust the caller's role if it matches the general requirements. We could verify the user's role from the users collection.
     const userDoc = await transaction.get(db.collection("users").doc(context.auth.uid));
