@@ -9,6 +9,7 @@ import { httpsCallable } from "firebase/functions";
 import { Save, Play, AlertTriangle, FileText, Database, Archive } from 'lucide-react';
 import Navbar from "@/components/Navbar";
 import Link from 'next/link';
+import VisualMappingImport from '../../../components/VisualMappingImport';
 
 export default function DocumentCenter() {
   const [rulesUpv, setRulesUpv] = useState('');
@@ -98,28 +99,6 @@ export default function DocumentCenter() {
   };
 
 
-  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setImporting(true);
-    setImportStats(null);
-    try {
-      const reader = new FileReader();
-      reader.onload = async (event) => {
-        const base64Data = (event.target?.result as string).split(',')[1];
-        const importFn = httpsCallable(functions, 'importRoster');
-        const res = await importFn({ fileData: base64Data, format: importFormat });
-        setImportStats(res.data);
-        setImporting(false);
-      };
-      reader.readAsDataURL(file);
-    } catch (error) {
-      console.error("Import failed", error);
-      alert('Chyba při importu.');
-      setImporting(false);
-    }
-  };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, pathPrefix: string, setUploading: (v: boolean) => void) => {
     const file = e.target.files?.[0];
@@ -270,39 +249,12 @@ export default function DocumentCenter() {
           <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-200">
             <div className="flex items-center gap-3 mb-6 border-b border-slate-100 pb-4">
               <Database size={24} className="text-blue-600" />
-              <h2 className="text-xl font-bold text-slate-800">Data Import Engine</h2>
+              <h2 className="text-xl font-bold text-slate-800">Data Import Engine (Vizuální mapování)</h2>
             </div>
 
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-slate-700 mb-2">Formát importu</label>
-              <select
-                value={importFormat}
-                onChange={(e) => setImportFormat(e.target.value)}
-                className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-              >
-                <option value="UPV">Odbor Učitelství (UPV) - Komplexní formát</option>
-                <option value="KP">Odbor Kariérové poradenství (KP) - Standardní formát</option>
-              </select>
-            </div>
-
-            <div className="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center bg-slate-50 relative hover:bg-slate-100 transition">
-              <input
-                type="file"
-                accept=".xlsx,.xls"
-                onChange={handleImport}
-                disabled={importing}
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
-              />
-              <div className="flex flex-col items-center pointer-events-none">
-                <Database size={48} className="text-slate-400 mb-4" />
-                <p className="font-medium text-slate-700 text-lg">
-                  {importing ? 'Zpracovávám data...' : 'Klikněte nebo přetáhněte Excel soubor'}
-                </p>
-                <p className="text-sm text-slate-500 mt-2">Podporované formáty: .xlsx, .xls</p>
-              </div>
-            </div>
-
-            {importStats && (
+            {!importStats ? (
+                <VisualMappingImport onSuccess={setImportStats} />
+            ) : (
               <div className="mt-8 bg-green-50 border border-green-200 rounded-lg p-4 text-green-800">
                 <h3 className="font-bold mb-2">Import úspěšně dokončen</h3>
                 <ul className="list-disc pl-5 text-sm space-y-1 mb-4">
@@ -310,12 +262,20 @@ export default function DocumentCenter() {
                   <li>Aktualizováno studentů: {importStats.updated}</li>
                   <li>Ignorováno řádků: {importStats.ignored}</li>
                 </ul>
-                <Link
-                  href="/admin/users"
-                  className="inline-flex items-center gap-2 text-sm font-semibold bg-white px-4 py-2 border border-green-300 rounded-lg text-green-700 hover:bg-green-100 transition"
-                >
-                  Přejít na Správu uživatelů
-                </Link>
+                <div className="flex gap-4">
+                  <Link
+                    href="/admin/users"
+                    className="inline-flex items-center gap-2 text-sm font-semibold bg-white px-4 py-2 border border-green-300 rounded-lg text-green-700 hover:bg-green-100 transition"
+                  >
+                    Přejít na Správu uživatelů
+                  </Link>
+                  <button
+                    onClick={() => setImportStats(null)}
+                    className="inline-flex items-center gap-2 text-sm font-semibold bg-white px-4 py-2 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-100 transition"
+                  >
+                    Nahrát další soubor
+                  </button>
+                </div>
               </div>
             )}
           </div>

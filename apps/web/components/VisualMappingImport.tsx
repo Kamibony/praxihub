@@ -1,0 +1,266 @@
+"use client";
+
+import React, { useState } from 'react';
+import * as xlsx from 'xlsx';
+import { Database, CheckCircle, AlertTriangle, ArrowRight, Upload } from 'lucide-react';
+import { httpsCallable } from 'firebase/functions';
+import { functions } from '../lib/firebase';
+
+interface VisualMappingImportProps {
+  onSuccess: (stats: any) => void;
+}
+
+export default function VisualMappingImport({ onSuccess }: VisualMappingImportProps) {
+  const [fileData, setFileData] = useState<any[][] | null>(null);
+  const [headers, setHeaders] = useState<string[]>([]);
+  const [importing, setImporting] = useState(false);
+
+  // Mapping state: destination field -> source column index
+  const [mapping, setMapping] = useState({
+    firstName: -1,
+    lastName: -1,
+    email: -1,
+    schoolId: -1,
+    year: -1,
+    name: -1 // Optional: combined name
+  });
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const bstr = event.target?.result;
+      const wb = xlsx.read(bstr, { type: 'binary' });
+      const wsname = wb.SheetNames[0];
+      const ws = wb.Sheets[wsname];
+      const data = xlsx.utils.sheet_to_json(ws, { header: 1 }) as any[][];
+
+      // Basic heuristic to find headers (first non-empty row)
+      let headerRowIndex = 0;
+      for (let i = 0; i < data.length; i++) {
+          if (data[i] && data[i].length > 0 && data[i].some(c => typeof c === 'string')) {
+              headerRowIndex = i;
+              break;
+          }
+      }
+
+      const rawHeaders = data[headerRowIndex] || [];
+      const cleanHeaders = rawHeaders.map((h, i) => h ? String(h) : `Sloupec ${i + 1}`);
+
+      setHeaders(cleanHeaders);
+      setFileData(data.slice(headerRowIndex + 1).filter(r => r && r.length > 0)); // Skip headers and empty rows
+
+      // Auto-guess some mappings
+      const newMapping = { ...mapping };
+      cleanHeaders.forEach((h, i) => {
+          const lower = h.toLowerCase();
+          if (lower.includes('jméno') && !lower.includes('příjmení')) newMapping.firstName = i;
+          if (lower.includes('příjmení')) newMapping.lastName = i;
+          if (lower.includes('jméno') && lower.includes('příjmení')) newMapping.name = i;
+          if (lower.includes('email') || lower.includes('e-mail')) newMapping.email = i;
+          if (lower.includes('škola') || lower.includes('organizace') || lower.includes('lokace')) newMapping.schoolId = i;
+          if (lower.includes('ročník') || lower.includes('rok')) newMapping.year = i;
+      });
+      setMapping(newMapping);
+    };
+    reader.readAsBinaryString(file);
+  };
+
+  const handleMappingChange = (field: string, val: string) => {
+      setMapping(prev => ({ ...prev, [field]: parseInt(val) }));
+  };
+
+  const executeImport = async () => {
+    if (!fileData) return;
+    setImporting(true);
+
+    // Validate mapping
+    if (mapping.name === -1 && (mapping.firstName === -1 || mapping.lastName === -1)) {
+        alert("Musíte namapovat buď Celé jméno, nebo Jméno a Příjmení.");
+        setImporting(false);
+        return;
+    }
+
+    try {
+        const mappedData = [];
+        let activeSchoolId = null;
+
+        for (const row of fileData) {
+            // Rolling state for merged cells in school column
+            if (mapping.schoolId !== -1 && row[mapping.schoolId]) {
+                activeSchoolId = row[mapping.schoolId];
+            }
+
+            const mappedRow: any = {};
+
+            if (mapping.name !== -1) {
+                mappedRow.name = row[mapping.name];
+            }
+            if (mapping.firstName !== -1) {
+                mappedRow.firstName = row[mapping.firstName];
+            }
+            if (mapping.lastName !== -1) {
+                mappedRow.lastName = row[mapping.lastName];
+            }
+            if (mapping.email !== -1) {
+                mappedRow.email = row[mapping.email];
+            }
+            if (mapping.year !== -1) {
+                mappedRow.year = row[mapping.year];
+            }
+
+            mappedRow.schoolId = mapping.schoolId !== -1 ? (row[mapping.schoolId] || activeSchoolId) : null;
+
+            // Only add if we have at least some name info
+            if (mappedRow.name || mappedRow.firstName || mappedRow.lastName) {
+                mappedData.push(mappedRow);
+            }
+        }
+
+        const importFn = httpsCallable(functions, 'importRoster');
+        const res = await importFn({ mappedData });
+        onSuccess(res.data);
+    } catch (error) {
+        console.error("Import execution failed", error);
+        alert('Chyba při vykonávání importu. Zkontrolujte konzoli.');
+    } finally {
+        setImporting(false);
+    }
+  };
+
+  if (!fileData) {
+      return (
+        <div className="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center bg-slate-50 relative hover:bg-slate-100 transition">
+          <input
+            type="file"
+            accept=".xlsx,.xls"
+            onChange={handleFileUpload}
+            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+          />
+          <div className="flex flex-col items-center pointer-events-none">
+            <Upload size={48} className="text-blue-500 mb-4" />
+            <p className="font-medium text-slate-700 text-lg">
+              Klikněte nebo přetáhněte Excel soubor s rosterem
+            </p>
+            <p className="text-sm text-slate-500 mt-2">.xlsx, .xls</p>
+          </div>
+        </div>
+      );
+  }
+
+  return (
+      <div className="space-y-6">
+          <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 flex items-start gap-3">
+              <Database className="text-blue-600 mt-1" size={20} />
+              <div>
+                  <h3 className="font-bold text-blue-900">Mapování sloupců (ETL)</h3>
+                  <p className="text-sm text-blue-700 mt-1">
+                      Přiřaďte sloupce z vašeho Excelu k našim databázovým polím. Pro sloupec "Škola/Organizace" podporujeme rolovací stav (spojené buňky).
+                  </p>
+              </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Mapping Controls */}
+              <div className="space-y-3 bg-white p-4 rounded-xl border border-slate-200">
+                  <h4 className="font-semibold text-slate-800 border-b pb-2">Požadovaná pole</h4>
+
+                  <div className="flex items-center justify-between">
+                      <label className="text-sm font-medium text-slate-700">Celé Jméno</label>
+                      <select value={mapping.name} onChange={(e) => handleMappingChange('name', e.target.value)} className="border p-1.5 rounded text-sm w-48 bg-slate-50">
+                          <option value={-1}>-- Ignorovat --</option>
+                          {headers.map((h, i) => <option key={i} value={i}>{h}</option>)}
+                      </select>
+                  </div>
+                  <div className="text-xs text-slate-400 text-center">- NEBO -</div>
+                  <div className="flex items-center justify-between">
+                      <label className="text-sm font-medium text-slate-700">Křestní jméno</label>
+                      <select value={mapping.firstName} onChange={(e) => handleMappingChange('firstName', e.target.value)} className="border p-1.5 rounded text-sm w-48 bg-slate-50">
+                          <option value={-1}>-- Ignorovat --</option>
+                          {headers.map((h, i) => <option key={i} value={i}>{h}</option>)}
+                      </select>
+                  </div>
+                  <div className="flex items-center justify-between">
+                      <label className="text-sm font-medium text-slate-700">Příjmení</label>
+                      <select value={mapping.lastName} onChange={(e) => handleMappingChange('lastName', e.target.value)} className="border p-1.5 rounded text-sm w-48 bg-slate-50">
+                          <option value={-1}>-- Ignorovat --</option>
+                          {headers.map((h, i) => <option key={i} value={i}>{h}</option>)}
+                      </select>
+                  </div>
+
+                  <h4 className="font-semibold text-slate-800 border-b pb-2 mt-4 pt-2">Volitelná pole</h4>
+
+                  <div className="flex items-center justify-between">
+                      <label className="text-sm font-medium text-slate-700">Email</label>
+                      <select value={mapping.email} onChange={(e) => handleMappingChange('email', e.target.value)} className="border p-1.5 rounded text-sm w-48 bg-slate-50">
+                          <option value={-1}>-- Generovat automaticky --</option>
+                          {headers.map((h, i) => <option key={i} value={i}>{h}</option>)}
+                      </select>
+                  </div>
+                  <div className="flex items-center justify-between">
+                      <label className="text-sm font-medium text-slate-700">Škola / Organizace</label>
+                      <select value={mapping.schoolId} onChange={(e) => handleMappingChange('schoolId', e.target.value)} className="border p-1.5 rounded text-sm w-48 bg-slate-50">
+                          <option value={-1}>-- Ignorovat --</option>
+                          {headers.map((h, i) => <option key={i} value={i}>{h}</option>)}
+                      </select>
+                  </div>
+                  <div className="flex items-center justify-between">
+                      <label className="text-sm font-medium text-slate-700">Ročník</label>
+                      <select value={mapping.year} onChange={(e) => handleMappingChange('year', e.target.value)} className="border p-1.5 rounded text-sm w-48 bg-slate-50">
+                          <option value={-1}>-- Ignorovat --</option>
+                          {headers.map((h, i) => <option key={i} value={i}>{h}</option>)}
+                      </select>
+                  </div>
+              </div>
+
+              {/* Data Preview */}
+              <div className="bg-white p-4 rounded-xl border border-slate-200 overflow-x-auto">
+                  <h4 className="font-semibold text-slate-800 border-b pb-2 mb-3">Náhled dat (první 3 řádky)</h4>
+                  <table className="min-w-full text-xs text-left">
+                      <thead className="bg-slate-100">
+                          <tr>
+                              {headers.map((h, i) => (
+                                  <th key={i} className="px-2 py-1.5 border-b text-slate-600 font-medium whitespace-nowrap">{h}</th>
+                              ))}
+                          </tr>
+                      </thead>
+                      <tbody>
+                          {fileData.slice(0, 3).map((row, rowIdx) => (
+                              <tr key={rowIdx} className="border-b last:border-0">
+                                  {headers.map((_, colIdx) => (
+                                      <td key={colIdx} className="px-2 py-1.5 text-slate-700 max-w-[150px] truncate">
+                                          {row[colIdx] !== undefined ? String(row[colIdx]) : ''}
+                                      </td>
+                                  ))}
+                              </tr>
+                          ))}
+                      </tbody>
+                  </table>
+                  <div className="mt-3 text-xs text-slate-500 italic">
+                      Celkem načteno {fileData.length} datových řádků.
+                  </div>
+              </div>
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4 border-t">
+              <button
+                  onClick={() => setFileData(null)}
+                  disabled={importing}
+                  className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition"
+              >
+                  Zrušit a vybrat jiný soubor
+              </button>
+              <button
+                  onClick={executeImport}
+                  disabled={importing}
+                  className="flex items-center gap-2 px-6 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition disabled:opacity-50"
+              >
+                  {importing ? 'Importuji...' : 'Spustit import'}
+                  {!importing && <ArrowRight size={16} />}
+              </button>
+          </div>
+      </div>
+  );
+}

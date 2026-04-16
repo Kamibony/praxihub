@@ -524,22 +524,11 @@ exports.importRoster = functions.https.onCall(async (data, context) => {
     throw new functions.https.HttpsError('unauthenticated', 'Must be logged in.');
   }
 
-  const { fileData, format } = data;
-  if (!fileData) {
-    throw new functions.https.HttpsError('invalid-argument', 'Missing file data.');
+  const { mappedData } = data;
+  if (!mappedData || !Array.isArray(mappedData)) {
+    throw new functions.https.HttpsError('invalid-argument', 'Missing mapped data array.');
   }
 
-  let workbook;
-  try {
-    const buffer = Buffer.from(fileData, 'base64');
-    workbook = xlsx.read(buffer, { type: 'buffer' });
-  } catch (error) {
-    console.error("Excel parse error:", error);
-    throw new functions.https.HttpsError('invalid-argument', 'Invalid Excel file.');
-  }
-
-  const sheetName = workbook.SheetNames[0];
-  const worksheet = workbook.Sheets[sheetName];
   const db = admin.firestore();
 
   let added = 0;
@@ -557,12 +546,13 @@ exports.importRoster = functions.https.onCall(async (data, context) => {
   };
 
   const processUser = async (userObj) => {
-    if (!userObj.name) {
+    let fullName = userObj.name || [userObj.firstName, userObj.lastName].filter(Boolean).join(' ');
+    if (!fullName) {
       ignored++;
       return;
     }
 
-    const normalizedName = normalizeName(userObj.name);
+    const normalizedName = normalizeName(fullName);
 
     try {
       await db.runTransaction(async (transaction) => {
@@ -578,6 +568,7 @@ exports.importRoster = functions.https.onCall(async (data, context) => {
           transaction.update(userDoc.ref, {
             schoolId: userObj.schoolId || userDoc.data().schoolId,
             year: userObj.year || userDoc.data().year,
+            email: userObj.email || userDoc.data().email || `${normalizedName.replace(/\s+/g, '.').toLowerCase()}@placeholder.com`,
             updatedAt: admin.firestore.FieldValue.serverTimestamp()
           });
 
@@ -593,7 +584,7 @@ exports.importRoster = functions.https.onCall(async (data, context) => {
           // Create new
           const newUserRef = usersRef.doc();
           transaction.set(newUserRef, {
-            name: userObj.name,
+            name: fullName,
             normalizedName: normalizedName,
             role: 'student',
             schoolId: userObj.schoolId || null,
@@ -613,134 +604,13 @@ exports.importRoster = functions.https.onCall(async (data, context) => {
         }
       });
     } catch (e) {
-      console.error('Transaction failed for user', userObj.name, e);
+      console.error('Transaction failed for user', fullName, e);
       ignored++;
     }
   };
 
-  if (format === 'UPV') {
-    // Logic A: The "UPV" Format
-    const rawData = xlsx.utils.sheet_to_json(worksheet, { header: 1 });
-    let headerRowIdx = -1;
-    let schoolColIdx = -1;
-    let nameColIdx = -1;
-
-    // Dynamically find the header row by searching for "Škola" and "1. týden"
-    for (let i = 0; i < rawData.length; i++) {
-      const row = rawData[i];
-      if (!row) continue;
-
-      const hasSkola = row.some(cell => typeof cell === 'string' && cell.toLowerCase().includes('škola'));
-      const hasTyden = row.some(cell => typeof cell === 'string' && cell.toLowerCase().includes('1. týden'));
-
-      if (hasSkola && hasTyden) {
-        headerRowIdx = i;
-        schoolColIdx = row.findIndex(cell => typeof cell === 'string' && cell.toLowerCase().includes('škola'));
-        // Find where names start (simplified: assuming column before '1. týden')
-        const tydenColIdx = row.findIndex(cell => typeof cell === 'string' && cell.toLowerCase().includes('1. týden'));
-        nameColIdx = tydenColIdx - 1;
-        break;
-      }
-    }
-
-    if (headerRowIdx !== -1 && schoolColIdx !== -1 && nameColIdx !== -1) {
-      let activeSchoolId = null; // Rolling State for merged cells
-
-      for (let i = headerRowIdx + 1; i < rawData.length; i++) {
-        const row = rawData[i];
-        if (!row || row.length === 0) continue;
-
-        // Carry down the last known school
-        if (row[schoolColIdx]) {
-          activeSchoolId = row[schoolColIdx];
-        }
-
-        const rawName = row[nameColIdx];
-        if (rawName && typeof rawName === 'string') {
-          await processUser({
-            name: rawName.trim(),
-            schoolId: activeSchoolId
-          });
-        }
-      }
-    } else {
-      throw new functions.https.HttpsError('invalid-argument', 'Could not find required headers in UPV format.');
-    }
-  } else {
-    // Logic B: The "KP" Format (Standard) - Fuzzy Matching with Dynamic Headers
-    const normalizeHeader = (header) => {
-      if (!header || typeof header !== 'string') return '';
-      return header
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "") // remove diacritics
-        .trim()
-        .replace(/\s+/g, ' ');
-    };
-
-    const nameAliases = ['jmeno', 'prijmeni', 'student', 'osoba', 'name', 'jmeno a prijmeni', 'student/ka', 'prijmennni'];
-    const yearAliases = ['rocnik', 'rok', 'year', 'trida'];
-    const locationAliases = ['lokace', 'skola', 'misto', 'location', 'ustav', 'organizace', 'nazev', 'zeme'];
-
-    const rawRows = xlsx.utils.sheet_to_json(worksheet, { header: 1 });
-    let headerRowIdx = -1;
-    let nameColIdx = -1;
-    let yearColIdx = -1;
-    let locationColIdx = -1;
-
-    // Scan first 15 rows for the header
-    for (let rowIndex = 0; rowIndex < Math.min(15, rawRows.length); rowIndex++) {
-      const row = rawRows[rowIndex];
-      if (!row || row.length === 0) continue;
-
-      let tempNameColIdx = -1;
-      for (let i = 0; i < row.length; i++) {
-        const normHeader = normalizeHeader(row[i]);
-        if (nameAliases.includes(normHeader) || nameAliases.some(alias => normHeader.includes(alias))) {
-          tempNameColIdx = i;
-          break;
-        }
-      }
-
-      if (tempNameColIdx !== -1) {
-        headerRowIdx = rowIndex;
-        nameColIdx = tempNameColIdx;
-
-        // Find other columns in this header row
-        for (let i = 0; i < row.length; i++) {
-          if (i === nameColIdx) continue;
-          const normHeader = normalizeHeader(row[i]);
-          if (yearColIdx === -1 && (yearAliases.includes(normHeader) || yearAliases.some(alias => normHeader.includes(alias)))) {
-            yearColIdx = i;
-          }
-          if (locationColIdx === -1 && (locationAliases.includes(normHeader) || locationAliases.some(alias => normHeader.includes(alias)))) {
-            locationColIdx = i;
-          }
-        }
-        break;
-      }
-    }
-
-    if (headerRowIdx !== -1 && nameColIdx !== -1) {
-      for (let i = headerRowIdx + 1; i < rawRows.length; i++) {
-        const row = rawRows[i];
-        if (!row || row.length === 0) continue;
-
-        const name = row[nameColIdx];
-        const year = yearColIdx !== -1 ? row[yearColIdx] : null;
-        const schoolId = locationColIdx !== -1 ? row[locationColIdx] : null;
-
-        if (name && typeof name === 'string') {
-          await processUser({
-            name: name.trim(),
-            year: year,
-            schoolId: schoolId
-          });
-        }
-      }
-    } else {
-      throw new functions.https.HttpsError('invalid-argument', 'Could not find a valid Name/Student column in KP format.');
-    }
+  for (const row of mappedData) {
+    await processUser(row);
   }
 
   return { added, updated, ignored };
