@@ -6,7 +6,7 @@ admin.initializeApp({
 });
 
 const db = admin.firestore();
-const COLLECTION = "internships";
+const COLLECTION = "placements";
 // Using a reliable Google Storage URL to avoid 403 Forbidden errors from external sites
 const TEST_URL = "https://raw.githubusercontent.com/mozilla/pdf.js/master/web/compressed.tracemonkey-pldi-09.pdf";
 

@@ -11,7 +11,7 @@ if (!admin.apps.length) {
 // 1. AI ANALÝZA ZMLUVY
 // Spustí sa, keď sa vytvorí/upraví dokument a status je 'ANALYZING'
 exports.analyzeContract = functions.firestore
-  .document("internships/{docId}")
+  .document("placements/{docId}")
   .onWrite(async (change, context) => { 
     if (!change.after.exists) return null;
 
@@ -81,7 +81,7 @@ exports.analyzeContract = functions.firestore
 // 2. NOTIFIKÁCIE (Vyžaduje Firebase Extension: Trigger Email)
 // Sleduje zmeny statusov a posiela e-maily
 exports.sendEmailNotification = functions.firestore
-  .document("internships/{docId}")
+  .document("placements/{docId}")
   .onUpdate(async (change, context) => {
     const newData = change.after.data();
     const previousData = change.before.data();
@@ -118,7 +118,7 @@ exports.chatWithAI = functions.https.onCall(async (data, context) => {
 
     // Systémové inštrukcie pre Chatbota
     const systemPrompt = `
-   You are the intelligent assistant for PraxiHub, a university internship management platform.
+   You are the intelligent assistant for PraxiHub, a university placement management platform.
    Your goal is to guide Students, Coordinators, and Companies through the app.
    You must answer in the user's language (mostly Czech/Slovak).
 
@@ -141,7 +141,7 @@ exports.chatWithAI = functions.https.onCall(async (data, context) => {
    4. FOR COMPANIES:
       - **Unified Detail:** Clicking a student row opens a Modal.
       - **Contracts:** In this Modal, you can download the student's contract (Blue button "Stáhnout smlouvu").
-      - **Rating:** In the same Modal, you can rate the student (Stars + Review) at the end of the internship.
+      - **Rating:** In the same Modal, you can rate the student (Stars + Review) at the end of the placement.
 
    BEHAVIOR:
    - Be concise and helpful.
@@ -393,7 +393,7 @@ exports.findMatches = functions.https.onCall(async (data, context) => {
       Úkol:
       Porovnej studentovy dovednosti s požadavky firem.
       Vrať JSON pole objektů (seřazené od nejlepší shody po nejhorší), kde každý objekt má:
-      - companyId (ID firmy ze vstupu)
+      - organizationId (ID firmy ze vstupu)
       - matchScore (číslo 0-100)
       - reasoning (stručné vysvětlení v češtině, proč se hodí/nehodí - max 2 věty)
 
@@ -413,7 +413,7 @@ exports.findMatches = functions.https.onCall(async (data, context) => {
 
     // Merge back with company details
     const detailedMatches = matches.map(m => {
-      const company = companies.find(c => c.id === m.companyId);
+      const company = companies.find(c => c.id === m.organizationId);
       return {
         ...m,
         companyName: company?.name || "Unknown",
@@ -433,7 +433,7 @@ exports.findMatches = functions.https.onCall(async (data, context) => {
 
 
 // 6. STATE MACHINE TRANSITION
-exports.transitionInternshipState = functions.https.onCall(async (data, context) => {
+exports.transitionPlacementState = functions.https.onCall(async (data, context) => {
   if (!context.auth) {
     throw new functions.https.HttpsError('unauthenticated', 'Must be logged in.');
   }
@@ -447,20 +447,20 @@ exports.transitionInternshipState = functions.https.onCall(async (data, context)
     'EVALUATION': ['CLOSED']
   };
 
-  const { internshipId, newState } = data;
+  const { placementId, newState } = data;
 
-  if (!internshipId || !newState) {
-    throw new functions.https.HttpsError('invalid-argument', 'Missing internshipId or newState.');
+  if (!placementId || !newState) {
+    throw new functions.https.HttpsError('invalid-argument', 'Missing placementId or newState.');
   }
 
   const db = admin.firestore();
-  const internshipRef = db.collection('internships').doc(internshipId);
+  const placementRef = db.collection('placements').doc(placementId);
 
   try {
     const result = await db.runTransaction(async (transaction) => {
-      const doc = await transaction.get(internshipRef);
+      const doc = await transaction.get(placementRef);
       if (!doc.exists) {
-        throw new functions.https.HttpsError('not-found', 'Internship not found.');
+        throw new functions.https.HttpsError('not-found', 'Placement not found.');
       }
 
       const currentData = doc.data();
@@ -493,12 +493,12 @@ exports.transitionInternshipState = functions.https.onCall(async (data, context)
       // Add guardrails here for the new states
       if (newState === 'CONTRACT_LOCKED') {
           // ensure required fields exist
-          if (!currentData.companyId) {
+          if (!currentData.organizationId) {
               throw new functions.https.HttpsError('failed-precondition', 'Missing required fields for CONTRACT_LOCKED.');
           }
       }
 
-      transaction.update(internshipRef, {
+      transaction.update(placementRef, {
         status: newState,
         updatedAt: admin.firestore.FieldValue.serverTimestamp()
       });
@@ -572,8 +572,8 @@ exports.importRoster = functions.https.onCall(async (data, context) => {
         const orgsRef = db.collection('organizations');
         let existingOrgDoc = null;
         let orgName = null;
-        if (userObj.schoolId) {
-          orgName = String(userObj.schoolId).trim();
+        if (userObj.organizationId) {
+          orgName = String(userObj.organizationId).trim();
           const orgQ = orgsRef.where('name', '==', orgName).limit(1);
           const orgSnapshot = await transaction.get(orgQ);
           if (!orgSnapshot.empty) {
@@ -595,7 +595,7 @@ exports.importRoster = functions.https.onCall(async (data, context) => {
 
         if (existingUserDoc) {
           transaction.update(existingUserDoc.ref, {
-            schoolId: userObj.schoolId || existingUserDoc.data().schoolId,
+            organizationId: userObj.organizationId || existingUserDoc.data().organizationId,
             year: userObj.year || existingUserDoc.data().year,
             email: userObj.email || existingUserDoc.data().email || `${normalizedName.replace(/\s+/g, '.').toLowerCase()}@placeholder.com`,
             updatedAt: admin.firestore.FieldValue.serverTimestamp()
@@ -607,7 +607,7 @@ exports.importRoster = functions.https.onCall(async (data, context) => {
             name: fullName,
             normalizedName: normalizedName,
             role: 'student',
-            schoolId: userObj.schoolId || null,
+            organizationId: userObj.organizationId || null,
             year: userObj.year || null,
             email: `${normalizedName.replace(/\s+/g, '.').toLowerCase()}@placeholder.com`, // Mock email
             createdAt: admin.firestore.FieldValue.serverTimestamp()
@@ -667,36 +667,36 @@ exports.evaluateReflection = functions.https.onCall(async (data, context) => {
     );
   }
 
-  const { internshipId, reflectionText } = data;
+  const { placementId, reflectionText } = data;
 
-  if (!internshipId || !reflectionText) {
+  if (!placementId || !reflectionText) {
     throw new functions.https.HttpsError(
       "invalid-argument",
-      "Chybí povinné parametry: internshipId a reflectionText."
+      "Chybí povinné parametry: placementId a reflectionText."
     );
   }
 
   const db = admin.firestore();
-  const internshipRef = db.collection("internships").doc(internshipId);
-  const internshipDoc = await internshipRef.get();
+  const placementRef = db.collection("placements").doc(placementId);
+  const placementDoc = await placementRef.get();
 
-  if (!internshipDoc.exists) {
+  if (!placementDoc.exists) {
     throw new functions.https.HttpsError(
       "not-found",
       "Praxe nebyla nalezena."
     );
   }
 
-  const internshipData = internshipDoc.data();
+  const placementData = placementDoc.data();
 
-  if (internshipData.studentId !== context.auth.uid) {
+  if (placementData.studentId !== context.auth.uid) {
     throw new functions.https.HttpsError(
       "permission-denied",
       "Nemáte oprávnění hodnotit tuto praxi."
     );
   }
 
-  if (internshipData.status !== "EVALUATION") {
+  if (placementData.status !== "EVALUATION") {
     throw new functions.https.HttpsError(
       "failed-precondition",
       "Praxe není ve stavu hodnocení (EVALUATION)."
@@ -765,7 +765,7 @@ exports.evaluateReflection = functions.https.onCall(async (data, context) => {
     });
 
     // Fetch dynamic rules based on major
-    const major = internshipData.studentMajor || 'UPV';
+    const major = placementData.studentMajor || 'UPV';
     const configDocId = major === 'KPV' ? 'ai_rules_kpv' : 'ai_rules_upv';
 
     let krauDoc = await db.collection("system_configs").doc(configDocId).get();
@@ -805,13 +805,13 @@ Veškeré texty pro zpětnou vazbu (reasoning) musí být napsány v profesioná
       updateData.status = "CLOSED";
 
       // 1. Create Snapshot Data
-      const snapshotId = internshipRef.id + '_' + Date.now();
+      const snapshotId = placementRef.id + '_' + Date.now();
       const snapshotData = {
-        ...internshipData,
+        ...placementData,
         evaluationResult: evaluationResult,
         status: "CLOSED",
         snapshotCreatedAt: admin.firestore.FieldValue.serverTimestamp(),
-        originalInternshipId: internshipRef.id,
+        originalPlacementId: placementRef.id,
       };
 
       // 2. Generate PDF with QR Code
@@ -831,11 +831,11 @@ Veškeré texty pro zpětnou vazbu (reasoning) musí být napsány v profesioná
       updateData.certificateUrl = certificateUrl;
       updateData.snapshotId = snapshotId;
 
-      // 4. Save to archived_internships
-      await db.collection("archived_internships").doc(snapshotId).set(snapshotData);
+      // 4. Save to archived_placements
+      await db.collection("archived_placements").doc(snapshotId).set(snapshotData);
     }
 
-    await internshipRef.update(updateData);
+    await placementRef.update(updateData);
 
     return evaluationData;
   } catch (error) {
@@ -852,9 +852,9 @@ exports.signContract = functions.https.onCall(async (data, context) => {
     throw new functions.https.HttpsError("unauthenticated", "Musíte být přihlášeni.");
   }
 
-  const { internshipId, role } = data;
-  if (!internshipId || !role) {
-    throw new functions.https.HttpsError("invalid-argument", "Chybí internshipId nebo role.");
+  const { placementId, role } = data;
+  if (!placementId || !role) {
+    throw new functions.https.HttpsError("invalid-argument", "Chybí placementId nebo role.");
   }
 
   if (!['student', 'coordinator', 'company'].includes(role)) {
@@ -862,23 +862,23 @@ exports.signContract = functions.https.onCall(async (data, context) => {
   }
 
   const db = admin.firestore();
-  const internshipRef = db.collection("internships").doc(internshipId);
+  const placementRef = db.collection("placements").doc(placementId);
 
   return await db.runTransaction(async (transaction) => {
-    const doc = await transaction.get(internshipRef);
+    const doc = await transaction.get(placementRef);
     if (!doc.exists) {
       throw new functions.https.HttpsError("not-found", "Praxe nebyla nalezena.");
     }
 
-    const internshipData = doc.data();
+    const placementData = doc.data();
 
     // Check permissions
-    if (role === 'student' && internshipData.studentId !== context.auth.uid) {
+    if (role === 'student' && placementData.studentId !== context.auth.uid) {
       throw new functions.https.HttpsError("permission-denied", "Nemáte oprávnění podepsat za studenta.");
     }
 
-    // Check if the internship requires tripartite signature
-    const major = internshipData.studentMajor || internshipData.major || "UPV";
+    // Check if the placement requires tripartite signature
+    const major = placementData.studentMajor || placementData.major || "UPV";
     if (major === "UPV") {
       throw new functions.https.HttpsError(
         "failed-precondition",
@@ -894,7 +894,7 @@ exports.signContract = functions.https.onCall(async (data, context) => {
       throw new functions.https.HttpsError("permission-denied", "Nemáte oprávnění podepsat za koordinátora.");
     }
 
-    if (role === 'company' && userData.role !== 'company' && internshipData.companyId !== context.auth.uid && internshipData.mentorId !== context.auth.uid) {
+    if (role === 'company' && userData.role !== 'company' && placementData.organizationId !== context.auth.uid && placementData.mentorId !== context.auth.uid) {
       throw new functions.https.HttpsError("permission-denied", "Nemáte oprávnění podepsat za společnost.");
     }
 
@@ -910,13 +910,13 @@ exports.signContract = functions.https.onCall(async (data, context) => {
     const updateData = {};
     updateData[`signatures.${role}`] = signatureData;
 
-    transaction.update(internshipRef, updateData);
+    transaction.update(placementRef, updateData);
 
     // Create audit log
     const auditLogRef = db.collection("audit_logs").doc();
     transaction.set(auditLogRef, {
       action: 'SIGN_CONTRACT',
-      internshipId: internshipId,
+      placementId: placementId,
       role: role,
       userId: context.auth.uid,
       ipAddress: ipAddress,
@@ -945,7 +945,7 @@ exports.generatePayrollReport = functions.https.onCall(async (data, context) => 
       mentorNames[doc.id] = userData.displayName || userData.email || 'Neznámý mentor';
     });
 
-    // Use collection group query to get all approved time logs across all internships efficiently
+    // Use collection group query to get all approved time logs across all placements efficiently
     const timeLogsSnapshot = await admin.firestore()
       .collectionGroup('time_logs')
       .where('status', '==', 'approved')

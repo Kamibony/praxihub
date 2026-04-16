@@ -23,7 +23,7 @@ test.describe('Scenario 3: Mentor Icon System', () => {
     await expect(studentPage.getByText('Načítám data...')).not.toBeVisible({ timeout: 20000 });
 
     // We expect the student to see the "Nový záznam" section (add time log)
-    // The seeded internship is in APPROVED state, which reveals time logs UI.
+    // The seeded placement is in APPROVED state, which reveals time logs UI.
     const dateInput = studentPage.locator('input[type="date"]');
     await expect(dateInput).toBeVisible({ timeout: 15000 });
 

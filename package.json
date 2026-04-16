@@ -28,6 +28,7 @@
   "homepage": "https://github.com/Kamibony/praxihub#readme",
   "devDependencies": {
     "@playwright/test": "^1.59.1",
+    "firebase-admin": "^13.8.0",
     "firebase-tools": "^15.14.0"
   }
 }

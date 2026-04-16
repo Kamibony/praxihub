@@ -71,13 +71,13 @@ async function wipe() {
   console.log("Starting Secure Cascading Wipe...");
   try {
      console.log("1. Wiping time_logs subcollections...");
-     const internships = await db.collection("internships").get();
-     for (const doc of internships.docs) {
-         await deleteCollection(`internships/${doc.id}/time_logs`);
+     const placements = await db.collection("placements").get();
+     for (const doc of placements.docs) {
+         await deleteCollection(`placements/${doc.id}/time_logs`);
      }
 
-     console.log("2. Wiping internships collection...");
-     await deleteCollection("internships");
+     console.log("2. Wiping placements collection...");
+     await deleteCollection("placements");
 
      console.log("3. Wiping Storage Artifacts...");
      await emptyStorageFolder("contracts/");

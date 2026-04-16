@@ -34,10 +34,10 @@ type FilterStatus =
   | "ANALYZING";
 
 export default function CoordinatorDashboard() {
-  const [internships, setInternships] = useState<any[]>([]);
+  const [placements, setPlacements] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState<FilterStatus>("ALL");
-  const [selectedInternship, setSelectedInternship] = useState<any>(null);
+  const [selectedPlacement, setSelectedPlacement] = useState<any>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadResult, setUploadResult] = useState<{
     success?: boolean;
@@ -46,8 +46,8 @@ export default function CoordinatorDashboard() {
 
   // View mode state
   const [viewMode, setViewMode] = useState<
-    "INTERNSHIPS" | "DOCUMENTS" | "COMPLIANCE"
-  >("INTERNSHIPS");
+    "PLACEMENTS" | "DOCUMENTS" | "COMPLIANCE"
+  >("PLACEMENTS");
 
   // Institutions (Compliance) state
   const [institutions, setInstitutions] = useState<any[]>([]);
@@ -76,7 +76,7 @@ export default function CoordinatorDashboard() {
         router.push("/login");
       } else {
         const q = query(
-          collection(db, "internships"),
+          collection(db, "placements"),
           orderBy("createdAt", "desc"),
         );
 
@@ -86,7 +86,7 @@ export default function CoordinatorDashboard() {
             id: doc.id,
             ...doc.data(),
           }));
-          setInternships(data);
+          setPlacements(data);
           setLoading(false);
         });
       }
@@ -176,15 +176,15 @@ export default function CoordinatorDashboard() {
 
   const getCompanyAverageRating = (ico: string) => {
     if (!ico) return null;
-    const companyInternships = internships.filter(
+    const companyPlacements = placements.filter(
       (i) => i.organization_ico === ico && i.studentRating > 0,
     );
-    if (companyInternships.length === 0) return null;
-    const sum = companyInternships.reduce(
+    if (companyPlacements.length === 0) return null;
+    const sum = companyPlacements.reduce(
       (acc, curr) => acc + curr.studentRating,
       0,
     );
-    return (sum / companyInternships.length).toFixed(1);
+    return (sum / companyPlacements.length).toFixed(1);
   };
 
   // OPRAVA: Pridaná funkcia pre formátovanie dátumu (D. M. YYYY)
@@ -258,7 +258,7 @@ export default function CoordinatorDashboard() {
     ];
     const csvContent = [
       headers.join(","),
-      ...internships.map((item) =>
+      ...placements.map((item) =>
         [
           `"${item.studentName || ""}"`,
           `"${item.studentEmail || ""}"`,
@@ -347,12 +347,12 @@ export default function CoordinatorDashboard() {
   const handleApproveOrg = async (id: string) => {
     if (!confirm("Opravdu chcete schválit tuto firmu?")) return;
     try {
-      const transitionInternshipState = httpsCallable(
+      const transitionPlacementState = httpsCallable(
         functions,
-        "transitionInternshipState",
+        "transitionPlacementState",
       );
-      await transitionInternshipState({
-        internshipId: id,
+      await transitionPlacementState({
+        placementId: id,
         newState: "ORG_APPROVED",
       });
     } catch (e) {
@@ -365,13 +365,13 @@ export default function CoordinatorDashboard() {
     const reason = prompt("Zadejte důvod zamítnutí:");
     if (reason === null) return; // Cancelled
     try {
-      await updateDoc(doc(db, "internships", id), { ai_error_message: reason });
-      const transitionInternshipState = httpsCallable(
+      await updateDoc(doc(db, "placements", id), { ai_error_message: reason });
+      const transitionPlacementState = httpsCallable(
         functions,
-        "transitionInternshipState",
+        "transitionPlacementState",
       );
-      await transitionInternshipState({
-        internshipId: id,
+      await transitionPlacementState({
+        placementId: id,
         newState: "REJECTED",
       });
     } catch (e) {
@@ -381,7 +381,7 @@ export default function CoordinatorDashboard() {
   };
 
   // Filter Logic
-  const filteredInternships = internships.filter((item) => {
+  const filteredPlacements = placements.filter((item) => {
     if (filterStatus === "ALL") return true;
     return item.status === filterStatus;
   });
@@ -395,24 +395,24 @@ export default function CoordinatorDashboard() {
     }`;
   };
 
-  const pendingOrgs = internships.filter(
+  const pendingOrgs = placements.filter(
     (i) => i.status === "PENDING_ORG_APPROVAL",
   ).length;
-  const pendingReview = internships.filter(
+  const pendingReview = placements.filter(
     (i) => i.status === "NEEDS_REVIEW",
   ).length;
   const chatbotMessage = `Vítej zpět! Aktuálně máš ke schválení ${pendingOrgs} firem a ${pendingReview} smluv čeká na kontrolu.`;
 
   // Statistics for Overview Section
-  const approvedCount = internships.filter(
+  const approvedCount = placements.filter(
     (i) => i.status === "APPROVED",
   ).length;
-  const totalCount = internships.length;
+  const totalCount = placements.length;
   const progressPercentage =
     totalCount > 0 ? Math.round((approvedCount / totalCount) * 100) : 0;
 
   const companyCounts: Record<string, number> = {};
-  internships.forEach((i) => {
+  placements.forEach((i) => {
     if (i.organization_name) {
       companyCounts[i.organization_name] =
         (companyCounts[i.organization_name] || 0) + 1;
@@ -502,8 +502,8 @@ export default function CoordinatorDashboard() {
         {/* Tab Navigation */}
         <div className="flex gap-2 mb-6 border-b border-gray-200 overflow-x-auto">
           <button
-            onClick={() => setViewMode("INTERNSHIPS")}
-            className={`py-3 px-6 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${viewMode === "INTERNSHIPS" ? "border-blue-600 text-blue-600" : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"}`}
+            onClick={() => setViewMode("PLACEMENTS")}
+            className={`py-3 px-6 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${viewMode === "PLACEMENTS" ? "border-blue-600 text-blue-600" : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"}`}
           >
             Přehled praxí
           </button>
@@ -529,7 +529,7 @@ export default function CoordinatorDashboard() {
         </div>
 
         {/* Compliance Alerts Notification */}
-        {complianceAlerts.length > 0 && viewMode === "INTERNSHIPS" && (
+        {complianceAlerts.length > 0 && viewMode === "PLACEMENTS" && (
           <div className="mb-6 bg-red-50 border border-red-200 p-4 rounded-xl shadow-sm">
             <h3 className="text-red-800 font-bold flex items-center gap-2 mb-2">
               <svg
@@ -818,7 +818,7 @@ export default function CoordinatorDashboard() {
                   Celkem smluv
                 </p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {internships.length}
+                  {placements.length}
                 </p>
               </div>
               <div
@@ -830,7 +830,7 @@ export default function CoordinatorDashboard() {
                 </p>
                 <p className="text-2xl font-bold text-blue-800">
                   {
-                    internships.filter(
+                    placements.filter(
                       (i) => i.status === "PENDING_ORG_APPROVAL",
                     ).length
                   }
@@ -844,7 +844,7 @@ export default function CoordinatorDashboard() {
                   Schváleno
                 </p>
                 <p className="text-2xl font-bold text-green-600">
-                  {internships.filter((i) => i.status === "APPROVED").length}
+                  {placements.filter((i) => i.status === "APPROVED").length}
                 </p>
               </div>
               <div
@@ -856,7 +856,7 @@ export default function CoordinatorDashboard() {
                 </p>
                 <p className="text-2xl font-bold text-yellow-600">
                   {
-                    internships.filter((i) => i.status === "NEEDS_REVIEW")
+                    placements.filter((i) => i.status === "NEEDS_REVIEW")
                       .length
                   }
                 </p>
@@ -869,7 +869,7 @@ export default function CoordinatorDashboard() {
                   AI zpracovává
                 </p>
                 <p className="text-2xl font-bold text-blue-600">
-                  {internships.filter((i) => i.status === "ANALYZING").length}
+                  {placements.filter((i) => i.status === "ANALYZING").length}
                 </p>
               </div>
             </div>
@@ -898,10 +898,10 @@ export default function CoordinatorDashboard() {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {filteredInternships.map((item) => (
+                    {filteredPlacements.map((item) => (
                       <tr
                         key={item.id}
-                        onClick={() => setSelectedInternship(item)}
+                        onClick={() => setSelectedPlacement(item)}
                         className={`cursor-pointer transition-colors ${item.status === "PENDING_ORG_APPROVAL" ? "bg-blue-50/30 hover:bg-blue-100/50" : "hover:bg-blue-50"}`}
                       >
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -1062,13 +1062,13 @@ export default function CoordinatorDashboard() {
                         </td>
                       </tr>
                     ))}
-                    {filteredInternships.length === 0 && (
+                    {filteredPlacements.length === 0 && (
                       <tr>
                         <td
                           colSpan={5}
                           className="px-6 py-10 text-center text-gray-500"
                         >
-                          {internships.length === 0
+                          {placements.length === 0
                             ? "Zatím žádné nahrané praxe v systému."
                             : "Žádné záznamy pro tento filtr."}
                         </td>
@@ -1082,10 +1082,10 @@ export default function CoordinatorDashboard() {
         )}
 
         {/* MODAL - DETAIL VIEW */}
-        {selectedInternship && (
+        {selectedPlacement && (
           <div
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-            onClick={() => setSelectedInternship(null)}
+            onClick={() => setSelectedPlacement(null)}
           >
             <div
               className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
@@ -1094,37 +1094,37 @@ export default function CoordinatorDashboard() {
               <header className="flex justify-between items-start p-6 border-b border-gray-100">
                 <div>
                   <h2 className="text-2xl font-bold text-gray-900">
-                    {selectedInternship.studentName ||
-                      selectedInternship.studentEmail ||
+                    {selectedPlacement.studentName ||
+                      selectedPlacement.studentEmail ||
                       "Detail stáže"}
                   </h2>
                   <div className="mt-2">
                     <span
                       className={`px-2.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full border ${
-                        selectedInternship.status === "APPROVED"
+                        selectedPlacement.status === "APPROVED"
                           ? "bg-green-50 text-green-700 border-green-200"
-                          : selectedInternship.status === "ORG_APPROVED"
+                          : selectedPlacement.status === "ORG_APPROVED"
                             ? "bg-indigo-50 text-indigo-700 border-indigo-200"
-                            : selectedInternship.status ===
+                            : selectedPlacement.status ===
                                 "PENDING_ORG_APPROVAL"
                               ? "bg-blue-100 text-blue-800 border-blue-300"
-                              : selectedInternship.status === "REJECTED"
+                              : selectedPlacement.status === "REJECTED"
                                 ? "bg-red-50 text-red-700 border-red-200"
-                                : selectedInternship.status === "NEEDS_REVIEW"
+                                : selectedPlacement.status === "NEEDS_REVIEW"
                                   ? "bg-yellow-50 text-yellow-700 border-yellow-200"
                                   : "bg-blue-50 text-blue-700 border-blue-200"
                       }`}
                     >
-                      {selectedInternship.status === "PENDING_ORG_APPROVAL"
+                      {selectedPlacement.status === "PENDING_ORG_APPROVAL"
                         ? "Čeká na schválení"
-                        : selectedInternship.status === "ORG_APPROVED"
+                        : selectedPlacement.status === "ORG_APPROVED"
                           ? "Firma schválena"
-                          : selectedInternship.status}
+                          : selectedPlacement.status}
                     </span>
                   </div>
                 </div>
                 <button
-                  onClick={() => setSelectedInternship(null)}
+                  onClick={() => setSelectedPlacement(null)}
                   className="text-gray-400 hover:text-gray-600 p-2 rounded-full hover:bg-gray-100"
                 >
                   <svg
@@ -1153,13 +1153,13 @@ export default function CoordinatorDashboard() {
                     <div>
                       <p className="text-xs text-gray-500">Email</p>
                       <p className="text-sm font-medium text-gray-900">
-                        {selectedInternship.studentEmail}
+                        {selectedPlacement.studentEmail}
                       </p>
                     </div>
                     <div>
                       <p className="text-xs text-gray-500">ID studenta</p>
                       <p className="text-sm font-medium text-gray-900 font-mono">
-                        {selectedInternship.studentId}
+                        {selectedPlacement.studentId}
                       </p>
                     </div>
                   </div>
@@ -1174,32 +1174,32 @@ export default function CoordinatorDashboard() {
                     <div className="md:col-span-2">
                       <p className="text-xs text-gray-500">Název firmy</p>
                       <p className="text-lg font-bold text-gray-900">
-                        {selectedInternship.organization_name ||
+                        {selectedPlacement.organization_name ||
                           "Neznámá firma"}
                       </p>
                     </div>
                     <div>
                       <p className="text-xs text-gray-500">IČO</p>
                       <p className="text-sm font-medium text-gray-900 font-mono">
-                        {selectedInternship.organization_ico || "N/A"}
+                        {selectedPlacement.organization_ico || "N/A"}
                       </p>
                     </div>
                     <div>
                       <p className="text-xs text-gray-500">Web</p>
-                      {selectedInternship.organization_web ? (
+                      {selectedPlacement.organization_web ? (
                         <a
                           href={
-                            selectedInternship.organization_web.startsWith(
+                            selectedPlacement.organization_web.startsWith(
                               "http",
                             )
-                              ? selectedInternship.organization_web
-                              : `https://${selectedInternship.organization_web}`
+                              ? selectedPlacement.organization_web
+                              : `https://${selectedPlacement.organization_web}`
                           }
                           target="_blank"
                           rel="noreferrer"
                           className="text-sm font-medium text-blue-600 hover:underline flex items-center gap-1"
                         >
-                          {selectedInternship.organization_web}
+                          {selectedPlacement.organization_web}
                           <svg
                             className="w-3 h-3"
                             fill="none"
@@ -1230,17 +1230,17 @@ export default function CoordinatorDashboard() {
                     <div>
                       <p className="text-xs text-gray-500">Termín praxe</p>
                       <p className="text-sm font-medium text-gray-900">
-                        {selectedInternship.start_date
-                          ? `${formatDateCZ(selectedInternship.start_date)} - ${formatDateCZ(selectedInternship.end_date)}`
+                        {selectedPlacement.start_date
+                          ? `${formatDateCZ(selectedPlacement.start_date)} - ${formatDateCZ(selectedPlacement.end_date)}`
                           : "N/A"}
                       </p>
                     </div>
                     <div>
                       <p className="text-xs text-gray-500">Dokument</p>
-                      {selectedInternship.contract_url ? (
+                      {selectedPlacement.contract_url ? (
                         <>
                           <a
-                            href={selectedInternship.contract_url}
+                            href={selectedPlacement.contract_url}
                             target="_blank"
                             rel="noreferrer"
                             className="inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline mt-1 mb-4"
@@ -1260,12 +1260,12 @@ export default function CoordinatorDashboard() {
                             </svg>
                             Stáhnout PDF
                           </a>
-                          {(selectedInternship?.studentMajor === "KPV" ||
-                            selectedInternship?.major === "KPV") && (
+                          {(selectedPlacement?.studentMajor === "KPV" ||
+                            selectedPlacement?.major === "KPV") && (
                             <ContractSignature
-                              internshipId={selectedInternship.id}
+                              placementId={selectedPlacement.id}
                               role="coordinator"
-                              signatures={selectedInternship.signatures}
+                              signatures={selectedPlacement.signatures}
                             />
                           )}
                         </>
@@ -1279,8 +1279,8 @@ export default function CoordinatorDashboard() {
                 </div>
 
                 {/* Section 4: Certificate (if CLOSED) */}
-                {selectedInternship.status === "CLOSED" &&
-                  selectedInternship.certificateUrl && (
+                {selectedPlacement.status === "CLOSED" &&
+                  selectedPlacement.certificateUrl && (
                     <div className="bg-green-50 rounded-lg p-4 border border-green-200">
                       <h3 className="text-sm font-bold text-green-800 uppercase mb-3">
                         Certifikát
@@ -1290,7 +1290,7 @@ export default function CoordinatorDashboard() {
                         vygenerován.
                       </p>
                       <a
-                        href={selectedInternship.certificateUrl}
+                        href={selectedPlacement.certificateUrl}
                         target="_blank"
                         rel="noreferrer"
                         className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded font-bold shadow hover:bg-green-700 transition text-sm"
@@ -1316,7 +1316,7 @@ export default function CoordinatorDashboard() {
 
               <div className="p-6 border-t border-gray-100 flex justify-end">
                 <button
-                  onClick={() => setSelectedInternship(null)}
+                  onClick={() => setSelectedPlacement(null)}
                   className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-medium text-sm transition-colors"
                 >
                   Zavřít

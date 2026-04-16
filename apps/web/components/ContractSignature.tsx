@@ -5,7 +5,7 @@ import { doc, updateDoc } from "firebase/firestore";
 import { CheckCircle2, PenTool, Loader2 } from "lucide-react";
 
 interface ContractSignatureProps {
-  internshipId: string;
+  placementId: string;
   role: 'student' | 'coordinator' | 'company';
   signatures?: {
     student?: { timestamp: any; userId: string };
@@ -14,7 +14,7 @@ interface ContractSignatureProps {
   };
 }
 
-export default function ContractSignature({ internshipId, role, signatures }: ContractSignatureProps) {
+export default function ContractSignature({ placementId, role, signatures }: ContractSignatureProps) {
   const [isSigning, setIsSigning] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -26,7 +26,7 @@ export default function ContractSignature({ internshipId, role, signatures }: Co
     setError(null);
     try {
       const signContract = httpsCallable(functions, "signContract");
-      await signContract({ internshipId, role });
+      await signContract({ placementId, role });
     } catch (err: any) {
       console.error("Signature failed:", err);
       setError(err.message || "Nepodařilo se podepsat smlouvu.");

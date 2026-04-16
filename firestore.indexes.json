@@ -1,7 +1,7 @@
 {
   "indexes": [
     {
-      "collectionGroup": "internships",
+      "collectionGroup": "placements",
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "studentId", "order": "ASCENDING" },
@@ -9,7 +9,7 @@
       ]
     },
     {
-      "collectionGroup": "internships",
+      "collectionGroup": "placements",
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "status", "order": "ASCENDING" },

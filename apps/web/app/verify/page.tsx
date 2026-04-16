@@ -24,7 +24,7 @@ function VerifyCertificateContent() {
                 return;
             }
             try {
-                const docRef = doc(db, 'archived_internships', snapshotId);
+                const docRef = doc(db, 'archived_placements', snapshotId);
                 const docSnap = await getDoc(docRef);
 
                 if (docSnap.exists()) {

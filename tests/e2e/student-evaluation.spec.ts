@@ -40,7 +40,7 @@ test.describe('Scenario 2: Student AI Evaluation', () => {
       });
 
       const { db } = require('./setup-firebase-admin');
-      await db.collection('internships').doc('internship123').update({
+      await db.collection('placements').doc('placement123').update({
          status: 'CLOSED',
          evaluationResult: {
             isPass: true,

@@ -21,7 +21,7 @@ export default function VisualMappingImport({ onSuccess }: VisualMappingImportPr
     firstName: -1,
     lastName: -1,
     email: -1,
-    schoolId: -1,
+    organizationId: -1,
     year: -1,
     name: -1 // Optional: combined name
   });
@@ -61,7 +61,7 @@ export default function VisualMappingImport({ onSuccess }: VisualMappingImportPr
           if (lower.includes('příjmení')) newMapping.lastName = i;
           if (lower.includes('jméno') && lower.includes('příjmení')) newMapping.name = i;
           if (lower.includes('email') || lower.includes('e-mail')) newMapping.email = i;
-          if (lower.includes('škola') || lower.includes('organizace') || lower.includes('lokace')) newMapping.schoolId = i;
+          if (lower.includes('škola') || lower.includes('organizace') || lower.includes('lokace')) newMapping.organizationId = i;
           if (lower.includes('ročník') || lower.includes('rok')) newMapping.year = i;
       });
       setMapping(newMapping);
@@ -87,8 +87,8 @@ export default function VisualMappingImport({ onSuccess }: VisualMappingImportPr
     const orgs = new Set<string>();
 
     for (const row of fileData) {
-        if (mapping.schoolId !== -1 && row[mapping.schoolId]) {
-            activeSchoolId = row[mapping.schoolId];
+        if (mapping.organizationId !== -1 && row[mapping.organizationId]) {
+            activeSchoolId = row[mapping.organizationId];
         }
 
         const mappedRow: any = {};
@@ -99,12 +99,12 @@ export default function VisualMappingImport({ onSuccess }: VisualMappingImportPr
         if (mapping.email !== -1) mappedRow.email = row[mapping.email];
         if (mapping.year !== -1) mappedRow.year = row[mapping.year];
 
-        mappedRow.schoolId = mapping.schoolId !== -1 ? (row[mapping.schoolId] || activeSchoolId) : null;
+        mappedRow.organizationId = mapping.organizationId !== -1 ? (row[mapping.organizationId] || activeSchoolId) : null;
 
         if (mappedRow.name || mappedRow.firstName || mappedRow.lastName) {
             mappedData.push(mappedRow);
             if (!mappedRow.email) fallbackEmailCount++;
-            if (mappedRow.schoolId) orgs.add(String(mappedRow.schoolId).trim());
+            if (mappedRow.organizationId) orgs.add(String(mappedRow.organizationId).trim());
         }
     }
 
@@ -210,7 +210,7 @@ export default function VisualMappingImport({ onSuccess }: VisualMappingImportPr
                   </div>
                   <div className="flex items-center justify-between">
                       <label className="text-sm font-medium text-slate-700">Škola / Organizace</label>
-                      <select value={mapping.schoolId} onChange={(e) => handleMappingChange('schoolId', e.target.value)} className="border p-1.5 rounded text-sm w-48 bg-slate-50">
+                      <select value={mapping.organizationId} onChange={(e) => handleMappingChange('organizationId', e.target.value)} className="border p-1.5 rounded text-sm w-48 bg-slate-50">
                           <option value={-1}>-- Ignorovat --</option>
                           {headers.map((h, i) => <option key={i} value={i}>{h}</option>)}
                       </select>

@@ -7,6 +7,10 @@ export async function loginAs(page: Page, uid: string) {
   // Use a route that is more robust than root if root is redirecting or empty
   await page.goto('/login');
 
+  await page.evaluate(() => {
+    sessionStorage.setItem("uat_unlocked", "true");
+  });
+
   await page.waitForFunction(() => (window as any).firebaseAuth !== undefined, { timeout: 15000 });
 
   await page.evaluate(async (token) => {

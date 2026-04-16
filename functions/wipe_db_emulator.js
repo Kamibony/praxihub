@@ -46,13 +46,13 @@ async function wipe() {
   try {
      // wipe time_logs first
      console.log("Wiping time_logs (this requires collection group query)...");
-     // wait, time_logs is subcollection, we need to iterate internships
-     const internships = await db.collection("internships").get();
-     for (const doc of internships.docs) {
-         await deleteCollection(`internships/${doc.id}/time_logs`);
+     // wait, time_logs is subcollection, we need to iterate placements
+     const placements = await db.collection("placements").get();
+     for (const doc of placements.docs) {
+         await deleteCollection(`placements/${doc.id}/time_logs`);
      }
-     console.log("Wiping internships...");
-     await deleteCollection("internships");
+     console.log("Wiping placements...");
+     await deleteCollection("placements");
      console.log("Wipe completed.");
   } catch (e) {
      console.error(e);

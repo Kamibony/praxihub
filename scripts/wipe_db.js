@@ -11,7 +11,7 @@ admin.initializeApp({
 const db = admin.firestore();
 // test
 async function test() {
-   const qs = await db.collection("internships").limit(1).get();
+   const qs = await db.collection("placements").limit(1).get();
    console.log(qs.size);
 }
 test();

@@ -82,7 +82,7 @@ export default function App() {
       const downloadURL = await getDownloadURL(storageRef);
 
       // 3. Vytvorenie dokumentu vo Firestore (spustí AI analýzu na backende)
-      await addDoc(collection(db, "internships"), {
+      await addDoc(collection(db, "placements"), {
         studentId: user.uid,
         studentEmail: user.email,
         contract_url: downloadURL,

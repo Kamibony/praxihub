@@ -20,7 +20,7 @@ import ContractSignature from "@/components/ContractSignature";
 export default function CompanyDashboard() {
   const [user, setUser] = useState<any>(null);
   const [companyIco, setCompanyIco] = useState<string | null>(null);
-  const [internships, setInternships] = useState<any[]>([]);
+  const [placements, setPlacements] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [inputIco, setInputIco] = useState("");
@@ -31,7 +31,7 @@ export default function CompanyDashboard() {
   const [isTagsOpen, setIsTagsOpen] = useState(false);
 
   // Detail Modal & Rating State
-  const [selectedInternship, setSelectedInternship] = useState<any>(null);
+  const [selectedPlacement, setSelectedPlacement] = useState<any>(null);
   const [companyRating, setCompanyRating] = useState(0);
   const [companyReview, setCompanyReview] = useState("");
 
@@ -65,7 +65,7 @@ export default function CompanyDashboard() {
 
           if (userData.companyIco) {
             setCompanyIco(userData.companyIco);
-            unsubscribeFirestore = fetchInternships(userData.companyIco);
+            unsubscribeFirestore = fetchPlacements(userData.companyIco);
           } else {
             setLoading(false);
           }
@@ -82,17 +82,17 @@ export default function CompanyDashboard() {
     };
   }, [router]);
 
-  const fetchInternships = (ico: string) => {
+  const fetchPlacements = (ico: string) => {
     setLoading(true);
     const q = query(
-      collection(db, "internships"),
+      collection(db, "placements"),
       where("organization_ico", "==", ico),
       where("status", "==", "APPROVED"),
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-      setInternships(data);
+      setPlacements(data);
       setLoading(false);
     });
 
@@ -120,7 +120,7 @@ export default function CompanyDashboard() {
       });
       setCompanyIco(cleanIco);
       setIsEditing(false);
-      fetchInternships(cleanIco);
+      fetchPlacements(cleanIco);
     } catch (error) {
       console.error("Error updating company profile:", error);
       alert("Nepodařilo se uložit profil.");
@@ -158,22 +158,22 @@ export default function CompanyDashboard() {
     }
   };
 
-  const openModal = (internship: any) => {
-    setSelectedInternship(internship);
-    setCompanyRating(internship.companyRating || 0);
-    setCompanyReview(internship.companyReview || "");
+  const openModal = (placement: any) => {
+    setSelectedPlacement(placement);
+    setCompanyRating(placement.companyRating || 0);
+    setCompanyReview(placement.companyReview || "");
   };
 
   const closeModal = () => {
-    setSelectedInternship(null);
+    setSelectedPlacement(null);
     setCompanyRating(0);
     setCompanyReview("");
   };
 
   const handleRateStudent = async () => {
-    if (!selectedInternship || companyRating === 0) return;
+    if (!selectedPlacement || companyRating === 0) return;
     try {
-      const docRef = doc(db, "internships", selectedInternship.id);
+      const docRef = doc(db, "placements", selectedPlacement.id);
       await updateDoc(docRef, {
         companyRating,
         companyReview,
@@ -187,13 +187,13 @@ export default function CompanyDashboard() {
   };
 
   const calculateAverageRating = () => {
-    const ratedInternships = internships.filter((i) => i.studentRating > 0);
-    if (ratedInternships.length === 0) return null;
-    const sum = ratedInternships.reduce(
+    const ratedPlacements = placements.filter((i) => i.studentRating > 0);
+    if (ratedPlacements.length === 0) return null;
+    const sum = ratedPlacements.reduce(
       (acc, curr) => acc + curr.studentRating,
       0,
     );
-    return (sum / ratedInternships.length).toFixed(1);
+    return (sum / ratedPlacements.length).toFixed(1);
   };
 
   const averageRating = calculateAverageRating();
@@ -361,13 +361,13 @@ export default function CompanyDashboard() {
         )}
 
         {/* UNIFIED DETAIL MODAL */}
-        {selectedInternship && (
+        {selectedPlacement && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full p-6 animate-fade-in">
               <div className="flex justify-between items-start mb-6">
                 <div>
                   <h3 className="text-2xl font-bold text-gray-900">
-                    {selectedInternship.studentEmail}
+                    {selectedPlacement.studentEmail}
                   </h3>
                   <p className="text-sm text-gray-500">
                     Detail stáže a hodnocení
@@ -399,20 +399,20 @@ export default function CompanyDashboard() {
                   <h4 className="text-md font-semibold text-gray-800 mb-2">
                     Smlouva o stáži
                   </h4>
-                  {selectedInternship.contract_url ? (
+                  {selectedPlacement.contract_url ? (
                     <>
                       <div className="flex items-center justify-between mb-4">
                         <span className="text-sm text-gray-600 truncate mr-4">
                           {/* Try to get filename from url, fallback to simple text */}
                           {decodeURIComponent(
-                            selectedInternship.contract_url
+                            selectedPlacement.contract_url
                               .split("/")
                               .pop()
                               ?.split("?")[0] || "smlouva.pdf",
                           )}
                         </span>
                         <a
-                          href={selectedInternship.contract_url}
+                          href={selectedPlacement.contract_url}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-700 flex items-center gap-2"
@@ -433,12 +433,12 @@ export default function CompanyDashboard() {
                           Stáhnout smlouvu
                         </a>
                       </div>
-                      {(selectedInternship?.studentMajor === "KPV" ||
-                        selectedInternship?.major === "KPV") && (
+                      {(selectedPlacement?.studentMajor === "KPV" ||
+                        selectedPlacement?.major === "KPV") && (
                         <ContractSignature
-                          internshipId={selectedInternship.id}
+                          placementId={selectedPlacement.id}
                           role="company"
-                          signatures={selectedInternship.signatures}
+                          signatures={selectedPlacement.signatures}
                         />
                       )}
                     </>
@@ -506,7 +506,7 @@ export default function CompanyDashboard() {
                   Smlouvy přiřazené k IČO {companyIco}
                 </h2>
                 <span className="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded">
-                  {internships.length} Smluv
+                  {placements.length} Smluv
                 </span>
               </div>
 
@@ -529,7 +529,7 @@ export default function CompanyDashboard() {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {internships.map((intern) => (
+                    {placements.map((intern) => (
                       <tr
                         key={intern.id}
                         onClick={() => openModal(intern)}
@@ -580,7 +580,7 @@ export default function CompanyDashboard() {
                         </td>
                       </tr>
                     ))}
-                    {internships.length === 0 && (
+                    {placements.length === 0 && (
                       <tr>
                         <td
                           colSpan={4}
