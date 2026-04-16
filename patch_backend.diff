@@ -1,0 +1,152 @@
+<<<<<<< SEARCH
+        let userId;
+        if (!snapshot.empty) {
+          // Update existing
+          const userDoc = snapshot.docs[0];
+          userId = userDoc.id;
+          transaction.update(userDoc.ref, {
+            schoolId: userObj.schoolId || userDoc.data().schoolId,
+            year: userObj.year || userDoc.data().year,
+            email: userObj.email || userDoc.data().email || `${normalizedName.replace(/\s+/g, '.').toLowerCase()}@placeholder.com`,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp()
+          });
+          updated++;
+        } else {
+          // Create new
+          const newUserRef = usersRef.doc();
+          userId = newUserRef.id;
+          transaction.set(newUserRef, {
+            name: fullName,
+            normalizedName: normalizedName,
+            role: 'student',
+            schoolId: userObj.schoolId || null,
+            year: userObj.year || null,
+            email: `${normalizedName.replace(/\s+/g, '.').toLowerCase()}@placeholder.com`, // Mock email
+            createdAt: admin.firestore.FieldValue.serverTimestamp()
+          });
+          added++;
+        }
+
+        let orgId = null;
+        if (userObj.schoolId) {
+          const orgsRef = db.collection('organizations');
+          const orgName = String(userObj.schoolId).trim();
+          const orgQ = orgsRef.where('name', '==', orgName).limit(1);
+          const orgSnapshot = await transaction.get(orgQ);
+
+          if (!orgSnapshot.empty) {
+             orgId = orgSnapshot.docs[0].id;
+          } else {
+             const newOrgRef = orgsRef.doc();
+             orgId = newOrgRef.id;
+             transaction.set(newOrgRef, {
+               name: orgName,
+               role: 'institution',
+               createdAt: admin.firestore.FieldValue.serverTimestamp()
+             });
+          }
+        }
+
+        const placementsRef = db.collection('placements');
+        const placementQ = placementsRef.where('studentId', '==', userId).limit(1);
+        const placementSnapshot = await transaction.get(placementQ);
+
+        if (!placementSnapshot.empty) {
+           const placementDoc = placementSnapshot.docs[0];
+           transaction.update(placementDoc.ref, {
+              organizationId: orgId || placementDoc.data().organizationId,
+              updatedAt: admin.firestore.FieldValue.serverTimestamp()
+           });
+        } else {
+           const newPlacementRef = placementsRef.doc();
+           transaction.set(newPlacementRef, {
+              studentId: userId,
+              organizationId: orgId,
+              status: 'DRAFT',
+              createdAt: admin.firestore.FieldValue.serverTimestamp()
+           });
+        }
+=======
+        // 1. ALL READS FIRST
+
+        let existingUserDoc = null;
+        if (!snapshot.empty) {
+          existingUserDoc = snapshot.docs[0];
+        }
+
+        const orgsRef = db.collection('organizations');
+        let existingOrgDoc = null;
+        let orgName = null;
+        if (userObj.schoolId) {
+          orgName = String(userObj.schoolId).trim();
+          const orgQ = orgsRef.where('name', '==', orgName).limit(1);
+          const orgSnapshot = await transaction.get(orgQ);
+          if (!orgSnapshot.empty) {
+             existingOrgDoc = orgSnapshot.docs[0];
+          }
+        }
+
+        let userId = existingUserDoc ? existingUserDoc.id : usersRef.doc().id;
+
+        const placementsRef = db.collection('placements');
+        const placementQ = placementsRef.where('studentId', '==', userId).limit(1);
+        const placementSnapshot = await transaction.get(placementQ);
+        let existingPlacementDoc = null;
+        if (!placementSnapshot.empty) {
+           existingPlacementDoc = placementSnapshot.docs[0];
+        }
+
+        // 2. ALL WRITES SECOND
+
+        if (existingUserDoc) {
+          transaction.update(existingUserDoc.ref, {
+            schoolId: userObj.schoolId || existingUserDoc.data().schoolId,
+            year: userObj.year || existingUserDoc.data().year,
+            email: userObj.email || existingUserDoc.data().email || `${normalizedName.replace(/\s+/g, '.').toLowerCase()}@placeholder.com`,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp()
+          });
+          updated++;
+        } else {
+          const newUserRef = usersRef.doc(userId);
+          transaction.set(newUserRef, {
+            name: fullName,
+            normalizedName: normalizedName,
+            role: 'student',
+            schoolId: userObj.schoolId || null,
+            year: userObj.year || null,
+            email: `${normalizedName.replace(/\s+/g, '.').toLowerCase()}@placeholder.com`, // Mock email
+            createdAt: admin.firestore.FieldValue.serverTimestamp()
+          });
+          added++;
+        }
+
+        let orgId = null;
+        if (orgName) {
+          if (existingOrgDoc) {
+             orgId = existingOrgDoc.id;
+          } else {
+             const newOrgRef = orgsRef.doc();
+             orgId = newOrgRef.id;
+             transaction.set(newOrgRef, {
+               name: orgName,
+               role: 'institution',
+               createdAt: admin.firestore.FieldValue.serverTimestamp()
+             });
+          }
+        }
+
+        if (existingPlacementDoc) {
+           transaction.update(existingPlacementDoc.ref, {
+              organizationId: orgId || existingPlacementDoc.data().organizationId,
+              updatedAt: admin.firestore.FieldValue.serverTimestamp()
+           });
+        } else {
+           const newPlacementRef = placementsRef.doc();
+           transaction.set(newPlacementRef, {
+              studentId: userId,
+              organizationId: orgId,
+              status: 'DRAFT',
+              createdAt: admin.firestore.FieldValue.serverTimestamp()
+           });
+        }
+>>>>>>> REPLACE
