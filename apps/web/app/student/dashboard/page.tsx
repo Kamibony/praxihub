@@ -27,7 +27,7 @@ import { Mic, MicOff } from "lucide-react";
 
 export default function StudentDashboard() {
   const [user, setUser] = useState<any>(null);
-  const [internship, setInternship] = useState<any>(null);
+  const [placement, setPlacement] = useState<any>(null);
   const [uploading, setUploading] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
 
@@ -75,9 +75,9 @@ export default function StudentDashboard() {
 
   // Fetch time logs
   useEffect(() => {
-    if (!internship?.id) return;
+    if (!placement?.id) return;
 
-    const logsRef = collection(db, "internships", internship.id, "time_logs");
+    const logsRef = collection(db, "placements", placement.id, "time_logs");
     const q = query(logsRef, orderBy("date", "desc"));
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -89,22 +89,22 @@ export default function StudentDashboard() {
     });
 
     return () => unsubscribe();
-  }, [internship?.id]);
+  }, [placement?.id]);
 
   const handleTimeLogSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!internship?.id || !newLogDate || !newLogHours || !newLogDescription)
+    if (!placement?.id || !newLogDate || !newLogHours || !newLogDescription)
       return;
 
     setSubmittingLog(true);
     try {
-      const logsRef = collection(db, "internships", internship.id, "time_logs");
+      const logsRef = collection(db, "placements", placement.id, "time_logs");
       await addDoc(logsRef, {
         date: newLogDate,
         hours: Number(newLogHours),
         description: newLogDescription,
         status: "pending",
-        mentorId: internship.mentorId || null,
+        mentorId: placement.mentorId || null,
         createdAt: new Date().toISOString(),
       });
 
@@ -147,7 +147,7 @@ export default function StudentDashboard() {
         }
 
         const q = query(
-          collection(db, "internships"),
+          collection(db, "placements"),
           where("studentId", "==", currentUser.uid),
           orderBy("createdAt", "desc"),
           limit(1),
@@ -158,7 +158,7 @@ export default function StudentDashboard() {
           if (!snapshot.empty) {
             const data = snapshot.docs[0].data();
             const id = snapshot.docs[0].id;
-            setInternship({ id, ...data });
+            setPlacement({ id, ...data });
 
             if (data.status === "NEEDS_REVIEW") {
               setReviewData({
@@ -175,7 +175,7 @@ export default function StudentDashboard() {
               setStudentReview(data.studentReview);
             }
           } else {
-            setInternship(null);
+            setPlacement(null);
           }
           setLoadingData(false);
         });
@@ -197,7 +197,7 @@ export default function StudentDashboard() {
     }
     setSubmittingOrg(true);
     try {
-      await addDoc(collection(db, "internships"), {
+      await addDoc(collection(db, "placements"), {
         studentId: user.uid,
         studentEmail: user.email,
         studentName: user.displayName || user.email,
@@ -228,24 +228,24 @@ export default function StudentDashboard() {
       await uploadBytes(storageRef, file);
       const downloadURL = await getDownloadURL(storageRef);
 
-      // Save internship with student name for easier display in Coordinator Dashboard
-      if (internship && internship.id) {
-        const docRef = doc(db, "internships", internship.id);
+      // Save placement with student name for easier display in Coordinator Dashboard
+      if (placement && placement.id) {
+        const docRef = doc(db, "placements", placement.id);
         await updateDoc(docRef, {
           contract_url: downloadURL,
           fileName: file.name,
         });
-        const transitionInternshipState = httpsCallable(
+        const transitionPlacementState = httpsCallable(
           functions,
-          "transitionInternshipState",
+          "transitionPlacementState",
         );
-        await transitionInternshipState({
-          internshipId: internship.id,
+        await transitionPlacementState({
+          placementId: placement.id,
           newState: "ANALYZING",
         });
       } else {
         // Fallback - should not happen in this flow if strictly following APPROVED path
-        await addDoc(collection(db, "internships"), {
+        await addDoc(collection(db, "placements"), {
           studentId: user.uid,
           studentEmail: user.email,
           studentName: user.displayName || user.email,
@@ -264,20 +264,20 @@ export default function StudentDashboard() {
   };
 
   const confirmData = async () => {
-    if (!internship) return;
+    if (!placement) return;
     try {
-      const docRef = doc(db, "internships", internship.id);
+      const docRef = doc(db, "placements", placement.id);
       await updateDoc(docRef, {
         ...reviewData,
         is_verified: true,
         approvedAt: new Date().toISOString(),
       });
-      const transitionInternshipState = httpsCallable(
+      const transitionPlacementState = httpsCallable(
         functions,
-        "transitionInternshipState",
+        "transitionPlacementState",
       );
-      await transitionInternshipState({
-        internshipId: internship.id,
+      await transitionPlacementState({
+        placementId: placement.id,
         newState: "APPROVED",
       });
       alert("Údaje potvrzeny!");
@@ -288,9 +288,9 @@ export default function StudentDashboard() {
   };
 
   const handleRateCompany = async () => {
-    if (!internship || studentRating === 0) return;
+    if (!placement || studentRating === 0) return;
     try {
-      const docRef = doc(db, "internships", internship.id);
+      const docRef = doc(db, "placements", placement.id);
       await updateDoc(docRef, {
         studentRating,
         studentReview,
@@ -303,7 +303,7 @@ export default function StudentDashboard() {
   };
 
   const handleEvaluateReflection = async () => {
-    if (!internship || !reflectionText.trim()) return;
+    if (!placement || !reflectionText.trim()) return;
     setEvaluating(true);
     try {
       const evaluateReflectionFn = httpsCallable(
@@ -311,7 +311,7 @@ export default function StudentDashboard() {
         "evaluateReflection",
       );
       const response = await evaluateReflectionFn({
-        internshipId: internship.id,
+        placementId: placement.id,
         reflectionText: reflectionText,
       });
 
@@ -438,9 +438,9 @@ export default function StudentDashboard() {
   };
 
   const getChatbotMessage = () => {
-    if (!internship)
+    if (!placement)
       return "Ahoj! Vítám tě v PraxiHubu. Začni tím, že vyplníš žádost o schválení firmy.";
-    switch (internship.status) {
+    switch (placement.status) {
       case "PENDING_ORG_APPROVAL":
         return "Právě čekáme na schválení firmy koordinátorem. Dám ti vědět, jakmile to bude hotové.";
       case "ORG_APPROVED":
@@ -457,7 +457,7 @@ export default function StudentDashboard() {
   // UI Components
   const UploadSection = () => {
     // Ak užívateľ nemá schválenú organizáciu, zobrazíme pôvodnú správu (defenzívne, hoci rodič to kontroluje)
-    if (internship?.status !== "ORG_APPROVED") {
+    if (placement?.status !== "ORG_APPROVED") {
       return (
         <div className="text-center py-10 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
           <p className="text-gray-500">Zatím nemáš žádnou aktivní praxi.</p>
@@ -788,7 +788,7 @@ export default function StudentDashboard() {
               </h2>
 
               {/* LOGIC FLOW */}
-              {!internship || internship.status === "REJECTED" ? (
+              {!placement || placement.status === "REJECTED" ? (
                 <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
                   <h3 className="text-lg font-bold text-gray-800 mb-4">
                     Žádost o schválení organizace
@@ -798,14 +798,14 @@ export default function StudentDashboard() {
                     vámi vybranou organizaci.
                   </p>
 
-                  {internship?.status === "REJECTED" && (
+                  {placement?.status === "REJECTED" && (
                     <div className="bg-red-50 text-red-700 p-4 rounded-lg mb-6 border border-red-200">
                       <p className="font-bold">
                         Vaša predchádzajúca žiadosť bola zamietnutá.
                       </p>
-                      {internship.ai_error_message && (
+                      {placement.ai_error_message && (
                         <p className="text-sm mt-1">
-                          Důvod: {internship.ai_error_message}
+                          Důvod: {placement.ai_error_message}
                         </p>
                       )}
                       <p className="text-sm mt-2">
@@ -874,7 +874,7 @@ export default function StudentDashboard() {
               ) : (
                 <>
                   {/* PENDING APPROVAL */}
-                  {internship.status === "PENDING_ORG_APPROVAL" && (
+                  {placement.status === "PENDING_ORG_APPROVAL" && (
                     <div className="text-center py-10 bg-blue-50 rounded-lg border border-blue-100">
                       <div className="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
                         <svg
@@ -896,36 +896,36 @@ export default function StudentDashboard() {
                       </h3>
                       <p className="text-gray-600 max-w-md mx-auto">
                         Váš požadavek na praxi v{" "}
-                        <strong>{internship.organization_name}</strong> čeká na
+                        <strong>{placement.organization_name}</strong> čeká na
                         schválení koordinátorem. O výsledku budete informováni.
                       </p>
                     </div>
                   )}
 
                   {/* ORG APPROVED - Show Upload/Generate Buttons */}
-                  {internship.status === "ORG_APPROVED" && <UploadSection />}
+                  {placement.status === "ORG_APPROVED" && <UploadSection />}
 
                   {/* EXISTING STATUSES */}
-                  {(internship.status === "ANALYZING" ||
-                    internship.status === "NEEDS_REVIEW" ||
-                    internship.status === "APPROVED" ||
-                    internship.status === "EVALUATION" ||
-                    internship.status === "CLOSED") && (
+                  {(placement.status === "ANALYZING" ||
+                    placement.status === "NEEDS_REVIEW" ||
+                    placement.status === "APPROVED" ||
+                    placement.status === "EVALUATION" ||
+                    placement.status === "CLOSED") && (
                     <div className="space-y-6">
                       {/* STATUS BAR */}
                       <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg border border-gray-100">
                         <div
                           className={`p-3 rounded-full ${
-                            internship.status === "ANALYZING"
+                            placement.status === "ANALYZING"
                               ? "bg-blue-100 text-blue-600"
-                              : internship.status === "APPROVED"
+                              : placement.status === "APPROVED"
                                 ? "bg-green-100 text-green-600"
-                                : internship.status === "NEEDS_REVIEW"
+                                : placement.status === "NEEDS_REVIEW"
                                   ? "bg-yellow-100 text-yellow-600"
                                   : "bg-gray-100 text-gray-600"
                           }`}
                         >
-                          {internship.status === "ANALYZING" && (
+                          {placement.status === "ANALYZING" && (
                             <svg
                               className="w-6 h-6 animate-spin"
                               fill="none"
@@ -946,7 +946,7 @@ export default function StudentDashboard() {
                               ></path>
                             </svg>
                           )}
-                          {internship.status === "APPROVED" && (
+                          {placement.status === "APPROVED" && (
                             <svg
                               className="w-6 h-6"
                               fill="none"
@@ -961,8 +961,8 @@ export default function StudentDashboard() {
                               />
                             </svg>
                           )}
-                          {(internship.status === "EVALUATION" ||
-                            internship.status === "CLOSED") && (
+                          {(placement.status === "EVALUATION" ||
+                            placement.status === "CLOSED") && (
                             <svg
                               className="w-6 h-6"
                               fill="none"
@@ -977,7 +977,7 @@ export default function StudentDashboard() {
                               />
                             </svg>
                           )}
-                          {internship.status === "NEEDS_REVIEW" && (
+                          {placement.status === "NEEDS_REVIEW" && (
                             <svg
                               className="w-6 h-6"
                               fill="none"
@@ -995,33 +995,33 @@ export default function StudentDashboard() {
                         </div>
                         <div>
                           <h3 className="font-bold text-lg text-gray-900">
-                            {internship.status === "ANALYZING" &&
+                            {placement.status === "ANALYZING" &&
                               "AI zpracovává dokument..."}
-                            {internship.status === "NEEDS_REVIEW" &&
+                            {placement.status === "NEEDS_REVIEW" &&
                               "Nutná kontrola údajů"}
-                            {internship.status === "APPROVED" &&
+                            {placement.status === "APPROVED" &&
                               "Praxe je oficiálně schválena"}
-                            {internship.status === "EVALUATION" &&
+                            {placement.status === "EVALUATION" &&
                               "Čeká se na hodnocení"}
-                            {internship.status === "CLOSED" && "Praxe uzavřena"}
+                            {placement.status === "CLOSED" && "Praxe uzavřena"}
                           </h3>
                           <p className="text-sm text-gray-500">
-                            {internship.status === "ANALYZING" &&
+                            {placement.status === "ANALYZING" &&
                               "Čekejte prosím, čtu data ze smlouvy."}
-                            {internship.status === "NEEDS_REVIEW" &&
+                            {placement.status === "NEEDS_REVIEW" &&
                               "AI předvyplnila data. Prosím o vaši kontrolu níže."}
-                            {internship.status === "APPROVED" &&
-                              `Schváleno dne ${formatDateCZ(internship.approvedAt)}. E-mail odeslán firmě.`}
-                            {internship.status === "EVALUATION" &&
+                            {placement.status === "APPROVED" &&
+                              `Schváleno dne ${formatDateCZ(placement.approvedAt)}. E-mail odeslán firmě.`}
+                            {placement.status === "EVALUATION" &&
                               "Napiš svou reflexi z praxe."}
-                            {internship.status === "CLOSED" &&
+                            {placement.status === "CLOSED" &&
                               "Tvá praxe byla úspěšně hodnocena."}
                           </p>
                         </div>
                       </div>
 
                       {/* FORMULÁR NA KONTROLU (Iba ak NEEDS_REVIEW) */}
-                      {internship.status === "NEEDS_REVIEW" && (
+                      {placement.status === "NEEDS_REVIEW" && (
                         <div className="bg-yellow-50 p-6 rounded-lg border border-yellow-200">
                           <h4 className="font-bold text-yellow-800 mb-4">
                             Zkontrolujte údaje nalezené AI:
@@ -1102,9 +1102,9 @@ export default function StudentDashboard() {
                       )}
 
                       {/* SCHVÁLENÉ ÚDAJE (Iba ak APPROVED alebo EVALUATION alebo CLOSED) */}
-                      {(internship.status === "APPROVED" ||
-                        internship.status === "EVALUATION" ||
-                        internship.status === "CLOSED") && (
+                      {(placement.status === "APPROVED" ||
+                        placement.status === "EVALUATION" ||
+                        placement.status === "CLOSED") && (
                         <div className="space-y-6">
                           <div className="bg-white rounded-lg border border-gray-100 overflow-hidden">
                             <table className="min-w-full divide-y divide-gray-200 text-sm">
@@ -1114,7 +1114,7 @@ export default function StudentDashboard() {
                                     Firma
                                   </td>
                                   <td className="px-4 py-3 text-gray-900 font-bold">
-                                    {internship.organization_name}
+                                    {placement.organization_name}
                                   </td>
                                 </tr>
                                 <tr>
@@ -1122,7 +1122,7 @@ export default function StudentDashboard() {
                                     IČO
                                   </td>
                                   <td className="px-4 py-3 text-gray-900 font-mono">
-                                    {internship.organization_ico}
+                                    {placement.organization_ico}
                                   </td>
                                 </tr>
                                 <tr>
@@ -1130,8 +1130,8 @@ export default function StudentDashboard() {
                                     Termín
                                   </td>
                                   <td className="px-4 py-3 text-gray-900">
-                                    {internship.start_date} —{" "}
-                                    {internship.end_date}
+                                    {placement.start_date} —{" "}
+                                    {placement.end_date}
                                   </td>
                                 </tr>
                               </tbody>
@@ -1139,7 +1139,7 @@ export default function StudentDashboard() {
                           </div>
 
                           {/* AI HODNOCENÍ REFLEXE (EVALUATION STATE) */}
-                          {internship.status === "EVALUATION" && (
+                          {placement.status === "EVALUATION" && (
                             <div className="bg-indigo-50 p-6 rounded-lg border border-indigo-200 mt-6">
                               <h3 className="font-bold text-indigo-900 text-lg mb-2 flex items-center gap-2">
                                 <svg
@@ -1164,86 +1164,86 @@ export default function StudentDashboard() {
                                 AI Sensei váš text vyhodnotí.
                               </p>
 
-                              {internship.evaluationResult &&
-                                !internship.evaluationResult.isPass && (
+                              {placement.evaluationResult &&
+                                !placement.evaluationResult.isPass && (
                                   <div className="bg-red-50 text-red-700 p-4 rounded mb-4 text-sm border border-red-200">
                                     <p className="font-bold mb-2">
                                       Hodnocení AI – Reflexe nesplňuje metodiku
                                       (MŠMT KRAU)
                                     </p>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
-                                      {internship.evaluationResult
+                                      {placement.evaluationResult
                                         .didacticCompetence && (
                                         <div className="bg-white p-3 rounded border border-red-100">
                                           <span className="font-bold text-red-800">
                                             Oborově-předmětová a didaktická kom.
                                             (
                                             {
-                                              internship.evaluationResult
+                                              placement.evaluationResult
                                                 .didacticCompetence.score
                                             }
                                             /100):
                                           </span>
                                           <p className="text-red-600 mt-1">
                                             {
-                                              internship.evaluationResult
+                                              placement.evaluationResult
                                                 .didacticCompetence.reasoning
                                             }
                                           </p>
                                         </div>
                                       )}
-                                      {internship.evaluationResult
+                                      {placement.evaluationResult
                                         .pedagogicalCompetence && (
                                         <div className="bg-white p-3 rounded border border-red-100">
                                           <span className="font-bold text-red-800">
                                             Pedagogická a psychologická kom. (
                                             {
-                                              internship.evaluationResult
+                                              placement.evaluationResult
                                                 .pedagogicalCompetence.score
                                             }
                                             /100):
                                           </span>
                                           <p className="text-red-600 mt-1">
                                             {
-                                              internship.evaluationResult
+                                              placement.evaluationResult
                                                 .pedagogicalCompetence.reasoning
                                             }
                                           </p>
                                         </div>
                                       )}
-                                      {internship.evaluationResult
+                                      {placement.evaluationResult
                                         .socialCompetence && (
                                         <div className="bg-white p-3 rounded border border-red-100">
                                           <span className="font-bold text-red-800">
                                             Komunikativní a sociální kom. (
                                             {
-                                              internship.evaluationResult
+                                              placement.evaluationResult
                                                 .socialCompetence.score
                                             }
                                             /100):
                                           </span>
                                           <p className="text-red-600 mt-1">
                                             {
-                                              internship.evaluationResult
+                                              placement.evaluationResult
                                                 .socialCompetence.reasoning
                                             }
                                           </p>
                                         </div>
                                       )}
-                                      {internship.evaluationResult
+                                      {placement.evaluationResult
                                         .reflectiveCompetence && (
                                         <div className="bg-white p-3 rounded border border-red-100">
                                           <span className="font-bold text-red-800">
                                             Profesní a sebereflektivní kom. (
                                             {
-                                              internship.evaluationResult
+                                              placement.evaluationResult
                                                 .reflectiveCompetence.score
                                             }
                                             /100):
                                           </span>
                                           <p className="text-red-600 mt-1">
                                             {
-                                              internship.evaluationResult
+                                              placement.evaluationResult
                                                 .reflectiveCompetence.reasoning
                                             }
                                           </p>
@@ -1291,7 +1291,7 @@ export default function StudentDashboard() {
                           )}
 
                           {/* UZAVŘENÁ PRAXE (CLOSED STATE) */}
-                          {internship.status === "CLOSED" && (
+                          {placement.status === "CLOSED" && (
                             <div className="bg-green-50 p-6 rounded-lg border border-green-200 mt-6">
                               <h3 className="font-bold text-green-900 text-lg mb-2 flex items-center gap-2">
                                 <svg
@@ -1313,19 +1313,19 @@ export default function StudentDashboard() {
                                 Gratulujeme! Vaše reflexe byla schválena a praxe
                                 je oficiálně uzavřena.
                               </p>
-                              {internship.evaluationResult && (
+                              {placement.evaluationResult && (
                                 <div className="bg-white p-4 rounded-lg border border-green-100 text-sm mt-4">
                                   <p className="font-bold text-green-700 mb-3 text-base">
                                     Zpětná vazba od AI Sensei (dle MŠMT KRAU)
                                   </p>
                                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {internship.evaluationResult
+                                    {placement.evaluationResult
                                       .didacticCompetence && (
                                       <div className="bg-green-50 p-3 rounded border border-green-200">
                                         <span className="font-bold text-green-800">
                                           Oborově-předmětová a didaktická kom. (
                                           {
-                                            internship.evaluationResult
+                                            placement.evaluationResult
                                               .didacticCompetence.score
                                           }
                                           /100):
@@ -1333,20 +1333,20 @@ export default function StudentDashboard() {
                                         <p className="text-gray-700 mt-1 italic">
                                           "
                                           {
-                                            internship.evaluationResult
+                                            placement.evaluationResult
                                               .didacticCompetence.reasoning
                                           }
                                           "
                                         </p>
                                       </div>
                                     )}
-                                    {internship.evaluationResult
+                                    {placement.evaluationResult
                                       .pedagogicalCompetence && (
                                       <div className="bg-green-50 p-3 rounded border border-green-200">
                                         <span className="font-bold text-green-800">
                                           Pedagogická a psychologická kom. (
                                           {
-                                            internship.evaluationResult
+                                            placement.evaluationResult
                                               .pedagogicalCompetence.score
                                           }
                                           /100):
@@ -1354,20 +1354,20 @@ export default function StudentDashboard() {
                                         <p className="text-gray-700 mt-1 italic">
                                           "
                                           {
-                                            internship.evaluationResult
+                                            placement.evaluationResult
                                               .pedagogicalCompetence.reasoning
                                           }
                                           "
                                         </p>
                                       </div>
                                     )}
-                                    {internship.evaluationResult
+                                    {placement.evaluationResult
                                       .socialCompetence && (
                                       <div className="bg-green-50 p-3 rounded border border-green-200">
                                         <span className="font-bold text-green-800">
                                           Komunikativní a sociální kom. (
                                           {
-                                            internship.evaluationResult
+                                            placement.evaluationResult
                                               .socialCompetence.score
                                           }
                                           /100):
@@ -1375,20 +1375,20 @@ export default function StudentDashboard() {
                                         <p className="text-gray-700 mt-1 italic">
                                           "
                                           {
-                                            internship.evaluationResult
+                                            placement.evaluationResult
                                               .socialCompetence.reasoning
                                           }
                                           "
                                         </p>
                                       </div>
                                     )}
-                                    {internship.evaluationResult
+                                    {placement.evaluationResult
                                       .reflectiveCompetence && (
                                       <div className="bg-green-50 p-3 rounded border border-green-200">
                                         <span className="font-bold text-green-800">
                                           Profesní a sebereflektivní kom. (
                                           {
-                                            internship.evaluationResult
+                                            placement.evaluationResult
                                               .reflectiveCompetence.score
                                           }
                                           /100):
@@ -1396,7 +1396,7 @@ export default function StudentDashboard() {
                                         <p className="text-gray-700 mt-1 italic">
                                           "
                                           {
-                                            internship.evaluationResult
+                                            placement.evaluationResult
                                               .reflectiveCompetence.reasoning
                                           }
                                           "
@@ -1406,10 +1406,10 @@ export default function StudentDashboard() {
                                   </div>
                                 </div>
                               )}
-                              {internship.certificateUrl && (
+                              {placement.certificateUrl && (
                                 <div className="mt-6 flex justify-center">
                                   <a
-                                    href={internship.certificateUrl}
+                                    href={placement.certificateUrl}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-lg font-bold shadow-md hover:bg-indigo-700 transition"
@@ -1435,9 +1435,9 @@ export default function StudentDashboard() {
                           )}
 
                           {/* EVIDENCE HODIN (Time Logs) - Zobrazia sa len ak je APPROVED alebo EVALUATION alebo CLOSED */}
-                          {(internship.status === "APPROVED" ||
-                            internship.status === "EVALUATION" ||
-                            internship.status === "CLOSED") && (
+                          {(placement.status === "APPROVED" ||
+                            placement.status === "EVALUATION" ||
+                            placement.status === "CLOSED") && (
                             <div className="bg-blue-50 p-6 rounded-lg border border-blue-200 mb-6">
                               <h3 className="font-bold text-blue-900 text-lg mb-4 flex items-center gap-2">
                                 <svg
@@ -1588,23 +1588,23 @@ export default function StudentDashboard() {
                               Hodnocení praxe
                             </h3>
 
-                            {internship.studentRating ? (
+                            {placement.studentRating ? (
                               <div>
                                 <p className="text-sm text-purple-800 mb-2 font-medium">
                                   Vaše hodnocení firmy:
                                 </p>
                                 <div className="flex items-center gap-3 mb-3">
                                   <StarRating
-                                    rating={internship.studentRating}
+                                    rating={placement.studentRating}
                                     readOnly
                                   />
                                   <span className="font-bold text-purple-900">
-                                    {internship.studentRating}/5
+                                    {placement.studentRating}/5
                                   </span>
                                 </div>
-                                {internship.studentReview && (
+                                {placement.studentReview && (
                                   <div className="bg-white p-3 rounded border border-purple-100 text-gray-700 text-sm italic">
-                                    "{internship.studentReview}"
+                                    "{placement.studentReview}"
                                   </div>
                                 )}
                               </div>
@@ -1665,7 +1665,7 @@ export default function StudentDashboard() {
               <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">
                 Dokumentace
               </h3>
-              {internship && internship.contract_url ? (
+              {placement && placement.contract_url ? (
                 <div>
                   <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg mb-4">
                     <svg
@@ -1683,37 +1683,37 @@ export default function StudentDashboard() {
                     </svg>
                     <div className="overflow-hidden">
                       <p className="text-sm font-medium text-gray-900 truncate">
-                        {internship.fileName}
+                        {placement.fileName}
                       </p>
                       <p className="text-xs text-gray-500">
-                        Nahráno: {formatDateCZ(internship.createdAt)}
+                        Nahráno: {formatDateCZ(placement.createdAt)}
                       </p>
                     </div>
                   </div>
                   <a
-                    href={internship.contract_url}
+                    href={placement.contract_url}
                     target="_blank"
                     rel="noreferrer"
                     className="block w-full text-center py-2 border border-blue-200 text-blue-600 rounded-lg hover:bg-blue-50 text-sm font-medium transition mb-4"
                   >
                     Stáhnout originál
                   </a>
-                  {(internship?.studentMajor === "KPV" ||
-                    internship?.major === "KPV") && (
+                  {(placement?.studentMajor === "KPV" ||
+                    placement?.major === "KPV") && (
                     <div className="mt-4 border-t pt-4">
                       <ContractSignature
-                        internshipId={internship.id}
+                        placementId={placement.id}
                         role="student"
-                        signatures={internship.signatures}
+                        signatures={placement.signatures}
                       />
                     </div>
                   )}
                 </div>
               ) : (
                 <p className="text-sm text-gray-500 italic">
-                  {internship?.status === "PENDING_ORG_APPROVAL"
+                  {placement?.status === "PENDING_ORG_APPROVAL"
                     ? "Čeká se na schválení firmy."
-                    : internship?.status === "ORG_APPROVED"
+                    : placement?.status === "ORG_APPROVED"
                       ? "Čeká se na nahrání smlouvy."
                       : "Žádný dokument nebyl nahrán."}
                 </p>
@@ -1721,34 +1721,34 @@ export default function StudentDashboard() {
             </div>
 
             {/* Časová os (Timeline) */}
-            {internship && (
+            {placement && (
               <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                 <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">
                   Průběh zpracování
                 </h3>
                 <div className="relative pl-4 border-l-2 border-gray-200 space-y-6">
                   {/* Step: Org Request */}
-                  {(internship.status === "PENDING_ORG_APPROVAL" ||
-                    internship.status === "ORG_APPROVED" ||
-                    internship.status === "ANALYZING" ||
-                    internship.status === "NEEDS_REVIEW" ||
-                    internship.status === "APPROVED" ||
-                    internship.status === "REJECTED") && (
+                  {(placement.status === "PENDING_ORG_APPROVAL" ||
+                    placement.status === "ORG_APPROVED" ||
+                    placement.status === "ANALYZING" ||
+                    placement.status === "NEEDS_REVIEW" ||
+                    placement.status === "APPROVED" ||
+                    placement.status === "REJECTED") && (
                     <div className="relative">
                       <div
                         className={`absolute -left-[21px] h-3 w-3 rounded-full border-2 border-white ${
-                          internship.status === "PENDING_ORG_APPROVAL"
+                          placement.status === "PENDING_ORG_APPROVAL"
                             ? "bg-blue-500"
-                            : internship.status === "REJECTED"
+                            : placement.status === "REJECTED"
                               ? "bg-red-500"
                               : "bg-green-500"
                         }`}
                       ></div>
                       <p className="text-xs text-gray-500">
-                        {formatDateCZ(internship.createdAt)}
+                        {formatDateCZ(placement.createdAt)}
                       </p>
                       <p className="text-sm font-medium text-gray-900">
-                        {internship.status === "PENDING_ORG_APPROVAL"
+                        {placement.status === "PENDING_ORG_APPROVAL"
                           ? "Žádost o schválení firmy"
                           : "Žádost odeslána"}
                       </p>
@@ -1756,11 +1756,11 @@ export default function StudentDashboard() {
                   )}
 
                   {/* Step: Upload Contract */}
-                  {(internship.status === "ANALYZING" ||
-                    internship.status === "NEEDS_REVIEW" ||
-                    internship.status === "APPROVED" ||
-                    (internship.status === "REJECTED" &&
-                      internship.fileName)) && (
+                  {(placement.status === "ANALYZING" ||
+                    placement.status === "NEEDS_REVIEW" ||
+                    placement.status === "APPROVED" ||
+                    (placement.status === "REJECTED" &&
+                      placement.fileName)) && (
                     <div className="relative">
                       <div className="absolute -left-[21px] bg-green-500 h-3 w-3 rounded-full border-2 border-white"></div>
                       <p className="text-sm font-medium text-gray-900">
@@ -1770,10 +1770,10 @@ export default function StudentDashboard() {
                   )}
 
                   {/* Krok 2 AI */}
-                  {(internship.status === "NEEDS_REVIEW" ||
-                    internship.status === "APPROVED" ||
-                    (internship.status === "REJECTED" &&
-                      internship.fileName)) && (
+                  {(placement.status === "NEEDS_REVIEW" ||
+                    placement.status === "APPROVED" ||
+                    (placement.status === "REJECTED" &&
+                      placement.fileName)) && (
                     <div className="relative">
                       <div className="absolute -left-[21px] bg-blue-500 h-3 w-3 rounded-full border-2 border-white"></div>
                       <p className="text-sm font-medium text-gray-900">
@@ -1782,13 +1782,13 @@ export default function StudentDashboard() {
                     </div>
                   )}
                   {/* Krok 3 Approved */}
-                  {(internship.status === "APPROVED" ||
-                    internship.status === "EVALUATION" ||
-                    internship.status === "CLOSED") && (
+                  {(placement.status === "APPROVED" ||
+                    placement.status === "EVALUATION" ||
+                    placement.status === "CLOSED") && (
                     <div className="relative">
                       <div className="absolute -left-[21px] bg-green-500 h-3 w-3 rounded-full border-2 border-white"></div>
                       <p className="text-xs text-gray-500">
-                        {formatDateCZ(internship.approvedAt)}
+                        {formatDateCZ(placement.approvedAt)}
                       </p>
                       <p className="text-sm font-bold text-green-700">
                         Schváleno
@@ -1796,7 +1796,7 @@ export default function StudentDashboard() {
                     </div>
                   )}
                   {/* Krok 3 Rejected */}
-                  {internship.status === "REJECTED" && (
+                  {placement.status === "REJECTED" && (
                     <div className="relative">
                       <div className="absolute -left-[21px] bg-red-500 h-3 w-3 rounded-full border-2 border-white"></div>
                       <p className="text-sm font-bold text-red-700">
@@ -1806,11 +1806,11 @@ export default function StudentDashboard() {
                   )}
 
                   {/* Krok 4: Evaluation */}
-                  {(internship.status === "EVALUATION" ||
-                    internship.status === "CLOSED") && (
+                  {(placement.status === "EVALUATION" ||
+                    placement.status === "CLOSED") && (
                     <div className="relative">
                       <div
-                        className={`absolute -left-[21px] h-3 w-3 rounded-full border-2 border-white ${internship.status === "CLOSED" ? "bg-green-500" : "bg-blue-500"}`}
+                        className={`absolute -left-[21px] h-3 w-3 rounded-full border-2 border-white ${placement.status === "CLOSED" ? "bg-green-500" : "bg-blue-500"}`}
                       ></div>
                       <p className="text-sm font-medium text-gray-900">
                         Hodnocení praxe
@@ -1819,7 +1819,7 @@ export default function StudentDashboard() {
                   )}
 
                   {/* Krok 5: Closed */}
-                  {internship.status === "CLOSED" && (
+                  {placement.status === "CLOSED" && (
                     <div className="relative">
                       <div className="absolute -left-[21px] bg-green-500 h-3 w-3 rounded-full border-2 border-white"></div>
                       <p className="text-sm font-bold text-green-700">

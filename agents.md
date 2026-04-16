@@ -10,7 +10,7 @@
 
 ## Architectural Principles
 *   **Localization:** Strict Czech localization for all user-facing UI and AI system prompts. We do not use i18n libraries; strings are hardcoded in professional Czech for the CZ market.
-*   **State Machine:** Internship progression is managed by a strict State Machine enforced by Cloud Functions, not client-side writes.
+*   **State Machine:** Placement progression is managed by a strict State Machine enforced by Cloud Functions, not client-side writes.
 *   **Transactions:** Operations that read and then write data (like the Excel roster import or status transitions) use Firestore transactions to prevent race conditions and protect existing data.
 *   **UI Component Structure:** Monolithic frontend UI files should be broken down into smaller, strictly typed discrete React components to maintain clean syntax and prevent deep nesting.
 *   **AI Integration:** We use `gemini-2.5-pro` for general AI tasks (matchmaking, chatbots) and `gemini-2.5-flash` with structured outputs (JSON schema) for high-speed deterministic evaluations (MŠMT KRAU methodology).

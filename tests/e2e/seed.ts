@@ -31,7 +31,7 @@ export async function seedStudentUser() {
     createdAt: new Date().toISOString()
   });
 
-  await db.collection('internships').doc('internship123').set({
+  await db.collection('placements').doc('placement123').set({
     studentId: 'student123',
     status: 'EVALUATION',
     organization_name: 'Mock Company s.r.o.',
@@ -57,7 +57,7 @@ export async function seedMentorAndLog() {
     email: 'student-log@praxihub.cz'
   });
 
-  await db.collection('internships').doc('internship-log').set({
+  await db.collection('placements').doc('placement-log').set({
     studentId: 'student-log-123',
     mentorId: 'mentor123',
     status: 'APPROVED',

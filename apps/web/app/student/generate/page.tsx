@@ -22,14 +22,14 @@ export default function GenerateContractPage() {
   });
   const [loading, setLoading] = useState(false);
   const [generatedUrl, setGeneratedUrl] = useState<string | null>(null);
-  const [internshipId, setInternshipId] = useState<string | null>(null);
+  const [placementId, setPlacementId] = useState<string | null>(null);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
-        // Fetch existing approved internship
+        // Fetch existing approved placement
         const q = query(
-            collection(db, "internships"),
+            collection(db, "placements"),
             where("studentId", "==", currentUser.uid),
             where("status", "==", "ORG_APPROVED"),
             orderBy("createdAt", "desc"),
@@ -38,7 +38,7 @@ export default function GenerateContractPage() {
         const snapshot = await getDocs(q);
         if (!snapshot.empty) {
             const docData = snapshot.docs[0].data();
-            setInternshipId(snapshot.docs[0].id);
+            setPlacementId(snapshot.docs[0].id);
             setFormData(prev => ({
                 ...prev,
                 companyName: docData.organization_name || "",
@@ -241,9 +241,9 @@ export default function GenerateContractPage() {
       setGeneratedUrl(downloadURL);
 
       // 4. Firestore
-      if (internshipId) {
+      if (placementId) {
         // UPDATE existing document
-        const docRef = doc(db, "internships", internshipId);
+        const docRef = doc(db, "placements", placementId);
         await updateDoc(docRef, {
             contract_url: downloadURL,
             fileName: fileName,
@@ -251,11 +251,11 @@ export default function GenerateContractPage() {
             end_date: formData.endDate,
             generated: true
         });
-        const transitionInternshipState = httpsCallable(functions, 'transitionInternshipState');
-        await transitionInternshipState({ internshipId: internshipId, newState: "NEEDS_REVIEW" });
+        const transitionPlacementState = httpsCallable(functions, 'transitionPlacementState');
+        await transitionPlacementState({ placementId: placementId, newState: "NEEDS_REVIEW" });
       } else {
          // Create new if not found
-         await addDoc(collection(db, "internships"), {
+         await addDoc(collection(db, "placements"), {
             studentId: auth.currentUser.uid,
             studentEmail: auth.currentUser.email,
             studentName: formData.studentName || auth.currentUser.displayName,
@@ -307,9 +307,9 @@ export default function GenerateContractPage() {
                 name="companyName"
                 value={formData.companyName}
                 onChange={handleChange}
-                className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2 ${internshipId ? 'bg-gray-100' : ''}`}
+                className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2 ${placementId ? 'bg-gray-100' : ''}`}
                 required
-                readOnly={!!internshipId}
+                readOnly={!!placementId}
               />
             </div>
             <div>
@@ -319,9 +319,9 @@ export default function GenerateContractPage() {
                 name="ico"
                 value={formData.ico}
                 onChange={handleChange}
-                className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2 ${internshipId ? 'bg-gray-100' : ''}`}
+                className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2 ${placementId ? 'bg-gray-100' : ''}`}
                 required
-                readOnly={!!internshipId}
+                readOnly={!!placementId}
               />
             </div>
             <div>

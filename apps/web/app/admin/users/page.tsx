@@ -155,7 +155,7 @@ export default function UserManagementPage() {
                         {u.year || '-'}
                       </td>
                       <td className="px-6 py-4 text-slate-600">
-                        {u.schoolId || u.companyName || u.organizationName || '-'}
+                        {u.organizationId || u.companyName || u.organizationName || '-'}
                       </td>
                       <td className="px-6 py-4 text-right">
                         <button

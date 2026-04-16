@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 interface Match {
-  companyId: string;
+  organizationId: string;
   companyName: string;
   companyEmail: string;
   matchScore: number;
@@ -102,7 +102,7 @@ export default function MatchmakingPage() {
         ) : (
           <div className="grid gap-6">
             {matches.map((match) => (
-              <div key={match.companyId} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition">
+              <div key={match.organizationId} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition">
                 <div className="flex justify-between items-start gap-4">
                   <div>
                     <h2 className="text-xl font-bold text-gray-900">{match.companyName}</h2>

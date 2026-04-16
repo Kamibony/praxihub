@@ -11,7 +11,7 @@ import Chatbot from "@/components/Chatbot";
 export default function MentorDashboard() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [internships, setInternships] = useState<any[]>([]);
+  const [placements, setPlacements] = useState<any[]>([]);
   const [timeLogs, setTimeLogs] = useState<any[]>([]);
 
   const router = useRouter();
@@ -39,17 +39,17 @@ export default function MentorDashboard() {
         const userDoc = await getDoc(userDocRef);
 
         if (userDoc.exists() && userDoc.data().role === 'mentor') {
-          // Fetch internships specifically assigned to this mentor
-          const internshipsRef = collection(db, "internships");
+          // Fetch placements specifically assigned to this mentor
+          const placementsRef = collection(db, "placements");
           const q = query(
-            internshipsRef,
+            placementsRef,
             where("mentorId", "==", currentUser.uid),
             where("status", "in", ["APPROVED", "EVALUATION"])
           );
 
           unsubscribeFirestore = onSnapshot(q, (snapshot) => {
-            const internshipsData = snapshot.docs.map(d => ({ id: d.id, ...d.data() })) as any[];
-            setInternships(internshipsData);
+            const placementsData = snapshot.docs.map(d => ({ id: d.id, ...d.data() })) as any[];
+            setPlacements(placementsData);
 
             // Clean up old listeners
             timeLogsUnsubscribes.forEach(unsub => unsub());
@@ -57,21 +57,21 @@ export default function MentorDashboard() {
 
             let allLogs: any[] = [];
 
-            internshipsData.forEach(internship => {
-              const logsRef = collection(db, "internships", internship.id, "time_logs");
+            placementsData.forEach(placement => {
+              const logsRef = collection(db, "placements", placement.id, "time_logs");
               const logsQ = query(logsRef, orderBy("date", "desc"));
 
               const unsub = onSnapshot(logsQ, (logsSnapshot) => {
                 const logsData = logsSnapshot.docs.map(doc => ({
                   id: doc.id,
-                  internshipId: internship.id,
-                  studentName: internship.studentName || 'Student',
-                  organizationName: internship.companyData?.name || 'Firma',
+                  placementId: placement.id,
+                  studentName: placement.studentName || 'Student',
+                  organizationName: placement.companyData?.name || 'Firma',
                   ...doc.data()
                 }));
 
                 // Update allLogs and set state
-                allLogs = allLogs.filter(l => l.internshipId !== internship.id).concat(logsData);
+                allLogs = allLogs.filter(l => l.placementId !== placement.id).concat(logsData);
                 // Sort combined logs by date desc
                 allLogs.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
                 setTimeLogs([...allLogs]);
@@ -103,9 +103,9 @@ export default function MentorDashboard() {
     router.push("/login");
   };
 
-  const updateLogStatus = async (internshipId: string, logId: string, newStatus: string) => {
+  const updateLogStatus = async (placementId: string, logId: string, newStatus: string) => {
     try {
-      const logRef = doc(db, "internships", internshipId, "time_logs", logId);
+      const logRef = doc(db, "placements", placementId, "time_logs", logId);
       await updateDoc(logRef, { status: newStatus });
     } catch (err) {
       console.error("Chyba při aktualizaci stavu:", err);
@@ -113,9 +113,9 @@ export default function MentorDashboard() {
     }
   };
 
-  const updateLogRating = async (internshipId: string, logId: string, rating: number) => {
+  const updateLogRating = async (placementId: string, logId: string, rating: number) => {
      try {
-      const logRef = doc(db, "internships", internshipId, "time_logs", logId);
+      const logRef = doc(db, "placements", placementId, "time_logs", logId);
       await updateDoc(logRef, { mentorRating: rating });
     } catch (err) {
       console.error("Chyba při hodnocení:", err);
@@ -189,14 +189,14 @@ export default function MentorDashboard() {
                   {/* Icon System Actions */}
                   <div className="flex border-t border-slate-100 divide-x divide-slate-100">
                     <button
-                      onClick={() => updateLogStatus(log.internshipId, log.id, 'approved')}
+                      onClick={() => updateLogStatus(log.placementId, log.id, 'approved')}
                       className="flex-1 py-4 flex flex-col items-center justify-center gap-1 text-slate-500 hover:bg-green-50 hover:text-green-700 transition"
                     >
                       <CheckCircle className="w-6 h-6" />
                       <span className="text-xs font-medium">Schválit</span>
                     </button>
                     <button
-                      onClick={() => updateLogStatus(log.internshipId, log.id, 'rejected')}
+                      onClick={() => updateLogStatus(log.placementId, log.id, 'rejected')}
                       className="flex-1 py-4 flex flex-col items-center justify-center gap-1 text-slate-500 hover:bg-red-50 hover:text-red-700 transition"
                     >
                       <XCircle className="w-6 h-6" />
@@ -226,7 +226,7 @@ export default function MentorDashboard() {
                       {[1, 2, 3, 4, 5].map((star) => (
                         <button
                           key={star}
-                          onClick={() => updateLogRating(log.internshipId, log.id, star)}
+                          onClick={() => updateLogRating(log.placementId, log.id, star)}
                           className={`focus:outline-none transition-transform hover:scale-110 ${log.mentorRating >= star ? 'text-yellow-400' : 'text-slate-200'}`}
                         >
                           <Star className="w-5 h-5 fill-current" />

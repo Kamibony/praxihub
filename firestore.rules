@@ -18,28 +18,39 @@ service cloud.firestore {
       allow write: if request.auth != null && (request.auth.uid == userId || isAdmin() || isCoordinator());
     }
 
-    match /internships/{internshipId} {
+    match /organizations/{organizationId} {
       allow read: if request.auth != null;
+      allow write: if request.auth != null && (isAdmin() || isCoordinator());
+    }
+
+    match /placements/{placementId} {
+      // Students can read their own placements, Mentors can read their mentees' placements, Admins/Coordinators can read all
+      allow read: if request.auth != null && (
+        resource.data.studentId == request.auth.uid ||
+        resource.data.mentorId == request.auth.uid ||
+        isAdmin() ||
+        isCoordinator()
+      );
 
       // Allow creation
       allow create: if request.auth != null;
 
       // Restrict update: do not allow the client to update the 'status' field directly.
       // Any attempt to modify 'status' via client-side sdk updateDoc() will be rejected.
-      // (This forces them to use the callable transitionInternshipState function)
+      // (This forces them to use the callable transitionPlacementState function)
       allow update: if request.auth != null
                     && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['status']));
 
       allow delete: if request.auth != null && resource.data.studentId == request.auth.uid;
 
       match /time_logs/{logId} {
-        allow create, read: if request.auth != null && request.auth.uid == get(/databases/$(database)/documents/internships/$(internshipId)).data.studentId;
-        allow read, update: if request.auth != null && request.auth.uid == get(/databases/$(database)/documents/internships/$(internshipId)).data.mentorId;
+        allow create, read: if request.auth != null && request.auth.uid == get(/databases/$(database)/documents/placements/$(placementId)).data.studentId;
+        allow read, update: if request.auth != null && request.auth.uid == get(/databases/$(database)/documents/placements/$(placementId)).data.mentorId;
       }
     }
 
     // Allow public read for snapshots so verification page works without auth
-    match /archived_internships/{snapshotId} {
+    match /archived_placements/{snapshotId} {
       allow get: if true;
       allow list: if false;
       allow write: if false; // Only backend creates these
