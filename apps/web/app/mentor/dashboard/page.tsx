@@ -137,6 +137,7 @@ export default function MentorDashboard() {
 
   const pendingLogs = timeLogs.filter(log => log.status === 'pending');
   const reviewedLogs = timeLogs.filter(log => log.status !== 'pending');
+  const approvedHours = timeLogs.filter(log => log.status === 'approved').reduce((acc, log) => acc + (Number(log.hours) || 0), 0);
 
   return (
     <div className="min-h-screen bg-slate-50 pb-20 md:pb-0">
@@ -156,6 +157,15 @@ export default function MentorDashboard() {
       </header>
 
       <main className="max-w-3xl mx-auto p-4 space-y-6">
+
+        {/* Hour Balance Card */}
+        <section>
+          <div className="card bg-indigo-900 text-white p-6 rounded-2xl shadow-lg flex flex-col items-center justify-center">
+            <h2 className="text-sm font-medium text-indigo-200 uppercase tracking-wider mb-2">Konto hodin / Hour Balance</h2>
+            <div className="text-5xl font-black">{approvedHours}</div>
+            <p className="text-indigo-200 mt-2 text-sm">Celkový počet schválených hodin</p>
+          </div>
+        </section>
 
         {/* Pending Approvals */}
         <section>

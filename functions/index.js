@@ -964,12 +964,12 @@ exports.generatePayrollReport = functions.https.onCall(async (data, context) => 
   try {
     const mentorsData = {}; // mentorId -> { name, hours }
 
-    // Fetch all mentors to get their names
-    const usersSnapshot = await admin.firestore().collection('users').where('role', '==', 'mentor').get();
-    const mentorNames = {};
+    // Fetch all mentors and institutions to get their names
+    const usersSnapshot = await admin.firestore().collection('users').where('role', 'in', ['mentor', 'institution']).get();
+    const userNames = {};
     usersSnapshot.forEach(doc => {
       const userData = doc.data();
-      mentorNames[doc.id] = userData.displayName || userData.email || 'Neznámý mentor';
+      userNames[doc.id] = userData.displayName || userData.name || userData.email || 'Neznámý subjekt';
     });
 
     // Use collection group query to get all approved time logs across all placements efficiently
@@ -981,17 +981,21 @@ exports.generatePayrollReport = functions.https.onCall(async (data, context) => 
     timeLogsSnapshot.forEach(logDoc => {
       const logData = logDoc.data();
       const mentorId = logData.mentorId;
+      const organizationId = logData.organizationId || 'unassigned';
       const hours = logData.hours || 0;
 
       if (mentorId && hours > 0) {
-        if (!mentorsData[mentorId]) {
-          mentorsData[mentorId] = {
+        const key = `${mentorId}_${organizationId}`;
+        if (!mentorsData[key]) {
+          mentorsData[key] = {
             mentorId: mentorId,
-            mentorName: mentorNames[mentorId] || 'Neznámý mentor',
+            mentorName: userNames[mentorId] || 'Neznámý mentor',
+            organizationId: organizationId,
+            organizationName: organizationId !== 'unassigned' ? (userNames[organizationId] || 'Neznámá organizace') : 'Nepřiřazeno',
             totalHours: 0
           };
         }
-        mentorsData[mentorId].totalHours += hours;
+        mentorsData[key].totalHours += hours;
       }
     });
 
