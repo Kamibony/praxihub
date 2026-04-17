@@ -1,0 +1,21 @@
+<<<<<<< SEARCH
+    // Allow public read for snapshots so verification page works without auth
+    match /archived_placements/{snapshotId} {
+      allow get: if true;
+      allow list: if false;
+      allow write: if false; // Only backend creates these
+    }
+=======
+    // Allow public read for snapshots so verification page works without auth
+    match /archived_placements/{snapshotId} {
+      allow get: if true;
+      allow list: if false;
+      allow write: if false; // Only backend creates these
+    }
+
+    match /public_portfolios/{slug} {
+      allow get: if true;
+      allow list: if false;
+      allow write: if false;
+    }
+>>>>>>> REPLACE
