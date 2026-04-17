@@ -25,7 +25,16 @@ export default function DashboardRouter() {
           const userData = userDoc.data();
           const role = userData.role;
 
+
+          if (role === 'student' || role === 'mentor') {
+            if (!userData.researchConsent) {
+              router.push('/consent');
+              return;
+            }
+          }
+
           if (role === 'student') {
+
             router.push('/student/dashboard');
           } else if (role === 'company') {
             router.push('/company/dashboard');
