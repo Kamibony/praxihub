@@ -24,6 +24,7 @@ import StarRating from "@/components/StarRating";
 import Chatbot from "@/components/Chatbot";
 import ContractSignature from "@/components/ContractSignature";
 import { Mic, MicOff } from "lucide-react";
+import QRCode from "react-qr-code";
 
 export default function StudentDashboard() {
   const [user, setUser] = useState<any>(null);
@@ -1740,6 +1741,21 @@ export default function StudentDashboard() {
 
           {/* BOČNÝ PANEL (INFO & LOG) */}
           <div className="space-y-6">
+            {/* QR Kód pro mentora */}
+            {placement && placement.status !== "PENDING_ORG_APPROVAL" && placement.status !== "REJECTED" && (
+              <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 text-center">
+                <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">
+                  QR kód pro mentora
+                </h3>
+                <p className="text-xs text-gray-500 mb-4">
+                  Mentor může naskenovat tento kód ve svém rozhraní pro rychlý přístup k vaší praxi.
+                </p>
+                <div className="flex justify-center p-4 bg-white border-2 border-dashed border-gray-200 rounded-xl">
+                  <QRCode value={placement.id} size={150} />
+                </div>
+              </div>
+            )}
+
             {/* Dokument Karta */}
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
               <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">
