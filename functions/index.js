@@ -1,8 +1,8 @@
-const functions = require('firebase-functions/v1');
+const functions = require("firebase-functions/v1");
 const admin = require("firebase-admin");
 const { GoogleGenerativeAI, SchemaType } = require("@google/generative-ai");
 const axios = require("axios");
-const cors = require('cors')({origin: true});
+const cors = require("cors")({ origin: true });
 
 if (!admin.apps.length) {
   admin.initializeApp();
@@ -12,7 +12,7 @@ if (!admin.apps.length) {
 // Spustí sa, keď sa vytvorí/upraví dokument a status je 'ANALYZING'
 exports.analyzeContract = functions.firestore
   .document("placements/{docId}")
-  .onWrite(async (change, context) => { 
+  .onWrite(async (change, context) => {
     if (!change.after.exists) return null;
 
     const newData = change.after.data();
@@ -20,7 +20,8 @@ exports.analyzeContract = functions.firestore
 
     const isNew = !previousData;
     const statusChanged = previousData && previousData.status !== "ANALYZING";
-    const shouldRun = newData.status === "ANALYZING" && (isNew || statusChanged);
+    const shouldRun =
+      newData.status === "ANALYZING" && (isNew || statusChanged);
 
     if (shouldRun) {
       console.log(`🚀 Začínam analýzu pre: ${context.params.docId}`);
@@ -34,9 +35,13 @@ exports.analyzeContract = functions.firestore
         if (!fileUrl) throw new Error("Chýba URL zmluvy");
 
         // Stiahnutie súboru
-        const response = await axios.get(fileUrl, { responseType: "arraybuffer" });
+        const response = await axios.get(fileUrl, {
+          responseType: "arraybuffer",
+        });
         const base64File = Buffer.from(response.data).toString("base64");
-        const mimeType = fileUrl.toLowerCase().includes(".pdf") ? "application/pdf" : "image/jpeg";
+        const mimeType = fileUrl.toLowerCase().includes(".pdf")
+          ? "application/pdf"
+          : "image/jpeg";
 
         // Prompt pre Gemini
         const prompt = `
@@ -52,8 +57,15 @@ exports.analyzeContract = functions.firestore
           Ak IČO nevieš nájsť, skús hľadať 8-miestne číslo označené ako IČO. Ak údaj chýba, daj null.
         `;
 
-        const result = await model.generateContent([prompt, { inlineData: { data: base64File, mimeType: mimeType } }]);
-        const cleanJson = result.response.text().replace(/```json/g, "").replace(/```/g, "").trim();
+        const result = await model.generateContent([
+          prompt,
+          { inlineData: { data: base64File, mimeType: mimeType } },
+        ]);
+        const cleanJson = result.response
+          .text()
+          .replace(/```json/g, "")
+          .replace(/```/g, "")
+          .trim();
         const extractedData = JSON.parse(cleanJson);
 
         // Nastavíme status na NEEDS_REVIEW, aby to študent skontroloval
@@ -62,16 +74,15 @@ exports.analyzeContract = functions.firestore
           organization_ico: extractedData.organization_ico || null,
           start_date: extractedData.start_date,
           end_date: extractedData.end_date,
-          status: "NEEDS_REVIEW", 
+          status: "NEEDS_REVIEW",
           ai_analysis_result: cleanJson,
-          is_verified: false
+          is_verified: false,
         });
-
       } catch (error) {
         console.error("❌ Chyba pri analýze:", error);
-        await change.after.ref.update({ 
-            status: "REJECTED", 
-            ai_error_message: error.message 
+        await change.after.ref.update({
+          status: "REJECTED",
+          ai_error_message: error.message,
         });
       }
     }
@@ -93,13 +104,15 @@ exports.sendEmailNotification = functions.firestore
         message: {
           subject: `PraxiHub: Zmena stavu zmluvy na ${newData.status}`,
           text: `Ahoj, stav tvojej zmluvy sa zmenil na: ${newData.status}. Skontroluj si dashboard.`,
-          html: `<p>Ahoj,</p><p>stav tvojej zmluvy sa zmenil na: <strong>${newData.status}</strong>.</p><p><a href="https://praxihub-app.web.app">Prejsť na Dashboard</a></p>`
-        }
+          html: `<p>Ahoj,</p><p>stav tvojej zmluvy sa zmenil na: <strong>${newData.status}</strong>.</p><p><a href="https://praxihub-app.web.app">Prejsť na Dashboard</a></p>`,
+        },
       };
 
       // Zapíšeme do kolekcie 'mail', ktorú sleduje rozšírenie Trigger Email
       await admin.firestore().collection("mail").add(emailDoc);
-      console.log(`📧 E-mail požiadavka vytvorená pre: ${newData.studentEmail}`);
+      console.log(
+        `📧 E-mail požiadavka vytvorená pre: ${newData.studentEmail}`,
+      );
     }
     return null;
   });
@@ -108,9 +121,9 @@ exports.sendEmailNotification = functions.firestore
 // Volateľná funkcia z frontendu (Webu)
 exports.chatWithAI = functions.https.onCall(async (data, context) => {
   // data obsahuje: { message: "Otázka užívateľa", role: "student/company/..." }
-  
+
   const userMessage = data.message;
-  const userRole = data.role || "visitor"; 
+  const userRole = data.role || "visitor";
 
   try {
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
@@ -158,158 +171,188 @@ exports.chatWithAI = functions.https.onCall(async (data, context) => {
         },
         {
           role: "model",
-          parts: [{ text: "Rozumím. Jsem připraven pomáhat uživatelům PraxiHubu v češtině." }],
+          parts: [
+            {
+              text: "Rozumím. Jsem připraven pomáhat uživatelům PraxiHubu v češtině.",
+            },
+          ],
         },
       ],
     });
 
     const result = await chat.sendMessage(userMessage);
     return { response: result.response.text() };
-
   } catch (error) {
     console.error("Chatbot Error:", error);
     // Vrátime chybu frontend klientovi
-    throw new functions.https.HttpsError('internal', 'AI momentálně neodpovídá.');
+    throw new functions.https.HttpsError(
+      "internal",
+      "AI momentálně neodpovídá.",
+    );
   }
 });
 
 // 4. GENERATE CONTRACT PDF
-exports.createContractPDF = functions.runWith({ memory: '512MB', timeoutSeconds: 60 }).https.onRequest((req, res) => {
-  cors(req, res, async () => {
-    console.log("Starting createContractPDF");
+exports.createContractPDF = functions
+  .runWith({ memory: "512MB", timeoutSeconds: 60 })
+  .https.onRequest((req, res) => {
+    cors(req, res, async () => {
+      console.log("Starting createContractPDF");
 
-    // Authenticate Request
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).send('Unauthorized');
-    }
-    const idToken = authHeader.split('Bearer ')[1];
-    let decodedToken;
-    try {
-      decodedToken = await admin.auth().verifyIdToken(idToken);
-    } catch (e) {
-      console.error("Error verifying token:", e);
-      return res.status(401).send('Unauthorized');
-    }
-    const uid = decodedToken.uid;
+      // Authenticate Request
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        return res.status(401).send("Unauthorized");
+      }
+      const idToken = authHeader.split("Bearer ")[1];
+      let decodedToken;
+      try {
+        decodedToken = await admin.auth().verifyIdToken(idToken);
+      } catch (e) {
+        console.error("Error verifying token:", e);
+        return res.status(401).send("Unauthorized");
+      }
+      const uid = decodedToken.uid;
 
-    const data = req.body.data || req.body;
-    const { studentName, companyName, ico, startDate, endDate, position } = data;
-    if (!studentName || !companyName || !ico || !startDate || !endDate || !position) {
-      return res.status(400).send({ error: 'Missing required fields.' });
-    }
+      const data = req.body.data || req.body;
+      const { studentName, companyName, ico, startDate, endDate, position } =
+        data;
+      if (
+        !studentName ||
+        !companyName ||
+        !ico ||
+        !startDate ||
+        !endDate ||
+        !position
+      ) {
+        return res.status(400).send({ error: "Missing required fields." });
+      }
 
-    // Track execution step for better debugging
-    let step = "Initialization";
+      // Track execution step for better debugging
+      let step = "Initialization";
 
-    try {
-      console.log("Loading dependencies (pdf-lib)...");
-      const { PDFDocument, rgb } = require('pdf-lib');
-      const fontkit = require('@pdf-lib/fontkit');
-      console.log("Dependencies loaded.");
+      try {
+        console.log("Loading dependencies (pdf-lib)...");
+        const { PDFDocument, rgb } = require("pdf-lib");
+        const fontkit = require("@pdf-lib/fontkit");
+        console.log("Dependencies loaded.");
 
-      // Fetch font supporting Latin-2 (Czech)
-      const fontUrl = 'https://fonts.gstatic.com/s/roboto/v30/KFOmCnqEu92Fr1Mu4mxK.ttf';
-      const fontResponse = await axios.get(fontUrl, {
-        responseType: 'arraybuffer',
-        headers: { 'User-Agent': 'Mozilla/5.0' }
-      });
+        // Fetch font supporting Latin-2 (Czech)
+        const fontUrl =
+          "https://fonts.gstatic.com/s/roboto/v30/KFOmCnqEu92Fr1Mu4mxK.ttf";
+        const fontResponse = await axios.get(fontUrl, {
+          responseType: "arraybuffer",
+          headers: { "User-Agent": "Mozilla/5.0" },
+        });
 
-      step = "PDF Creation";
-      const pdfDoc = await PDFDocument.create();
+        step = "PDF Creation";
+        const pdfDoc = await PDFDocument.create();
 
-      pdfDoc.registerFontkit(fontkit);
-      const customFont = await pdfDoc.embedFont(fontResponse.data);
+        pdfDoc.registerFontkit(fontkit);
+        const customFont = await pdfDoc.embedFont(fontResponse.data);
 
-      step = "Adding Page and Text";
-      const page = pdfDoc.addPage();
-      const { width, height } = page.getSize();
-      const fontSize = 12;
+        step = "Adding Page and Text";
+        const page = pdfDoc.addPage();
+        const { width, height } = page.getSize();
+        const fontSize = 12;
 
-      const drawText = (text, x, y, size = fontSize) => {
+        const drawText = (text, x, y, size = fontSize) => {
           page.drawText(text, {
-              x,
-              y,
-              size,
-              font: customFont,
-              color: rgb(0, 0, 0),
+            x,
+            y,
+            size,
+            font: customFont,
+            color: rgb(0, 0, 0),
           });
-      };
+        };
 
-      let yPosition = height - 50;
+        let yPosition = height - 50;
 
-      drawText('Smlouva o praxi', 50, yPosition, 20);
-      yPosition -= 40;
+        drawText("Smlouva o praxi", 50, yPosition, 20);
+        yPosition -= 40;
 
-      drawText(`Student: ${studentName}`, 50, yPosition);
-      yPosition -= 20;
-      drawText(`Společnost: ${companyName}`, 50, yPosition);
-      yPosition -= 20;
-      drawText(`IČO: ${ico}`, 50, yPosition);
-      yPosition -= 20;
-      drawText(`Pozice: ${position}`, 50, yPosition);
-      yPosition -= 20;
-      drawText(`Termín: ${startDate} - ${endDate}`, 50, yPosition);
-      yPosition -= 40;
+        drawText(`Student: ${studentName}`, 50, yPosition);
+        yPosition -= 20;
+        drawText(`Společnost: ${companyName}`, 50, yPosition);
+        yPosition -= 20;
+        drawText(`IČO: ${ico}`, 50, yPosition);
+        yPosition -= 20;
+        drawText(`Pozice: ${position}`, 50, yPosition);
+        yPosition -= 20;
+        drawText(`Termín: ${startDate} - ${endDate}`, 50, yPosition);
+        yPosition -= 40;
 
-      drawText('Potvrzujeme, že student vykoná praxi ve výše uvedeném rozsahu.', 50, yPosition);
-      yPosition -= 20;
-      drawText('Tato smlouva je generována automaticky aplikací PraxiHub.', 50, yPosition);
+        drawText(
+          "Potvrzujeme, že student vykoná praxi ve výše uvedeném rozsahu.",
+          50,
+          yPosition,
+        );
+        yPosition -= 20;
+        drawText(
+          "Tato smlouva je generována automaticky aplikací PraxiHub.",
+          50,
+          yPosition,
+        );
 
-      step = "PDF Serialization";
-      const pdfBytes = await pdfDoc.save();
-      console.log("PDF generated successfully.");
+        step = "PDF Serialization";
+        const pdfBytes = await pdfDoc.save();
+        console.log("PDF generated successfully.");
 
-      // Upload to Firebase Storage
-      step = "Storage Upload";
-      console.log("Uploading to Storage...");
-      const bucket = admin.storage().bucket("praxihub-app.firebasestorage.app");
-      console.log("Bucket name:", bucket.name); // Debug log as requested
+        // Upload to Firebase Storage
+        step = "Storage Upload";
+        console.log("Uploading to Storage...");
+        const bucket = admin
+          .storage()
+          .bucket("praxihub-app.firebasestorage.app");
+        console.log("Bucket name:", bucket.name); // Debug log as requested
 
-      const fileName = `generated_contract_${Date.now()}.pdf`;
-      const filePath = `contracts/${uid}/${fileName}`;
-      const file = bucket.file(filePath);
+        const fileName = `generated_contract_${Date.now()}.pdf`;
+        const filePath = `contracts/${uid}/${fileName}`;
+        const file = bucket.file(filePath);
 
-      await file.save(pdfBytes, {
-        metadata: {
-          contentType: 'application/pdf',
-        },
-      });
-      console.log("PDF uploaded.");
+        await file.save(pdfBytes, {
+          metadata: {
+            contentType: "application/pdf",
+          },
+        });
+        console.log("PDF uploaded.");
 
-      // Make the file publicly accessible via a long-lived download URL (token based)
-      // Using the uuid approach for client SDK compatibility
-      // We generate a random string for the token.
-      const uuid = Math.random().toString(36).substring(2) + Date.now().toString(36);
+        // Make the file publicly accessible via a long-lived download URL (token based)
+        // Using the uuid approach for client SDK compatibility
+        // We generate a random string for the token.
+        const uuid =
+          Math.random().toString(36).substring(2) + Date.now().toString(36);
 
-      await file.setMetadata({
-        metadata: {
-          firebaseStorageDownloadTokens: uuid,
-        },
-      });
+        await file.setMetadata({
+          metadata: {
+            firebaseStorageDownloadTokens: uuid,
+          },
+        });
 
-      const downloadURL = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(filePath)}?alt=media&token=${uuid}`;
-      console.log("Download URL generated:", downloadURL);
+        const downloadURL = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(filePath)}?alt=media&token=${uuid}`;
+        console.log("Download URL generated:", downloadURL);
 
-      // Return data in a format similar to what httpsCallable expects if possible, or just JSON
-      // httpsCallable expects { data: ... }
-      return res.status(200).json({ data: { downloadURL, fileName } });
-
-    } catch (error) {
-      console.error("Error generating PDF:", error);
-      return res.status(500).json({
-        error: "PDF Generation Failed",
-        details: error.message,
-        code: error.code // helpful for storage errors
-      });
-    }
+        // Return data in a format similar to what httpsCallable expects if possible, or just JSON
+        // httpsCallable expects { data: ... }
+        return res.status(200).json({ data: { downloadURL, fileName } });
+      } catch (error) {
+        console.error("Error generating PDF:", error);
+        return res.status(500).json({
+          error: "PDF Generation Failed",
+          details: error.message,
+          code: error.code, // helpful for storage errors
+        });
+      }
+    });
   });
-});
 
 // 5. AI MATCHMAKING
 exports.findMatches = functions.https.onCall(async (data, context) => {
   if (!context.auth) {
-    throw new functions.https.HttpsError('unauthenticated', 'Must be logged in.');
+    throw new functions.https.HttpsError(
+      "unauthenticated",
+      "Must be logged in.",
+    );
   }
 
   const studentId = context.auth.uid;
@@ -318,9 +361,16 @@ exports.findMatches = functions.https.onCall(async (data, context) => {
   // Step 1: Auth & Data Fetch
   let userData;
   try {
-    const userDoc = await admin.firestore().collection('users').doc(studentId).get();
+    const userDoc = await admin
+      .firestore()
+      .collection("users")
+      .doc(studentId)
+      .get();
     if (!userDoc.exists) {
-       return { matches: [], message: "Profil uživatele nebyl nalezen. Kontaktujte podporu." };
+      return {
+        matches: [],
+        message: "Profil uživatele nebyl nalezen. Kontaktujte podporu.",
+      };
     }
     userData = userDoc.data();
 
@@ -329,50 +379,66 @@ exports.findMatches = functions.https.onCall(async (data, context) => {
     console.log("RAW Skills Field:", userData.skills);
   } catch (err) {
     console.error("Firestore Fetch Error:", err);
-    throw new functions.https.HttpsError('internal', "Failed to fetch user profile.");
+    throw new functions.https.HttpsError(
+      "internal",
+      "Failed to fetch user profile.",
+    );
   }
 
   // Step 2: Stricter Skill Validation
   let studentSkills = [];
   if (Array.isArray(userData.skills)) {
     studentSkills = userData.skills
-      .map(s => String(s).trim())
-      .filter(s => s.length > 1); // Filter out single chars or empty strings
+      .map((s) => String(s).trim())
+      .filter((s) => s.length > 1); // Filter out single chars or empty strings
   }
   console.log("VALIDATED Student Skills:", studentSkills);
 
   if (studentSkills.length === 0) {
     console.log("ABORT: No valid skills found.");
-    return { matches: [], message: "Nemáte vyplněné žádné dovednosti. Pro získání doporučení si prosím doplňte profil." };
+    return {
+      matches: [],
+      message:
+        "Nemáte vyplněné žádné dovednosti. Pro získání doporučení si prosím doplňte profil.",
+    };
   }
 
   // Step 4: Env Validation
   const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) throw new Error("CRITICAL: GEMINI_API_KEY is not set in environment.");
+  if (!apiKey)
+    throw new Error("CRITICAL: GEMINI_API_KEY is not set in environment.");
 
   try {
     // Step 3: Company Validation
-    const companiesSnapshot = await admin.firestore().collection('users')
-      .orderBy('companyIco')
+    const companiesSnapshot = await admin
+      .firestore()
+      .collection("users")
+      .orderBy("companyIco")
       .get();
 
-    const companies = companiesSnapshot.docs.map(doc => {
-      const d = doc.data();
-      // Skip empty companies
-      if (!d.companyIco) return null;
-      if (!d.description && (!d.lookingFor || d.lookingFor.length === 0)) return null;
+    const companies = companiesSnapshot.docs
+      .map((doc) => {
+        const d = doc.data();
+        // Skip empty companies
+        if (!d.companyIco) return null;
+        if (!d.description && (!d.lookingFor || d.lookingFor.length === 0))
+          return null;
 
-      return {
-        id: doc.id,
-        name: d.displayName || d.email || "Neznámá firma",
-        lookingFor: d.lookingFor || [], // Array of strings
-        description: d.description || "",
-        email: d.email
-      };
-    }).filter(c => c !== null);
+        return {
+          id: doc.id,
+          name: d.displayName || d.email || "Neznámá firma",
+          lookingFor: d.lookingFor || [], // Array of strings
+          description: d.description || "",
+          email: d.email,
+        };
+      })
+      .filter((c) => c !== null);
 
     if (companies.length === 0) {
-      return { matches: [], message: "Zatím tu nejsou žádné firmy s popisem práce." };
+      return {
+        matches: [],
+        message: "Zatím tu nejsou žádné firmy s popisem práce.",
+      };
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
@@ -384,11 +450,13 @@ exports.findMatches = functions.https.onCall(async (data, context) => {
       Student má tyto dovednosti: ${studentSkills.join(", ")}.
 
       Zde je seznam firem a co hledají:
-      ${JSON.stringify(companies.map(c => ({
-        id: c.id,
-        name: c.name,
-        lookingFor: c.lookingFor
-      })))}
+      ${JSON.stringify(
+        companies.map((c) => ({
+          id: c.id,
+          name: c.name,
+          lookingFor: c.lookingFor,
+        })),
+      )}
 
       Úkol:
       Porovnej studentovy dovednosti s požadavky firem.
@@ -401,151 +469,238 @@ exports.findMatches = functions.https.onCall(async (data, context) => {
     `;
 
     const result = await model.generateContent(prompt);
-    const text = result.response.text().replace(/```json/g, "").replace(/```/g, "").trim();
+    const text = result.response
+      .text()
+      .replace(/```json/g, "")
+      .replace(/```/g, "")
+      .trim();
 
     let matches;
     try {
-        matches = JSON.parse(text);
+      matches = JSON.parse(text);
     } catch (parseError) {
-        console.error("AI JSON Parse Error. Raw text:", text);
-        throw new Error("AI returned invalid JSON");
+      console.error("AI JSON Parse Error. Raw text:", text);
+      throw new Error("AI returned invalid JSON");
     }
 
     // Merge back with company details
-    const detailedMatches = matches.map(m => {
-      const company = companies.find(c => c.id === m.organizationId);
+    const detailedMatches = matches.map((m) => {
+      const company = companies.find((c) => c.id === m.organizationId);
       return {
         ...m,
         companyName: company?.name || "Unknown",
         companyEmail: company?.email || "",
-        lookingFor: company?.lookingFor || []
+        lookingFor: company?.lookingFor || [],
       };
     });
 
     return { matches: detailedMatches };
-
   } catch (error) {
     // Step 6: Transparent Error Handling
     console.error("Matchmaking Critical Fail:", error);
-    throw new functions.https.HttpsError('internal', `System Error: ${error.message}`);
+    throw new functions.https.HttpsError(
+      "internal",
+      `System Error: ${error.message}`,
+    );
   }
 });
 
-
 // 6. STATE MACHINE TRANSITION
-exports.transitionPlacementState = functions.https.onCall(async (data, context) => {
-  if (!context.auth) {
-    throw new functions.https.HttpsError('unauthenticated', 'Must be logged in.');
-  }
+exports.transitionPlacementState = functions.https.onCall(
+  async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError(
+        "unauthenticated",
+        "Must be logged in.",
+      );
+    }
 
-  // Define valid states to replace legacy string flags
-  const validTransitions = {
-    'DRAFT': ['PENDING_INSTITUTION'],
-    'PENDING_INSTITUTION': ['CONTRACT_LOCKED', 'DRAFT'], // DRAFT allowed for rejection/corrections
-    'CONTRACT_LOCKED': ['IN_PROGRESS', 'DRAFT'],
-    'IN_PROGRESS': ['EVALUATION'],
-    'EVALUATION': ['CLOSED']
-  };
+    // Define valid states to replace legacy string flags
+    const validTransitions = {
+      DRAFT: ["PENDING_INSTITUTION"],
+      PENDING_INSTITUTION: ["CONTRACT_LOCKED", "DRAFT"], // DRAFT allowed for rejection/corrections
+      CONTRACT_LOCKED: ["IN_PROGRESS", "DRAFT"],
+      IN_PROGRESS: ["EVALUATION"],
+      EVALUATION: ["CLOSED"],
+      CLOSED: ["FINAL_EXAM"],
+    };
 
-  const { placementId, newState } = data;
+    const { placementId, newState } = data;
 
-  if (!placementId || !newState) {
-    throw new functions.https.HttpsError('invalid-argument', 'Missing placementId or newState.');
-  }
+    if (!placementId || !newState) {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        "Missing placementId or newState.",
+      );
+    }
 
-  const db = admin.firestore();
-  const placementRef = db.collection('placements').doc(placementId);
+    const db = admin.firestore();
+    const placementRef = db.collection("placements").doc(placementId);
 
-  try {
-    const result = await db.runTransaction(async (transaction) => {
-      const doc = await transaction.get(placementRef);
-      if (!doc.exists) {
-        throw new functions.https.HttpsError('not-found', 'Placement not found.');
-      }
-
-      const currentData = doc.data();
-
-      // Temporarily bypass strict state machine if the current status is a legacy flag,
-      // mapping them roughly to the new states to avoid breaking everything at once.
-      // E.g. 'PENDING_ORG_APPROVAL' -> 'PENDING_INSTITUTION'
-      //      'ORG_APPROVED' -> 'CONTRACT_LOCKED'
-      //      'ANALYZING' / 'NEEDS_REVIEW' / 'APPROVED' -> 'IN_PROGRESS'
-
-      // However, for the first PR we just want to ensure the backend validates the exact requested state transition if the user is using the new flow.
-      // But since we are incrementally rolling this out, we'll allow *any* transition IF the new state is part of the 6-step state machine
-      // to act as a bridge.
-
-      const currentState = currentData.status || 'DRAFT';
-
-      const newValidStates = ['DRAFT', 'PENDING_INSTITUTION', 'CONTRACT_LOCKED', 'IN_PROGRESS', 'EVALUATION', 'CLOSED'];
-
-      // If newState is NOT part of the new 6-step flow AND NOT a legacy state we still need, block it.
-      // We will temporarily allow legacy states for backward compatibility while we refactor the frontend in the next phase.
-      const allowedLegacyStates = ['PENDING_ORG_APPROVAL', 'ORG_APPROVED', 'ANALYZING', 'NEEDS_REVIEW', 'APPROVED', 'REJECTED'];
-
-      if (!newValidStates.includes(newState) && !allowedLegacyStates.includes(newState)) {
+    try {
+      const result = await db.runTransaction(async (transaction) => {
+        const doc = await transaction.get(placementRef);
+        if (!doc.exists) {
           throw new functions.https.HttpsError(
-            'failed-precondition',
-            `Invalid target state: ${newState}`
+            "not-found",
+            "Placement not found.",
           );
-      }
+        }
 
-      // Add guardrails here for the new states
-      if (newState === 'CONTRACT_LOCKED') {
+        const currentData = doc.data();
+
+        // Temporarily bypass strict state machine if the current status is a legacy flag,
+        // mapping them roughly to the new states to avoid breaking everything at once.
+        // E.g. 'PENDING_ORG_APPROVAL' -> 'PENDING_INSTITUTION'
+        //      'ORG_APPROVED' -> 'CONTRACT_LOCKED'
+        //      'ANALYZING' / 'NEEDS_REVIEW' / 'APPROVED' -> 'IN_PROGRESS'
+
+        // However, for the first PR we just want to ensure the backend validates the exact requested state transition if the user is using the new flow.
+        // But since we are incrementally rolling this out, we'll allow *any* transition IF the new state is part of the 6-step state machine
+        // to act as a bridge.
+
+        const currentState = currentData.status || "DRAFT";
+
+        const newValidStates = [
+          "DRAFT",
+          "PENDING_INSTITUTION",
+          "CONTRACT_LOCKED",
+          "IN_PROGRESS",
+          "EVALUATION",
+          "CLOSED",
+          "FINAL_EXAM",
+        ];
+
+        // If newState is NOT part of the new flow AND NOT a legacy state we still need, block it.
+        // We will temporarily allow legacy states for backward compatibility while we refactor the frontend in the next phase.
+        const allowedLegacyStates = [
+          "PENDING_ORG_APPROVAL",
+          "ORG_APPROVED",
+          "ANALYZING",
+          "NEEDS_REVIEW",
+          "APPROVED",
+          "REJECTED",
+        ];
+
+        if (
+          !newValidStates.includes(newState) &&
+          !allowedLegacyStates.includes(newState)
+        ) {
+          throw new functions.https.HttpsError(
+            "failed-precondition",
+            `Invalid target state: ${newState}`,
+          );
+        }
+
+        // Add guardrails here for the new states
+        if (newState === "CONTRACT_LOCKED") {
           // ensure required fields exist
           if (!currentData.organizationId) {
-              throw new functions.https.HttpsError('failed-precondition', 'Missing required fields for CONTRACT_LOCKED.');
+            throw new functions.https.HttpsError(
+              "failed-precondition",
+              "Missing required fields for CONTRACT_LOCKED.",
+            );
           }
 
           const major = currentData.studentMajor || currentData.major || "UPV";
           if (major === "KPV") {
-              const orgDoc = await transaction.get(db.collection("users").doc(currentData.organizationId));
-              if (!orgDoc.exists) {
-                  throw new functions.https.HttpsError('failed-precondition', 'Organizace nenalezena.');
-              }
-              const orgData = orgDoc.data();
-              const expirationStr = orgData.frameworkAgreementExpiration;
+            const orgDoc = await transaction.get(
+              db.collection("users").doc(currentData.organizationId),
+            );
+            if (!orgDoc.exists) {
+              throw new functions.https.HttpsError(
+                "failed-precondition",
+                "Organizace nenalezena.",
+              );
+            }
+            const orgData = orgDoc.data();
+            const expirationStr = orgData.frameworkAgreementExpiration;
 
-              if (!expirationStr) {
-                  throw new functions.https.HttpsError('failed-precondition', 'Organizace nemá platnou rámcovou smlouvu (chybí datum).');
-              }
+            if (!expirationStr) {
+              throw new functions.https.HttpsError(
+                "failed-precondition",
+                "Organizace nemá platnou rámcovou smlouvu (chybí datum).",
+              );
+            }
 
-              const expDate = new Date(expirationStr);
-              if (isNaN(expDate.getTime()) || expDate <= new Date()) {
-                  throw new functions.https.HttpsError('failed-precondition', 'Organizace nemá platnou rámcovou smlouvu (vypršela).');
-              }
+            const expDate = new Date(expirationStr);
+            if (isNaN(expDate.getTime()) || expDate <= new Date()) {
+              throw new functions.https.HttpsError(
+                "failed-precondition",
+                "Organizace nemá platnou rámcovou smlouvu (vypršela).",
+              );
+            }
           }
-      }
+        }
 
-      transaction.update(placementRef, {
-        status: newState,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        // Implement FINAL_EXAM promotion logic
+        // READ operations must come before WRITE operations in a transaction
+        let principalName = "Neznámý ředitel";
+        if (newState === "FINAL_EXAM") {
+          const organizationId = currentData.organizationId;
+          if (organizationId) {
+            const orgDoc = await transaction.get(
+              db.collection("organizations").doc(organizationId),
+            );
+            if (orgDoc.exists) {
+              principalName = orgDoc.data().principalName || "Neznámý ředitel";
+            }
+          }
+        }
+
+        transaction.update(placementRef, {
+          status: newState,
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+
+        if (newState === "FINAL_EXAM") {
+          const commissionRef = db.collection("commissions").doc();
+          transaction.set(commissionRef, {
+            placementId: placementId,
+            studentId: currentData.studentId,
+            mentorId: currentData.mentorId,
+            organizationId: currentData.organizationId,
+            principalName: principalName,
+            status: "PENDING",
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          });
+        }
+
+        return { success: true, oldState: currentState, newState };
       });
 
-      return { success: true, oldState: currentState, newState };
-    });
-
-    return result;
-  } catch (error) {
-    console.error("Transition Error:", error);
-    if (error instanceof functions.https.HttpsError) {
+      return result;
+    } catch (error) {
+      console.error("Transition Error:", error);
+      if (error instanceof functions.https.HttpsError) {
         throw error;
+      }
+      throw new functions.https.HttpsError(
+        "internal",
+        "Error during state transition.",
+      );
     }
-    throw new functions.https.HttpsError('internal', 'Error during state transition.');
-  }
-});
+  },
+);
 
 // 7. ROSTER IMPORT WITH SAFEGUARD
-const xlsx = require('xlsx');
+const xlsx = require("xlsx");
 
 exports.importRoster = functions.https.onCall(async (data, context) => {
   if (!context.auth) {
-    throw new functions.https.HttpsError('unauthenticated', 'Must be logged in.');
+    throw new functions.https.HttpsError(
+      "unauthenticated",
+      "Must be logged in.",
+    );
   }
 
   const { mappedData } = data;
   if (!mappedData || !Array.isArray(mappedData)) {
-    throw new functions.https.HttpsError('invalid-argument', 'Missing mapped data array.');
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "Missing mapped data array.",
+    );
   }
 
   const db = admin.firestore();
@@ -556,16 +711,18 @@ exports.importRoster = functions.https.onCall(async (data, context) => {
 
   // Helper to normalize names
   const normalizeName = (name) => {
-    if (!name) return '';
+    if (!name) return "";
     return name
-      .replace(/Bc\.|Mgr\.|Ing\.|Ph\.D\.|prof\.|doc\./gi, '')
-      .replace(/,/g, '')
+      .replace(/Bc\.|Mgr\.|Ing\.|Ph\.D\.|prof\.|doc\./gi, "")
+      .replace(/,/g, "")
       .trim()
-      .replace(/\s+/g, ' ');
+      .replace(/\s+/g, " ");
   };
 
   const processUser = async (userObj) => {
-    let fullName = userObj.name || [userObj.firstName, userObj.lastName].filter(Boolean).join(' ');
+    let fullName =
+      userObj.name ||
+      [userObj.firstName, userObj.lastName].filter(Boolean).join(" ");
     if (!fullName) {
       ignored++;
       return;
@@ -575,10 +732,12 @@ exports.importRoster = functions.https.onCall(async (data, context) => {
 
     try {
       await db.runTransaction(async (transaction) => {
-        const usersRef = db.collection('users');
+        const usersRef = db.collection("users");
         // Simple search by normalized name or ID for UPSERT. Note: Firestore queries inside transactions require care.
         // We do a simple get based on a where clause.
-        const q = usersRef.where('normalizedName', '==', normalizedName).limit(1);
+        const q = usersRef
+          .where("normalizedName", "==", normalizedName)
+          .limit(1);
         const snapshot = await transaction.get(q);
 
         // 1. ALL READS FIRST
@@ -588,36 +747,42 @@ exports.importRoster = functions.https.onCall(async (data, context) => {
           existingUserDoc = snapshot.docs[0];
         }
 
-        const orgsRef = db.collection('organizations');
+        const orgsRef = db.collection("organizations");
         let existingOrgDoc = null;
         let orgName = null;
         if (userObj.organizationId) {
           orgName = String(userObj.organizationId).trim();
-          const orgQ = orgsRef.where('name', '==', orgName).limit(1);
+          const orgQ = orgsRef.where("name", "==", orgName).limit(1);
           const orgSnapshot = await transaction.get(orgQ);
           if (!orgSnapshot.empty) {
-             existingOrgDoc = orgSnapshot.docs[0];
+            existingOrgDoc = orgSnapshot.docs[0];
           }
         }
 
         let userId = existingUserDoc ? existingUserDoc.id : usersRef.doc().id;
 
-        const placementsRef = db.collection('placements');
-        const placementQ = placementsRef.where('studentId', '==', userId).limit(1);
+        const placementsRef = db.collection("placements");
+        const placementQ = placementsRef
+          .where("studentId", "==", userId)
+          .limit(1);
         const placementSnapshot = await transaction.get(placementQ);
         let existingPlacementDoc = null;
         if (!placementSnapshot.empty) {
-           existingPlacementDoc = placementSnapshot.docs[0];
+          existingPlacementDoc = placementSnapshot.docs[0];
         }
 
         // 2. ALL WRITES SECOND
 
         if (existingUserDoc) {
           transaction.update(existingUserDoc.ref, {
-            organizationId: userObj.organizationId || existingUserDoc.data().organizationId,
+            organizationId:
+              userObj.organizationId || existingUserDoc.data().organizationId,
             year: userObj.year || existingUserDoc.data().year,
-            email: userObj.email || existingUserDoc.data().email || `${normalizedName.replace(/\s+/g, '.').toLowerCase()}@placeholder.com`,
-            updatedAt: admin.firestore.FieldValue.serverTimestamp()
+            email:
+              userObj.email ||
+              existingUserDoc.data().email ||
+              `${normalizedName.replace(/\s+/g, ".").toLowerCase()}@placeholder.com`,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
           });
           updated++;
         } else {
@@ -625,11 +790,11 @@ exports.importRoster = functions.https.onCall(async (data, context) => {
           transaction.set(newUserRef, {
             name: fullName,
             normalizedName: normalizedName,
-            role: 'student',
+            role: "student",
             organizationId: userObj.organizationId || null,
             year: userObj.year || null,
-            email: `${normalizedName.replace(/\s+/g, '.').toLowerCase()}@placeholder.com`, // Mock email
-            createdAt: admin.firestore.FieldValue.serverTimestamp()
+            email: `${normalizedName.replace(/\s+/g, ".").toLowerCase()}@placeholder.com`, // Mock email
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
           });
           added++;
         }
@@ -637,35 +802,35 @@ exports.importRoster = functions.https.onCall(async (data, context) => {
         let orgId = null;
         if (orgName) {
           if (existingOrgDoc) {
-             orgId = existingOrgDoc.id;
+            orgId = existingOrgDoc.id;
           } else {
-             const newOrgRef = orgsRef.doc();
-             orgId = newOrgRef.id;
-             transaction.set(newOrgRef, {
-               name: orgName,
-               role: 'institution',
-               createdAt: admin.firestore.FieldValue.serverTimestamp()
-             });
+            const newOrgRef = orgsRef.doc();
+            orgId = newOrgRef.id;
+            transaction.set(newOrgRef, {
+              name: orgName,
+              role: "institution",
+              createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            });
           }
         }
 
         if (existingPlacementDoc) {
-           transaction.update(existingPlacementDoc.ref, {
-              organizationId: orgId || existingPlacementDoc.data().organizationId,
-              updatedAt: admin.firestore.FieldValue.serverTimestamp()
-           });
+          transaction.update(existingPlacementDoc.ref, {
+            organizationId: orgId || existingPlacementDoc.data().organizationId,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          });
         } else {
-           const newPlacementRef = placementsRef.doc();
-           transaction.set(newPlacementRef, {
-              studentId: userId,
-              organizationId: orgId,
-              status: 'DRAFT',
-              createdAt: admin.firestore.FieldValue.serverTimestamp()
-           });
+          const newPlacementRef = placementsRef.doc();
+          transaction.set(newPlacementRef, {
+            studentId: userId,
+            organizationId: orgId,
+            status: "DRAFT",
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+          });
         }
       });
     } catch (e) {
-      console.error('Transaction failed for user', fullName, e);
+      console.error("Transaction failed for user", fullName, e);
       ignored++;
     }
   };
@@ -677,12 +842,11 @@ exports.importRoster = functions.https.onCall(async (data, context) => {
   return { added, updated, ignored };
 });
 
-
 exports.evaluateReflection = functions.https.onCall(async (data, context) => {
   if (!context.auth) {
     throw new functions.https.HttpsError(
       "unauthenticated",
-      "Musíte být přihlášeni pro hodnocení reflexe."
+      "Musíte být přihlášeni pro hodnocení reflexe.",
     );
   }
 
@@ -691,7 +855,7 @@ exports.evaluateReflection = functions.https.onCall(async (data, context) => {
   if (!placementId || !reflectionText) {
     throw new functions.https.HttpsError(
       "invalid-argument",
-      "Chybí povinné parametry: placementId a reflectionText."
+      "Chybí povinné parametry: placementId a reflectionText.",
     );
   }
 
@@ -700,10 +864,7 @@ exports.evaluateReflection = functions.https.onCall(async (data, context) => {
   const placementDoc = await placementRef.get();
 
   if (!placementDoc.exists) {
-    throw new functions.https.HttpsError(
-      "not-found",
-      "Praxe nebyla nalezena."
-    );
+    throw new functions.https.HttpsError("not-found", "Praxe nebyla nalezena.");
   }
 
   const placementData = placementDoc.data();
@@ -711,14 +872,14 @@ exports.evaluateReflection = functions.https.onCall(async (data, context) => {
   if (placementData.studentId !== context.auth.uid) {
     throw new functions.https.HttpsError(
       "permission-denied",
-      "Nemáte oprávnění hodnotit tuto praxi."
+      "Nemáte oprávnění hodnotit tuto praxi.",
     );
   }
 
   if (placementData.status !== "EVALUATION") {
     throw new functions.https.HttpsError(
       "failed-precondition",
-      "Praxe není ve stavu hodnocení (EVALUATION)."
+      "Praxe není ve stavu hodnocení (EVALUATION).",
     );
   }
 
@@ -736,62 +897,93 @@ exports.evaluateReflection = functions.https.onCall(async (data, context) => {
               properties: {
                 isPass: {
                   type: SchemaType.BOOLEAN,
-                  description: "Zda reflexe celkově splňuje metodiku (MŠMT KRAU) pro úspěšné hodnocení."
+                  description:
+                    "Zda reflexe celkově splňuje metodiku (MŠMT KRAU) pro úspěšné hodnocení.",
                 },
                 didacticCompetence: {
                   type: SchemaType.OBJECT,
                   description: "Oborově-předmětová a didaktická kompetence",
                   properties: {
-                    score: { type: SchemaType.INTEGER, description: "Bodové hodnocení od 0 do 100." },
-                    reasoning: { type: SchemaType.STRING, description: "Zdůvodnění v profesionální češtině." }
+                    score: {
+                      type: SchemaType.INTEGER,
+                      description: "Bodové hodnocení od 0 do 100.",
+                    },
+                    reasoning: {
+                      type: SchemaType.STRING,
+                      description: "Zdůvodnění v profesionální češtině.",
+                    },
                   },
-                  required: ["score", "reasoning"]
+                  required: ["score", "reasoning"],
                 },
                 pedagogicalCompetence: {
                   type: SchemaType.OBJECT,
                   description: "Pedagogická a psychologická kompetence",
                   properties: {
-                    score: { type: SchemaType.INTEGER, description: "Bodové hodnocení od 0 do 100." },
-                    reasoning: { type: SchemaType.STRING, description: "Zdůvodnění v profesionální češtině." }
+                    score: {
+                      type: SchemaType.INTEGER,
+                      description: "Bodové hodnocení od 0 do 100.",
+                    },
+                    reasoning: {
+                      type: SchemaType.STRING,
+                      description: "Zdůvodnění v profesionální češtině.",
+                    },
                   },
-                  required: ["score", "reasoning"]
+                  required: ["score", "reasoning"],
                 },
                 socialCompetence: {
                   type: SchemaType.OBJECT,
                   description: "Komunikativní a sociální kompetence",
                   properties: {
-                    score: { type: SchemaType.INTEGER, description: "Bodové hodnocení od 0 do 100." },
-                    reasoning: { type: SchemaType.STRING, description: "Zdůvodnění v profesionální češtině." }
+                    score: {
+                      type: SchemaType.INTEGER,
+                      description: "Bodové hodnocení od 0 do 100.",
+                    },
+                    reasoning: {
+                      type: SchemaType.STRING,
+                      description: "Zdůvodnění v profesionální češtině.",
+                    },
                   },
-                  required: ["score", "reasoning"]
+                  required: ["score", "reasoning"],
                 },
                 reflectiveCompetence: {
                   type: SchemaType.OBJECT,
                   description: "Profesní a sebereflektivní kompetence",
                   properties: {
-                    score: { type: SchemaType.INTEGER, description: "Bodové hodnocení od 0 do 100." },
-                    reasoning: { type: SchemaType.STRING, description: "Zdůvodnění v profesionální češtině." }
+                    score: {
+                      type: SchemaType.INTEGER,
+                      description: "Bodové hodnocení od 0 do 100.",
+                    },
+                    reasoning: {
+                      type: SchemaType.STRING,
+                      description: "Zdůvodnění v profesionální češtině.",
+                    },
                   },
-                  required: ["score", "reasoning"]
-                }
+                  required: ["score", "reasoning"],
+                },
               },
-              required: ["isPass", "didacticCompetence", "pedagogicalCompetence", "socialCompetence", "reflectiveCompetence"]
-            }
+              required: [
+                "isPass",
+                "didacticCompetence",
+                "pedagogicalCompetence",
+                "socialCompetence",
+                "reflectiveCompetence",
+              ],
+            },
           },
-          required: ["evaluation"]
-        }
-      }
+          required: ["evaluation"],
+        },
+      },
     });
 
     // Fetch dynamic rules based on major
-    const major = placementData.studentMajor || 'UPV';
-    const configDocId = major === 'KPV' ? 'ai_rules_kpv' : 'ai_rules_upv';
+    const major = placementData.studentMajor || "UPV";
+    const configDocId = major === "KPV" ? "ai_rules_kpv" : "ai_rules_upv";
 
     let krauDoc = await db.collection("system_rules").doc(configDocId).get();
 
     // Fallback to legacy rules if UPV rules not set yet
-    if (!krauDoc.exists && major === 'UPV') {
-        krauDoc = await db.collection("system_rules").doc("ai_krau_rules").get();
+    if (!krauDoc.exists && major === "UPV") {
+      krauDoc = await db.collection("system_rules").doc("ai_krau_rules").get();
     }
 
     let rulesContent = `Jste expertní hodnotitel studentských reflexí odborné praxe.
@@ -805,26 +997,30 @@ Váš výstup musí být výhradně validní JSON objekt.
 Veškeré texty pro zpětnou vazbu (reasoning) musí být napsány v profesionální a gramaticky bezchybné češtině.`;
 
     if (krauDoc.exists) {
-        rulesContent = krauDoc.data().content + "\n\nVáš výstup musí být výhradně validní JSON objekt.\nVeškeré texty pro zpětnou vazbu (reasoning) musí být napsány v profesionální a gramaticky bezchybné češtině.";
+      rulesContent =
+        krauDoc.data().content +
+        "\n\nVáš výstup musí být výhradně validní JSON objekt.\nVeškeré texty pro zpětnou vazbu (reasoning) musí být napsány v profesionální a gramaticky bezchybné češtině.";
     }
 
     const systemPrompt = rulesContent;
 
-    const result = await model.generateContent(`${systemPrompt}\n\nText reflexe:\n${reflectionText}`);
+    const result = await model.generateContent(
+      `${systemPrompt}\n\nText reflexe:\n${reflectionText}`,
+    );
     const responseText = result.response.text();
     const evaluationData = JSON.parse(responseText);
 
     const evaluationResult = evaluationData.evaluation;
 
     const updateData = {
-      evaluationResult: evaluationResult
+      evaluationResult: evaluationResult,
     };
 
     if (evaluationResult.isPass) {
       updateData.status = "CLOSED";
 
       // 1. Create Snapshot Data
-      const snapshotId = placementRef.id + '_' + Date.now();
+      const snapshotId = placementRef.id + "_" + Date.now();
       const snapshotData = {
         ...placementData,
         evaluationResult: evaluationResult,
@@ -834,15 +1030,17 @@ Veškeré texty pro zpětnou vazbu (reasoning) musí být napsány v profesioná
       };
 
       // 2. Generate PDF with QR Code
-      const { createCertificatePdf } = require('./pdf_logic');
+      const { createCertificatePdf } = require("./pdf_logic");
       const pdfBytes = await createCertificatePdf(snapshotData, snapshotId);
 
       // 3. Upload to Storage
-      const bucketName = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "praxihub-app.firebasestorage.app";
+      const bucketName =
+        process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET ||
+        "praxihub-app.firebasestorage.app";
       const bucket = admin.storage().bucket(bucketName);
       const file = bucket.file(`certificates/${snapshotId}.pdf`);
       await file.save(Buffer.from(pdfBytes), {
-        metadata: { contentType: 'application/pdf' }
+        metadata: { contentType: "application/pdf" },
       });
 
       const certificateUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/certificates%2F${snapshotId}.pdf?alt=media`;
@@ -851,7 +1049,10 @@ Veškeré texty pro zpětnou vazbu (reasoning) musí být napsány v profesioná
       updateData.snapshotId = snapshotId;
 
       // 4. Save to archived_placements
-      await db.collection("archived_placements").doc(snapshotId).set(snapshotData);
+      await db
+        .collection("archived_placements")
+        .doc(snapshotId)
+        .set(snapshotData);
     }
 
     await placementRef.update(updateData);
@@ -861,22 +1062,28 @@ Veškeré texty pro zpětnou vazbu (reasoning) musí být napsány v profesioná
     console.error("Chyba při hodnocení reflexe:", error);
     throw new functions.https.HttpsError(
       "internal",
-      "Nastala chyba při zpracování s AI: " + error.message
+      "Nastala chyba při zpracování s AI: " + error.message,
     );
   }
 });
 
 exports.signContract = functions.https.onCall(async (data, context) => {
   if (!context.auth) {
-    throw new functions.https.HttpsError("unauthenticated", "Musíte být přihlášeni.");
+    throw new functions.https.HttpsError(
+      "unauthenticated",
+      "Musíte být přihlášeni.",
+    );
   }
 
   const { placementId, role } = data;
   if (!placementId || !role) {
-    throw new functions.https.HttpsError("invalid-argument", "Chybí placementId nebo role.");
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "Chybí placementId nebo role.",
+    );
   }
 
-  if (!['student', 'coordinator', 'company'].includes(role)) {
+  if (!["student", "coordinator", "company"].includes(role)) {
     throw new functions.https.HttpsError("invalid-argument", "Neplatná role.");
   }
 
@@ -886,14 +1093,20 @@ exports.signContract = functions.https.onCall(async (data, context) => {
   return await db.runTransaction(async (transaction) => {
     const doc = await transaction.get(placementRef);
     if (!doc.exists) {
-      throw new functions.https.HttpsError("not-found", "Praxe nebyla nalezena.");
+      throw new functions.https.HttpsError(
+        "not-found",
+        "Praxe nebyla nalezena.",
+      );
     }
 
     const placementData = doc.data();
 
     // Check permissions
-    if (role === 'student' && placementData.studentId !== context.auth.uid) {
-      throw new functions.https.HttpsError("permission-denied", "Nemáte oprávnění podepsat za studenta.");
+    if (role === "student" && placementData.studentId !== context.auth.uid) {
+      throw new functions.https.HttpsError(
+        "permission-denied",
+        "Nemáte oprávnění podepsat za studenta.",
+      );
     }
 
     // Check if the placement requires tripartite signature
@@ -901,29 +1114,46 @@ exports.signContract = functions.https.onCall(async (data, context) => {
     if (major === "UPV") {
       throw new functions.https.HttpsError(
         "failed-precondition",
-        "Pro obor UPV není elektronický podpis podporován/vyžadován."
+        "Pro obor UPV není elektronický podpis podporován/vyžadován.",
       );
     }
     // Simplification: In a real app we would check if context.auth.uid is the actual coordinator or company user assigned.
     // For now, we trust the caller's role if it matches the general requirements. We could verify the user's role from the users collection.
-    const userDoc = await transaction.get(db.collection("users").doc(context.auth.uid));
+    const userDoc = await transaction.get(
+      db.collection("users").doc(context.auth.uid),
+    );
     const userData = userDoc.exists ? userDoc.data() : {};
 
-    if (role === 'coordinator' && userData.role !== 'admin' && userData.role !== 'coordinator') {
-      throw new functions.https.HttpsError("permission-denied", "Nemáte oprávnění podepsat za koordinátora.");
+    if (
+      role === "coordinator" &&
+      userData.role !== "admin" &&
+      userData.role !== "coordinator"
+    ) {
+      throw new functions.https.HttpsError(
+        "permission-denied",
+        "Nemáte oprávnění podepsat za koordinátora.",
+      );
     }
 
-    if (role === 'company' && userData.role !== 'company' && placementData.organizationId !== context.auth.uid && placementData.mentorId !== context.auth.uid) {
-      throw new functions.https.HttpsError("permission-denied", "Nemáte oprávnění podepsat za společnost.");
+    if (
+      role === "company" &&
+      userData.role !== "company" &&
+      placementData.organizationId !== context.auth.uid &&
+      placementData.mentorId !== context.auth.uid
+    ) {
+      throw new functions.https.HttpsError(
+        "permission-denied",
+        "Nemáte oprávnění podepsat za společnost.",
+      );
     }
 
-    const ipAddress = context.rawRequest ? context.rawRequest.ip : 'unknown';
+    const ipAddress = context.rawRequest ? context.rawRequest.ip : "unknown";
     const serverTimestamp = admin.firestore.FieldValue.serverTimestamp();
 
     const signatureData = {
       userId: context.auth.uid,
       timestamp: serverTimestamp,
-      ipAddress: ipAddress
+      ipAddress: ipAddress,
     };
 
     const updateData = {};
@@ -933,8 +1163,12 @@ exports.signContract = functions.https.onCall(async (data, context) => {
     const currentSignatures = placementData.signatures || {};
     const newSignatures = { ...currentSignatures, [role]: signatureData };
 
-    if (newSignatures.student && newSignatures.coordinator && newSignatures.company) {
-        updateData.status = 'IN_PROGRESS'; // Maps to ACTIVE
+    if (
+      newSignatures.student &&
+      newSignatures.coordinator &&
+      newSignatures.company
+    ) {
+      updateData.status = "IN_PROGRESS"; // Maps to ACTIVE
     }
 
     transaction.update(placementRef, updateData);
@@ -942,226 +1176,448 @@ exports.signContract = functions.https.onCall(async (data, context) => {
     // Create audit log
     const auditLogRef = db.collection("audit_logs").doc();
     transaction.set(auditLogRef, {
-      action: 'SIGN_CONTRACT',
+      action: "SIGN_CONTRACT",
       placementId: placementId,
       role: role,
       userId: context.auth.uid,
       ipAddress: ipAddress,
-      timestamp: serverTimestamp
+      timestamp: serverTimestamp,
     });
 
     return { success: true, message: `Úspěšně podepsáno jako ${role}.` };
   });
 });
 
-
 // 10. PAYROLL REPORT (Mzdové výkazy)
-exports.generatePayrollReport = functions.https.onCall(async (data, context) => {
-  if (!context.auth) {
-    throw new functions.https.HttpsError("unauthenticated", "Musíte být přihlášeni.");
-  }
+exports.generatePayrollReport = functions.https.onCall(
+  async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError(
+        "unauthenticated",
+        "Musíte být přihlášeni.",
+      );
+    }
 
-  try {
-    const mentorsData = {}; // mentorId -> { name, hours }
+    try {
+      const mentorsData = {}; // mentorId -> { name, hours }
 
-    // Fetch all mentors and institutions to get their names
-    const usersSnapshot = await admin.firestore().collection('users').where('role', 'in', ['mentor', 'institution']).get();
-    const userNames = {};
-    usersSnapshot.forEach(doc => {
-      const userData = doc.data();
-      userNames[doc.id] = userData.displayName || userData.name || userData.email || 'Neznámý subjekt';
-    });
+      // Fetch all mentors and institutions to get their names
+      const usersSnapshot = await admin
+        .firestore()
+        .collection("users")
+        .where("role", "in", ["mentor", "institution"])
+        .get();
+      const userNames = {};
+      usersSnapshot.forEach((doc) => {
+        const userData = doc.data();
+        userNames[doc.id] =
+          userData.displayName ||
+          userData.name ||
+          userData.email ||
+          "Neznámý subjekt";
+      });
 
-    // Use collection group query to get all approved time logs across all placements efficiently
-    const timeLogsSnapshot = await admin.firestore()
-      .collectionGroup('time_logs')
-      .where('status', '==', 'approved')
-      .get();
+      // Use collection group query to get all approved time logs across all placements efficiently
+      const timeLogsSnapshot = await admin
+        .firestore()
+        .collectionGroup("time_logs")
+        .where("status", "==", "approved")
+        .get();
 
-    timeLogsSnapshot.forEach(logDoc => {
-      const logData = logDoc.data();
-      const mentorId = logData.mentorId;
-      const organizationId = logData.organizationId || 'unassigned';
-      const hours = logData.hours || 0;
+      timeLogsSnapshot.forEach((logDoc) => {
+        const logData = logDoc.data();
+        const mentorId = logData.mentorId;
+        const organizationId = logData.organizationId || "unassigned";
+        const hours = logData.hours || 0;
 
-      if (mentorId && hours > 0) {
-        const key = `${mentorId}_${organizationId}`;
-        if (!mentorsData[key]) {
-          mentorsData[key] = {
-            mentorId: mentorId,
-            mentorName: userNames[mentorId] || 'Neznámý mentor',
-            organizationId: organizationId,
-            organizationName: organizationId !== 'unassigned' ? (userNames[organizationId] || 'Neznámá organizace') : 'Nepřiřazeno',
-            totalHours: 0
-          };
+        if (mentorId && hours > 0) {
+          const key = `${mentorId}_${organizationId}`;
+          if (!mentorsData[key]) {
+            mentorsData[key] = {
+              mentorId: mentorId,
+              mentorName: userNames[mentorId] || "Neznámý mentor",
+              organizationId: organizationId,
+              organizationName:
+                organizationId !== "unassigned"
+                  ? userNames[organizationId] || "Neznámá organizace"
+                  : "Nepřiřazeno",
+              totalHours: 0,
+            };
+          }
+          mentorsData[key].totalHours += hours;
         }
-        mentorsData[key].totalHours += hours;
-      }
-    });
+      });
 
-    return Object.values(mentorsData);
-  } catch (error) {
-    console.error("Error generating payroll report:", error);
-    throw new functions.https.HttpsError("internal", "Nepodařilo se vygenerovat mzdový výkaz.");
-  }
-});
+      return Object.values(mentorsData);
+    } catch (error) {
+      console.error("Error generating payroll report:", error);
+      throw new functions.https.HttpsError(
+        "internal",
+        "Nepodařilo se vygenerovat mzdový výkaz.",
+      );
+    }
+  },
+);
 
 // --- 8. TEST AI REFLECTION EVALUATION (Admin Playground) ---
-exports.testEvaluateReflection = functions.https.onCall(async (data, context) => {
-  if (!context.auth) {
-    throw new functions.https.HttpsError(
-      "unauthenticated",
-      "Musíte být přihlášeni."
-    );
-  }
+exports.testEvaluateReflection = functions.https.onCall(
+  async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError(
+        "unauthenticated",
+        "Musíte být přihlášeni.",
+      );
+    }
 
-  // Check admin role here
-  const userDoc = await admin.firestore().collection('users').doc(context.auth.uid).get();
-  if (!userDoc.exists || (userDoc.data().role !== 'admin' && userDoc.data().role !== 'coordinator')) {
-    throw new functions.https.HttpsError("permission-denied", "Nemáte oprávnění.");
-  }
+    // Check admin role here
+    const userDoc = await admin
+      .firestore()
+      .collection("users")
+      .doc(context.auth.uid)
+      .get();
+    if (
+      !userDoc.exists ||
+      (userDoc.data().role !== "admin" && userDoc.data().role !== "coordinator")
+    ) {
+      throw new functions.https.HttpsError(
+        "permission-denied",
+        "Nemáte oprávnění.",
+      );
+    }
 
-  const { reflectionText, rulesText } = data;
+    const { reflectionText, rulesText } = data;
 
-  if (!reflectionText || !rulesText) {
-    throw new functions.https.HttpsError(
-      "invalid-argument",
-      "Chybí povinné parametry: reflectionText a rulesText."
-    );
-  }
+    if (!reflectionText || !rulesText) {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        "Chybí povinné parametry: reflectionText a rulesText.",
+      );
+    }
 
-  try {
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({
-      model: "gemini-2.5-flash",
-      generationConfig: {
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: SchemaType.OBJECT,
-          properties: {
-            evaluation: {
-              type: SchemaType.OBJECT,
-              properties: {
-                isPass: {
-                  type: SchemaType.BOOLEAN,
-                  description: "Zda reflexe celkově splňuje metodiku (MŠMT KRAU) pro úspěšné hodnocení."
-                },
-                didacticCompetence: {
-                  type: SchemaType.OBJECT,
-                  description: "Oborově-předmětová a didaktická kompetence",
-                  properties: {
-                    score: { type: SchemaType.INTEGER, description: "Bodové hodnocení od 0 do 100." },
-                    reasoning: { type: SchemaType.STRING, description: "Zdůvodnění v profesionální češtině." }
+    try {
+      const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+      const model = genAI.getGenerativeModel({
+        model: "gemini-2.5-flash",
+        generationConfig: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: SchemaType.OBJECT,
+            properties: {
+              evaluation: {
+                type: SchemaType.OBJECT,
+                properties: {
+                  isPass: {
+                    type: SchemaType.BOOLEAN,
+                    description:
+                      "Zda reflexe celkově splňuje metodiku (MŠMT KRAU) pro úspěšné hodnocení.",
                   },
-                  required: ["score", "reasoning"]
-                },
-                pedagogicalCompetence: {
-                  type: SchemaType.OBJECT,
-                  description: "Pedagogická a psychologická kompetence",
-                  properties: {
-                    score: { type: SchemaType.INTEGER, description: "Bodové hodnocení od 0 do 100." },
-                    reasoning: { type: SchemaType.STRING, description: "Zdůvodnění v profesionální češtině." }
+                  didacticCompetence: {
+                    type: SchemaType.OBJECT,
+                    description: "Oborově-předmětová a didaktická kompetence",
+                    properties: {
+                      score: {
+                        type: SchemaType.INTEGER,
+                        description: "Bodové hodnocení od 0 do 100.",
+                      },
+                      reasoning: {
+                        type: SchemaType.STRING,
+                        description: "Zdůvodnění v profesionální češtině.",
+                      },
+                    },
+                    required: ["score", "reasoning"],
                   },
-                  required: ["score", "reasoning"]
-                },
-                socialCompetence: {
-                  type: SchemaType.OBJECT,
-                  description: "Komunikativní a sociální kompetence",
-                  properties: {
-                    score: { type: SchemaType.INTEGER, description: "Bodové hodnocení od 0 do 100." },
-                    reasoning: { type: SchemaType.STRING, description: "Zdůvodnění v profesionální češtině." }
+                  pedagogicalCompetence: {
+                    type: SchemaType.OBJECT,
+                    description: "Pedagogická a psychologická kompetence",
+                    properties: {
+                      score: {
+                        type: SchemaType.INTEGER,
+                        description: "Bodové hodnocení od 0 do 100.",
+                      },
+                      reasoning: {
+                        type: SchemaType.STRING,
+                        description: "Zdůvodnění v profesionální češtině.",
+                      },
+                    },
+                    required: ["score", "reasoning"],
                   },
-                  required: ["score", "reasoning"]
-                },
-                reflectiveCompetence: {
-                  type: SchemaType.OBJECT,
-                  description: "Profesní a sebereflektivní kompetence",
-                  properties: {
-                    score: { type: SchemaType.INTEGER, description: "Bodové hodnocení od 0 do 100." },
-                    reasoning: { type: SchemaType.STRING, description: "Zdůvodnění v profesionální češtině." }
+                  socialCompetence: {
+                    type: SchemaType.OBJECT,
+                    description: "Komunikativní a sociální kompetence",
+                    properties: {
+                      score: {
+                        type: SchemaType.INTEGER,
+                        description: "Bodové hodnocení od 0 do 100.",
+                      },
+                      reasoning: {
+                        type: SchemaType.STRING,
+                        description: "Zdůvodnění v profesionální češtině.",
+                      },
+                    },
+                    required: ["score", "reasoning"],
                   },
-                  required: ["score", "reasoning"]
-                }
+                  reflectiveCompetence: {
+                    type: SchemaType.OBJECT,
+                    description: "Profesní a sebereflektivní kompetence",
+                    properties: {
+                      score: {
+                        type: SchemaType.INTEGER,
+                        description: "Bodové hodnocení od 0 do 100.",
+                      },
+                      reasoning: {
+                        type: SchemaType.STRING,
+                        description: "Zdůvodnění v profesionální češtině.",
+                      },
+                    },
+                    required: ["score", "reasoning"],
+                  },
+                },
+                required: [
+                  "isPass",
+                  "didacticCompetence",
+                  "pedagogicalCompetence",
+                  "socialCompetence",
+                  "reflectiveCompetence",
+                ],
               },
-              required: ["isPass", "didacticCompetence", "pedagogicalCompetence", "socialCompetence", "reflectiveCompetence"]
-            }
+            },
+            required: ["evaluation"],
           },
-          required: ["evaluation"]
-        }
+        },
+      });
+
+      let systemPrompt =
+        rulesText +
+        "\n\nVáš výstup musí být výhradně validní JSON objekt.\nVeškeré texty pro zpětnou vazbu (reasoning) musí být napsány v profesionální a gramaticky bezchybné češtině.";
+
+      const result = await model.generateContent(
+        `${systemPrompt}\n\nText reflexe:\n${reflectionText}`,
+      );
+      const responseText = result.response.text();
+      const evaluationData = JSON.parse(responseText);
+
+      return evaluationData;
+    } catch (error) {
+      console.error("Chyba pri testovaní AI hodnocení:", error);
+      throw new functions.https.HttpsError(
+        "internal",
+        "Nepodařilo se ohodnotit reflexi",
+        error.message,
+      );
+    }
+  },
+);
+
+// 12. GENERATE COMMISSION DECREE
+exports.generateCommissionDecree = functions.https.onCall(
+  async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError(
+        "unauthenticated",
+        "Must be logged in.",
+      );
+    }
+
+    const { commissionId, guarantorName, guarantorId } = data;
+    if (!commissionId || !guarantorName) {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        "Missing commissionId or guarantorName.",
+      );
+    }
+
+    const db = admin.firestore();
+    const commissionRef = db.collection("commissions").doc(commissionId);
+
+    try {
+      const commissionDoc = await commissionRef.get();
+      if (!commissionDoc.exists) {
+        throw new functions.https.HttpsError(
+          "not-found",
+          "Commission not found.",
+        );
       }
-    });
 
-    let systemPrompt = rulesText + "\n\nVáš výstup musí být výhradně validní JSON objekt.\nVeškeré texty pro zpětnou vazbu (reasoning) musí být napsány v profesionální a gramaticky bezchybné češtině.";
+      const commissionData = commissionDoc.data();
 
-    const result = await model.generateContent(`${systemPrompt}\n\nText reflexe:\n${reflectionText}`);
-    const responseText = result.response.text();
-    const evaluationData = JSON.parse(responseText);
+      // Fetch related names
+      const [studentDoc, mentorDoc, orgDoc] = await Promise.all([
+        db.collection("users").doc(commissionData.studentId).get(),
+        db.collection("users").doc(commissionData.mentorId).get(),
+        db.collection("organizations").doc(commissionData.organizationId).get(),
+      ]);
 
-    return evaluationData;
-  } catch (error) {
-    console.error("Chyba pri testovaní AI hodnocení:", error);
-    throw new functions.https.HttpsError("internal", "Nepodařilo se ohodnotit reflexi", error.message);
-  }
-});
+      const decreeData = {
+        studentName: studentDoc.exists
+          ? studentDoc.data().name
+          : "Neznámý student",
+        organizationName: orgDoc.exists
+          ? orgDoc.data().name
+          : "Neznámá organizace",
+        mentorName: mentorDoc.exists ? mentorDoc.data().name : "Neznámý mentor",
+        principalName: commissionData.principalName || "Neznámý ředitel",
+        guarantorName: guarantorName,
+      };
 
-// --- 9. UPDATE SYSTEM CONFIG ---
-exports.resolveLoginIdentifier = functions.https.onCall(async (data, context) => {
-  const { identifier } = data;
-  if (!identifier) {
-    throw new functions.https.HttpsError('invalid-argument', 'Chybí e-mail nebo Univerzitní ID.');
-  }
+      // Generate PDF
+      const { createCommissionDecreePdf } = require("./pdf_logic");
+      const pdfBytes = await createCommissionDecreePdf(
+        decreeData,
+        commissionId,
+      );
 
-  // If identifier contains @, assume it's an email
-  if (identifier.includes('@')) {
-    const email = identifier.trim().toLowerCase();
-    const querySnapshot = await db.collection("users").where("email", "==", email).get();
-    if (querySnapshot.empty) {
-        throw new functions.https.HttpsError('not-found', 'Přístup odepřen. Váš e-mail není v systému registrován.');
+      // Upload to Storage
+      const bucket = admin.storage().bucket();
+      const file = bucket.file(`decrees/${commissionId}.pdf`);
+      await file.save(Buffer.from(pdfBytes), {
+        metadata: { contentType: "application/pdf" },
+      });
+
+      // Make it publicly accessible (or secure it via signed URLs, here we get a standard URL)
+      await file.makePublic();
+      const pdfUrl = `https://storage.googleapis.com/${bucket.name}/${file.name}`;
+
+      // Update commission doc
+      await commissionRef.update({
+        status: "GENERATED",
+        guarantorName: guarantorName,
+        guarantorId: guarantorId || null,
+        decreeUrl: pdfUrl,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+
+      // Automated Bonus - Add time_log for mentor
+      const placementRef = db
+        .collection("placements")
+        .doc(commissionData.placementId);
+      const timeLogRef = placementRef.collection("time_logs").doc();
+
+      await timeLogRef.set({
+        date: new Date().toISOString().split("T")[0],
+        hours: 0,
+        description: "Odměna za komisi - Jmenovací dekret",
+        status: "approved", // Pre-approved
+        type: "commission_bonus",
+        amount: 1000, // Fixed rate for commission bonus
+        mentorId: commissionData.mentorId,
+        organizationId: commissionData.organizationId,
+        studentId: commissionData.studentId,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+
+      return { success: true, pdfUrl };
+    } catch (error) {
+      console.error("Decree Generation Error:", error);
+      throw new functions.https.HttpsError(
+        "internal",
+        `Error generating decree: ${error.message}`,
+      );
     }
-    return { email };
-  } else {
-    // Assume it's a University ID
-    const universityId = identifier.trim();
-    const querySnapshot = await db.collection("users").where("universityId", "==", universityId).get();
+  },
+);
 
-    if (querySnapshot.empty) {
-        throw new functions.https.HttpsError('not-found', 'Přístup odepřen. Vaše Univerzitní ID nebylo nalezeno.');
+// 13. RESOLVE LOGIN IDENTIFIER
+exports.resolveLoginIdentifier = functions.https.onCall(
+  async (data, context) => {
+    const { identifier } = data;
+    if (!identifier) {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        "Chybí e-mail nebo Univerzitní ID.",
+      );
     }
-    // Return the first match (should be unique)
-    const userDoc = querySnapshot.docs[0];
-    return { email: userDoc.data().email };
-  }
-});
+
+    // If identifier contains @, assume it's an email
+    if (identifier.includes("@")) {
+      const email = identifier.trim().toLowerCase();
+      const querySnapshot = await db
+        .collection("users")
+        .where("email", "==", email)
+        .get();
+      if (querySnapshot.empty) {
+        throw new functions.https.HttpsError(
+          "not-found",
+          "Přístup odepřen. Váš e-mail není v systému registrován.",
+        );
+      }
+      return { email };
+    } else {
+      // Assume it's a University ID
+      const universityId = identifier.trim();
+      const querySnapshot = await db
+        .collection("users")
+        .where("universityId", "==", universityId)
+        .get();
+
+      if (querySnapshot.empty) {
+        throw new functions.https.HttpsError(
+          "not-found",
+          "Přístup odepřen. Vaše Univerzitní ID nebylo nalezeno.",
+        );
+      }
+      // Return the first match (should be unique)
+      const userDoc = querySnapshot.docs[0];
+      return { email: userDoc.data().email };
+    }
+  },
+);
 
 exports.updateSystemConfig = functions.https.onCall(async (data, context) => {
   if (!context.auth) {
-    throw new functions.https.HttpsError("unauthenticated", "Musíte být přihlášeni.");
+    throw new functions.https.HttpsError(
+      "unauthenticated",
+      "Musíte být přihlášeni.",
+    );
   }
 
-  const userDoc = await admin.firestore().collection('users').doc(context.auth.uid).get();
-  if (!userDoc.exists || (userDoc.data().role !== 'admin' && userDoc.data().role !== 'coordinator')) {
-    throw new functions.https.HttpsError("permission-denied", "Nemáte oprávnění.");
+  const userDoc = await admin
+    .firestore()
+    .collection("users")
+    .doc(context.auth.uid)
+    .get();
+  if (
+    !userDoc.exists ||
+    (userDoc.data().role !== "admin" && userDoc.data().role !== "coordinator")
+  ) {
+    throw new functions.https.HttpsError(
+      "permission-denied",
+      "Nemáte oprávnění.",
+    );
   }
 
   const { docId, content, title, isCritical } = data;
 
   if (!docId || !content) {
-    throw new functions.https.HttpsError("invalid-argument", "Chybí povinné parametry.");
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "Chybí povinné parametry.",
+    );
   }
 
   try {
-    await admin.firestore().collection('system_configs').doc(docId).set({
-      id: docId,
-      title: title || docId,
-      content: content,
-      lastUpdated: admin.firestore.FieldValue.serverTimestamp(),
-      updatedBy: context.auth.uid,
-      isCritical: isCritical || false
-    }, { merge: true });
+    await admin
+      .firestore()
+      .collection("system_configs")
+      .doc(docId)
+      .set(
+        {
+          id: docId,
+          title: title || docId,
+          content: content,
+          lastUpdated: admin.firestore.FieldValue.serverTimestamp(),
+          updatedBy: context.auth.uid,
+          isCritical: isCritical || false,
+        },
+        { merge: true },
+      );
 
     return { success: true };
   } catch (error) {
     console.error("Error updating config:", error);
-    throw new functions.https.HttpsError("internal", "Nepodařilo se uložit konfiguraci.", error.message);
+    throw new functions.https.HttpsError(
+      "internal",
+      "Nepodařilo se uložit konfiguraci.",
+      error.message,
+    );
   }
 });
