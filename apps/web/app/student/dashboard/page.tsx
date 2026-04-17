@@ -66,6 +66,7 @@ export default function StudentDashboard() {
   // State for AI Evaluation
   const [reflectionText, setReflectionText] = useState("");
   const [evaluating, setEvaluating] = useState(false);
+  const [isCorrectingGrammar, setIsCorrectingGrammar] = useState(false);
 
   // State for Voice Dictation
   const [isRecording, setIsRecording] = useState(false);
@@ -143,7 +144,7 @@ export default function StudentDashboard() {
           if (userDoc.exists()) {
             const data = userDoc.data();
             if (!data.researchConsent) {
-              router.push('/consent');
+              router.push("/consent");
               return;
             }
             setSkills(userDoc.data().skills || []);
@@ -305,6 +306,25 @@ export default function StudentDashboard() {
     } catch (error) {
       console.error("Error submitting rating:", error);
       alert("Chyba při odesílání hodnocení.");
+    }
+  };
+
+  const handleImproveWithAI = async () => {
+    if (!reflectionText.trim()) return;
+    setIsCorrectingGrammar(true);
+    try {
+      const correctGrammarFn = httpsCallable(
+        functions,
+        "correctReflectionGrammar",
+      );
+      const response = await correctGrammarFn({ text: reflectionText });
+      const data = response.data as { correctedText: string };
+      setReflectionText(data.correctedText);
+    } catch (error: any) {
+      console.error("Grammar Correction Error:", error);
+      alert(`Chyba při opravě textu: ${error.message}`);
+    } finally {
+      setIsCorrectingGrammar(false);
     }
   };
 
@@ -1281,18 +1301,72 @@ export default function StudentDashboard() {
                                   )}
                                 </button>
                               </div>
-                              <button
-                                onClick={handleEvaluateReflection}
-                                disabled={
-                                  evaluating ||
-                                  reflectionText.trim().length === 0
-                                }
-                                className="w-full sm:w-auto px-6 py-3 bg-indigo-600 text-white rounded-lg font-bold shadow-sm hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
-                              >
-                                {evaluating
-                                  ? "Hodnocení..."
-                                  : "Odeslat k hodnocení AI"}
-                              </button>
+                              <div className="flex flex-col sm:flex-row gap-2 mt-4">
+                                <button
+                                  onClick={handleImproveWithAI}
+                                  disabled={
+                                    isCorrectingGrammar ||
+                                    reflectionText.trim().length === 0
+                                  }
+                                  className="w-full sm:w-auto px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg font-bold shadow-sm hover:bg-indigo-200 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center justify-center gap-2"
+                                >
+                                  {isCorrectingGrammar ? (
+                                    <>
+                                      <svg
+                                        className="animate-spin h-4 w-4 text-indigo-700"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                      >
+                                        <circle
+                                          className="opacity-25"
+                                          cx="12"
+                                          cy="12"
+                                          r="10"
+                                          stroke="currentColor"
+                                          strokeWidth="4"
+                                        ></circle>
+                                        <path
+                                          className="opacity-75"
+                                          fill="currentColor"
+                                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                        ></path>
+                                      </svg>
+                                      Vylepšujem...
+                                    </>
+                                  ) : (
+                                    <>
+                                      <svg
+                                        className="w-4 h-4"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                      >
+                                        <path
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          strokeWidth={2}
+                                          d="M13 10V3L4 14h7v7l9-11h-7z"
+                                        />
+                                      </svg>
+                                      Vylepšiť pomocou AI
+                                    </>
+                                  )}
+                                </button>
+                                <button
+                                  onClick={handleEvaluateReflection}
+                                  disabled={
+                                    evaluating ||
+                                    isCorrectingGrammar ||
+                                    reflectionText.trim().length === 0
+                                  }
+                                  className="w-full sm:w-auto px-6 py-2 bg-indigo-600 text-white rounded-lg font-bold shadow-sm hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                                >
+                                  {evaluating
+                                    ? "Hodnocení..."
+                                    : "Odeslat k hodnocení AI"}
+                                </button>
+                              </div>
                             </div>
                           )}
 
@@ -1726,7 +1800,6 @@ export default function StudentDashboard() {
               )}
             </div>
 
-
             {/* Semaphore Stepper */}
             {placement && (
               <div className="card">
@@ -1739,50 +1812,75 @@ export default function StudentDashboard() {
 
                   {(() => {
                     const steps = [
-                      { id: 'DRAFT', label: 'Návrh' },
-                      { id: 'CONTRACT', label: 'Smlouva' },
-                      { id: 'ACTIVE', label: 'Probíhá' },
-                      { id: 'EVALUATION', label: 'Hodnocení' },
-                      { id: 'CLOSED', label: 'Uzavřeno' }
+                      { id: "DRAFT", label: "Návrh" },
+                      { id: "CONTRACT", label: "Smlouva" },
+                      { id: "ACTIVE", label: "Probíhá" },
+                      { id: "EVALUATION", label: "Hodnocení" },
+                      { id: "CLOSED", label: "Uzavřeno" },
                     ];
 
                     let currentStepIndex = 0;
-                    if (['ANALYZING', 'NEEDS_REVIEW'].includes(placement.status)) currentStepIndex = 1;
-                    if (placement.status === 'APPROVED') currentStepIndex = 2;
-                    if (placement.status === 'EVALUATION') currentStepIndex = 3;
-                    if (placement.status === 'CLOSED') currentStepIndex = 4;
-                    if (placement.status === 'REJECTED') currentStepIndex = -1;
+                    if (
+                      ["ANALYZING", "NEEDS_REVIEW"].includes(placement.status)
+                    )
+                      currentStepIndex = 1;
+                    if (placement.status === "APPROVED") currentStepIndex = 2;
+                    if (placement.status === "EVALUATION") currentStepIndex = 3;
+                    if (placement.status === "CLOSED") currentStepIndex = 4;
+                    if (placement.status === "REJECTED") currentStepIndex = -1;
 
                     return steps.map((step, index) => {
-                      const isCompleted = index < currentStepIndex || placement.status === 'CLOSED';
-                      const isActive = index === currentStepIndex && placement.status !== 'REJECTED';
-                      const isRejected = placement.status === 'REJECTED' && index === 0;
+                      const isCompleted =
+                        index < currentStepIndex ||
+                        placement.status === "CLOSED";
+                      const isActive =
+                        index === currentStepIndex &&
+                        placement.status !== "REJECTED";
+                      const isRejected =
+                        placement.status === "REJECTED" && index === 0;
 
-                      let bgColor = 'bg-slate-200';
-                      let textColor = 'text-slate-400';
-                      let borderColor = 'border-white';
+                      let bgColor = "bg-slate-200";
+                      let textColor = "text-slate-400";
+                      let borderColor = "border-white";
 
                       if (isCompleted) {
-                        bgColor = 'bg-green-500';
-                        textColor = 'text-green-700';
+                        bgColor = "bg-green-500";
+                        textColor = "text-green-700";
                       } else if (isActive) {
-                        bgColor = 'bg-indigo-600';
-                        textColor = 'text-indigo-900';
+                        bgColor = "bg-indigo-600";
+                        textColor = "text-indigo-900";
                       } else if (isRejected) {
-                        bgColor = 'bg-red-500';
-                        textColor = 'text-red-700';
+                        bgColor = "bg-red-500";
+                        textColor = "text-red-700";
                       }
 
                       return (
-                        <div key={step.id} className="relative z-10 flex flex-col items-center gap-3 bg-white px-1">
-                          <div className={`w-8 h-8 rounded-full border-4 flex items-center justify-center ${bgColor} ${borderColor} shadow-sm transition-all duration-300`}>
+                        <div
+                          key={step.id}
+                          className="relative z-10 flex flex-col items-center gap-3 bg-white px-1"
+                        >
+                          <div
+                            className={`w-8 h-8 rounded-full border-4 flex items-center justify-center ${bgColor} ${borderColor} shadow-sm transition-all duration-300`}
+                          >
                             {isCompleted && (
-                              <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                              <svg
+                                className="w-4 h-4 text-white"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={3}
+                                  d="M5 13l4 4L19 7"
+                                />
                               </svg>
                             )}
                           </div>
-                          <span className={`text-xs font-bold ${textColor}`}>{step.label}</span>
+                          <span className={`text-xs font-bold ${textColor}`}>
+                            {step.label}
+                          </span>
                         </div>
                       );
                     });
@@ -1790,20 +1888,28 @@ export default function StudentDashboard() {
                 </div>
 
                 <div className="mt-8 p-4 bg-slate-50 rounded-xl border border-slate-100 text-center">
-                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Na tahu:</span>
+                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                    Na tahu:
+                  </span>
                   <p className="text-sm font-bold text-slate-800 mt-1">
-                    {placement.status === 'PENDING_ORG_APPROVAL' && 'Firma (čeká se na schválení organizace)'}
-                    {placement.status === 'ORG_APPROVED' && 'Student (čeká se na nahrání smlouvy)'}
-                    {['ANALYZING', 'NEEDS_REVIEW'].includes(placement.status) && 'Koordinátor (kontrola smlouvy)'}
-                    {placement.status === 'APPROVED' && 'Student (vykonává praxi)'}
-                    {placement.status === 'EVALUATION' && 'Student / AI (vyplnění a vyhodnocení reflexe)'}
-                    {placement.status === 'CLOSED' && 'Hotovo (praxe úspěšně ukončena)'}
-                    {placement.status === 'REJECTED' && 'Student (nutno podat nový návrh)'}
+                    {placement.status === "PENDING_ORG_APPROVAL" &&
+                      "Firma (čeká se na schválení organizace)"}
+                    {placement.status === "ORG_APPROVED" &&
+                      "Student (čeká se na nahrání smlouvy)"}
+                    {["ANALYZING", "NEEDS_REVIEW"].includes(placement.status) &&
+                      "Koordinátor (kontrola smlouvy)"}
+                    {placement.status === "APPROVED" &&
+                      "Student (vykonává praxi)"}
+                    {placement.status === "EVALUATION" &&
+                      "Student / AI (vyplnění a vyhodnocení reflexe)"}
+                    {placement.status === "CLOSED" &&
+                      "Hotovo (praxe úspěšně ukončena)"}
+                    {placement.status === "REJECTED" &&
+                      "Student (nutno podat nový návrh)"}
                   </p>
                 </div>
               </div>
             )}
-
           </div>
         </div>
       </div>

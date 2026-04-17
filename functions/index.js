@@ -1621,3 +1621,49 @@ exports.updateSystemConfig = functions.https.onCall(async (data, context) => {
     );
   }
 });
+
+
+// 14. CORRECT REFLECTION GRAMMAR (AI Sensei)
+exports.correctReflectionGrammar = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError(
+      "unauthenticated",
+      "Musíte být přihlášeni pro použití AI korektora."
+    );
+  }
+
+  const { text } = data;
+
+  if (!text || text.trim() === "") {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "Chybí text k opravě."
+    );
+  }
+
+  try {
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+
+    const systemPrompt = `Jsi profesionální jazykový korektor pro češtinu a slovenštinu.
+Tvým jediným úkolem je opravit gramatické, pravopisné a stylistické chyby v zadaném textu.
+ZÁSADNÍ PRAVIDLO: Nesmíš měnit sémantický význam, přidávat nové myšlenky ani odstraňovat existující informace.
+Zachovej původní tón a záměr autora. Vrať POUZE opravený text bez jakýchkoliv komentářů nebo vysvětlivek.`;
+
+    const result = await model.generateContent([
+      { text: systemPrompt },
+      { text: "Text k opravě:\n" + text }
+    ]);
+
+    const correctedText = result.response.text();
+
+    return { correctedText: correctedText.trim() };
+  } catch (error) {
+    console.error("Error correcting grammar:", error);
+    throw new functions.https.HttpsError(
+      "internal",
+      "Nepodařilo se opravit gramatiku.",
+      error.message
+    );
+  }
+});
