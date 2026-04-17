@@ -1667,3 +1667,12 @@ Zachovej původní tón a záměr autora. Vrať POUZE opravený text bez jakých
     );
   }
 });
+
+// Import public portfolio module
+const publicPortfolio = require('./public_portfolio');
+exports.updatePublicPortfolio = publicPortfolio.updatePublicPortfolio;
+
+
+// Import Ping System
+const pingSystem = require('./ping_system');
+exports.pingMentorsScheduled = pingSystem.pingMentorsScheduled;

@@ -56,6 +56,12 @@ service cloud.firestore {
       allow write: if false; // Only backend creates these
     }
 
+    match /public_portfolios/{slug} {
+      allow get: if true;
+      allow list: if false;
+      allow write: if false;
+    }
+
     match /commissions/{commissionId} {
       allow read: if request.auth != null && (
         resource.data.studentId == request.auth.uid ||
