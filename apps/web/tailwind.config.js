@@ -7,7 +7,16 @@ module.exports = {
     "./src/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
-    extend: {},
+    extend: {
+      colors: {
+        slate: {
+          800: '#1e293b',
+        },
+        indigo: {
+          900: '#312e81',
+        }
+      }
+    },
   },
   plugins: [
     require('@tailwindcss/typography'),

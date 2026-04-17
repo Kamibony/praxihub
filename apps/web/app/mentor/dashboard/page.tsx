@@ -39,6 +39,10 @@ export default function MentorDashboard() {
         const userDoc = await getDoc(userDocRef);
 
         if (userDoc.exists() && userDoc.data().role === 'mentor') {
+          if (!userDoc.data().researchConsent) {
+            router.push('/consent');
+            return;
+          }
           // Fetch placements specifically assigned to this mentor
           const placementsRef = collection(db, "placements");
           const q = query(
@@ -187,21 +191,35 @@ export default function MentorDashboard() {
                   </div>
 
                   {/* Icon System Actions */}
-                  <div className="flex border-t border-slate-100 divide-x divide-slate-100">
-                    <button
-                      onClick={() => updateLogStatus(log.placementId, log.id, 'approved')}
-                      className="flex-1 py-4 flex flex-col items-center justify-center gap-1 text-slate-500 hover:bg-green-50 hover:text-green-700 transition"
-                    >
-                      <CheckCircle className="w-6 h-6" />
-                      <span className="text-xs font-medium">Schválit</span>
-                    </button>
-                    <button
-                      onClick={() => updateLogStatus(log.placementId, log.id, 'rejected')}
-                      className="flex-1 py-4 flex flex-col items-center justify-center gap-1 text-slate-500 hover:bg-red-50 hover:text-red-700 transition"
-                    >
-                      <XCircle className="w-6 h-6" />
-                      <span className="text-xs font-medium">Zamítnout</span>
-                    </button>
+                  <div className="p-4 bg-slate-50 border-t border-slate-100">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <button
+                        onClick={() => updateLogStatus(log.placementId, log.id, 'approved')}
+                        className="p-4 bg-white border-2 border-slate-200 text-slate-700 rounded-2xl hover:border-green-500 hover:text-green-600 hover:bg-green-50 transition flex flex-col items-center justify-center gap-2 shadow-sm"
+                      >
+                        <CheckCircle className="w-8 h-8" />
+                        <span className="text-sm font-bold">Schválit</span>
+                      </button>
+                      <button
+                        onClick={() => updateLogStatus(log.placementId, log.id, 'rejected')}
+                        className="p-4 bg-white border-2 border-slate-200 text-slate-700 rounded-2xl hover:border-red-500 hover:text-red-600 hover:bg-red-50 transition flex flex-col items-center justify-center gap-2 shadow-sm"
+                      >
+                        <XCircle className="w-8 h-8" />
+                        <span className="text-sm font-bold">Zamítnout</span>
+                      </button>
+                      <button
+                        onClick={() => {
+                          const rating = window.prompt("Zadejte hodnocení (1-5 hvězdiček):", "5");
+                          if (rating && !isNaN(Number(rating))) {
+                            updateLogRating(log.placementId, log.id, Number(rating));
+                          }
+                        }}
+                        className="p-4 bg-white border-2 border-slate-200 text-slate-700 rounded-2xl hover:border-blue-500 hover:text-blue-600 hover:bg-blue-50 transition flex flex-col items-center justify-center gap-2 shadow-sm"
+                      >
+                        <Star className="w-8 h-8" />
+                        <span className="text-sm font-bold">Hodnotit</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}

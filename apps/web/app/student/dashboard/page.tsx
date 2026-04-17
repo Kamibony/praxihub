@@ -140,6 +140,11 @@ export default function StudentDashboard() {
           const userDocRef = doc(db, "users", currentUser.uid);
           const userDoc = await getDoc(userDocRef);
           if (userDoc.exists()) {
+            const data = userDoc.data();
+            if (!data.researchConsent) {
+              router.push('/consent');
+              return;
+            }
             setSkills(userDoc.data().skills || []);
           }
         } catch (err) {
@@ -1720,116 +1725,84 @@ export default function StudentDashboard() {
               )}
             </div>
 
-            {/* Časová os (Timeline) */}
+
+            {/* Semaphore Stepper */}
             {placement && (
-              <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">
+              <div className="card">
+                <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-8">
                   Průběh zpracování
                 </h3>
-                <div className="relative pl-4 border-l-2 border-gray-200 space-y-6">
-                  {/* Step: Org Request */}
-                  {(placement.status === "PENDING_ORG_APPROVAL" ||
-                    placement.status === "ORG_APPROVED" ||
-                    placement.status === "ANALYZING" ||
-                    placement.status === "NEEDS_REVIEW" ||
-                    placement.status === "APPROVED" ||
-                    placement.status === "REJECTED") && (
-                    <div className="relative">
-                      <div
-                        className={`absolute -left-[21px] h-3 w-3 rounded-full border-2 border-white ${
-                          placement.status === "PENDING_ORG_APPROVAL"
-                            ? "bg-blue-500"
-                            : placement.status === "REJECTED"
-                              ? "bg-red-500"
-                              : "bg-green-500"
-                        }`}
-                      ></div>
-                      <p className="text-xs text-gray-500">
-                        {formatDateCZ(placement.createdAt)}
-                      </p>
-                      <p className="text-sm font-medium text-gray-900">
-                        {placement.status === "PENDING_ORG_APPROVAL"
-                          ? "Žádost o schválení firmy"
-                          : "Žádost odeslána"}
-                      </p>
-                    </div>
-                  )}
 
-                  {/* Step: Upload Contract */}
-                  {(placement.status === "ANALYZING" ||
-                    placement.status === "NEEDS_REVIEW" ||
-                    placement.status === "APPROVED" ||
-                    (placement.status === "REJECTED" &&
-                      placement.fileName)) && (
-                    <div className="relative">
-                      <div className="absolute -left-[21px] bg-green-500 h-3 w-3 rounded-full border-2 border-white"></div>
-                      <p className="text-sm font-medium text-gray-900">
-                        Smlouva nahrána
-                      </p>
-                    </div>
-                  )}
+                <div className="flex items-center justify-between relative px-2">
+                  <div className="absolute left-6 right-6 top-4 -translate-y-1/2 h-1 bg-slate-100 z-0 rounded-full"></div>
 
-                  {/* Krok 2 AI */}
-                  {(placement.status === "NEEDS_REVIEW" ||
-                    placement.status === "APPROVED" ||
-                    (placement.status === "REJECTED" &&
-                      placement.fileName)) && (
-                    <div className="relative">
-                      <div className="absolute -left-[21px] bg-blue-500 h-3 w-3 rounded-full border-2 border-white"></div>
-                      <p className="text-sm font-medium text-gray-900">
-                        AI Analýza
-                      </p>
-                    </div>
-                  )}
-                  {/* Krok 3 Approved */}
-                  {(placement.status === "APPROVED" ||
-                    placement.status === "EVALUATION" ||
-                    placement.status === "CLOSED") && (
-                    <div className="relative">
-                      <div className="absolute -left-[21px] bg-green-500 h-3 w-3 rounded-full border-2 border-white"></div>
-                      <p className="text-xs text-gray-500">
-                        {formatDateCZ(placement.approvedAt)}
-                      </p>
-                      <p className="text-sm font-bold text-green-700">
-                        Schváleno
-                      </p>
-                    </div>
-                  )}
-                  {/* Krok 3 Rejected */}
-                  {placement.status === "REJECTED" && (
-                    <div className="relative">
-                      <div className="absolute -left-[21px] bg-red-500 h-3 w-3 rounded-full border-2 border-white"></div>
-                      <p className="text-sm font-bold text-red-700">
-                        Zamítnuto
-                      </p>
-                    </div>
-                  )}
+                  {(() => {
+                    const steps = [
+                      { id: 'DRAFT', label: 'Návrh' },
+                      { id: 'CONTRACT', label: 'Smlouva' },
+                      { id: 'ACTIVE', label: 'Probíhá' },
+                      { id: 'EVALUATION', label: 'Hodnocení' },
+                      { id: 'CLOSED', label: 'Uzavřeno' }
+                    ];
 
-                  {/* Krok 4: Evaluation */}
-                  {(placement.status === "EVALUATION" ||
-                    placement.status === "CLOSED") && (
-                    <div className="relative">
-                      <div
-                        className={`absolute -left-[21px] h-3 w-3 rounded-full border-2 border-white ${placement.status === "CLOSED" ? "bg-green-500" : "bg-blue-500"}`}
-                      ></div>
-                      <p className="text-sm font-medium text-gray-900">
-                        Hodnocení praxe
-                      </p>
-                    </div>
-                  )}
+                    let currentStepIndex = 0;
+                    if (['ANALYZING', 'NEEDS_REVIEW'].includes(placement.status)) currentStepIndex = 1;
+                    if (placement.status === 'APPROVED') currentStepIndex = 2;
+                    if (placement.status === 'EVALUATION') currentStepIndex = 3;
+                    if (placement.status === 'CLOSED') currentStepIndex = 4;
+                    if (placement.status === 'REJECTED') currentStepIndex = -1;
 
-                  {/* Krok 5: Closed */}
-                  {placement.status === "CLOSED" && (
-                    <div className="relative">
-                      <div className="absolute -left-[21px] bg-green-500 h-3 w-3 rounded-full border-2 border-white"></div>
-                      <p className="text-sm font-bold text-green-700">
-                        Uzavřeno
-                      </p>
-                    </div>
-                  )}
+                    return steps.map((step, index) => {
+                      const isCompleted = index < currentStepIndex || placement.status === 'CLOSED';
+                      const isActive = index === currentStepIndex && placement.status !== 'REJECTED';
+                      const isRejected = placement.status === 'REJECTED' && index === 0;
+
+                      let bgColor = 'bg-slate-200';
+                      let textColor = 'text-slate-400';
+                      let borderColor = 'border-white';
+
+                      if (isCompleted) {
+                        bgColor = 'bg-green-500';
+                        textColor = 'text-green-700';
+                      } else if (isActive) {
+                        bgColor = 'bg-indigo-600';
+                        textColor = 'text-indigo-900';
+                      } else if (isRejected) {
+                        bgColor = 'bg-red-500';
+                        textColor = 'text-red-700';
+                      }
+
+                      return (
+                        <div key={step.id} className="relative z-10 flex flex-col items-center gap-3 bg-white px-1">
+                          <div className={`w-8 h-8 rounded-full border-4 flex items-center justify-center ${bgColor} ${borderColor} shadow-sm transition-all duration-300`}>
+                            {isCompleted && (
+                              <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                              </svg>
+                            )}
+                          </div>
+                          <span className={`text-xs font-bold ${textColor}`}>{step.label}</span>
+                        </div>
+                      );
+                    });
+                  })()}
+                </div>
+
+                <div className="mt-8 p-4 bg-slate-50 rounded-xl border border-slate-100 text-center">
+                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Na tahu:</span>
+                  <p className="text-sm font-bold text-slate-800 mt-1">
+                    {placement.status === 'PENDING_ORG_APPROVAL' && 'Firma (čeká se na schválení organizace)'}
+                    {placement.status === 'ORG_APPROVED' && 'Student (čeká se na nahrání smlouvy)'}
+                    {['ANALYZING', 'NEEDS_REVIEW'].includes(placement.status) && 'Koordinátor (kontrola smlouvy)'}
+                    {placement.status === 'APPROVED' && 'Student (vykonává praxi)'}
+                    {placement.status === 'EVALUATION' && 'Student / AI (vyplnění a vyhodnocení reflexe)'}
+                    {placement.status === 'CLOSED' && 'Hotovo (praxe úspěšně ukončena)'}
+                    {placement.status === 'REJECTED' && 'Student (nutno podat nový návrh)'}
+                  </p>
                 </div>
               </div>
             )}
+
           </div>
         </div>
       </div>
