@@ -7,6 +7,7 @@ import { onAuthStateChanged } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import { CheckCircle, XCircle, Star, LogOut, Clock, User, Building } from 'lucide-react';
 import Chatbot from "@/components/Chatbot";
+import QrScanner from "@/components/QrScanner";
 
 export default function MentorDashboard() {
   const [user, setUser] = useState<any>(null);
@@ -135,6 +136,29 @@ export default function MentorDashboard() {
     );
   }
 
+  const handleScanSuccess = async (scannedId: string) => {
+    // Optionally alert the mentor or verify the ID format
+    try {
+      const placementRef = doc(db, "placements", scannedId);
+      const placementDoc = await getDoc(placementRef);
+      if (placementDoc.exists()) {
+        const data = placementDoc.data();
+        if (data.mentorId === user.uid) {
+           alert("Praxe úspěšně načtena pomocí QR kódu.");
+           // Since the snapshot already fetches based on mentorId, it might already be loaded.
+           // This provides a manual check for immediate sync if needed, or visual feedback.
+        } else {
+           alert("Nemáte oprávnění spravovat tuto praxi.");
+        }
+      } else {
+        alert("Praxe nebyla nalezena.");
+      }
+    } catch (err) {
+      console.error("Error reading scanned placement:", err);
+      alert("Chyba při čtení praxe z QR kódu. Zkontrolujte, zda máte oprávnění.");
+    }
+  };
+
   const pendingLogs = timeLogs.filter(log => log.status === 'pending');
   const reviewedLogs = timeLogs.filter(log => log.status !== 'pending');
   const approvedHours = timeLogs.filter(log => log.status === 'approved').reduce((acc, log) => acc + (Number(log.hours) || 0), 0);
@@ -157,6 +181,13 @@ export default function MentorDashboard() {
       </header>
 
       <main className="max-w-3xl mx-auto p-4 space-y-6">
+
+        {/* QR Scanner Hub */}
+        <section className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm text-center">
+           <h2 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4">Naskenovat QR kód studenta</h2>
+           <p className="text-xs text-slate-500 mb-4">Naskenujte QR kód z aplikace studenta pro rychlé ověření nebo načtení praxe.</p>
+           <QrScanner onScanSuccess={handleScanSuccess} />
+        </section>
 
         {/* Hour Balance Card */}
         <section>
