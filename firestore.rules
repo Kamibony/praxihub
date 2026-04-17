@@ -56,6 +56,16 @@ service cloud.firestore {
       allow write: if false; // Only backend creates these
     }
 
+    match /commissions/{commissionId} {
+      allow read: if request.auth != null && (
+        resource.data.studentId == request.auth.uid ||
+        resource.data.mentorId == request.auth.uid ||
+        isAdmin() ||
+        isCoordinator()
+      );
+      allow write: if request.auth != null && (isAdmin() || isCoordinator());
+    }
+
     // Default fallback (block writes unless explicitly allowed above)
     match /{document=**} {
       allow read: if request.auth != null;

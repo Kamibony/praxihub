@@ -46,8 +46,16 @@ export default function CoordinatorDashboard() {
 
   // View mode state
   const [viewMode, setViewMode] = useState<
-    "PLACEMENTS" | "DOCUMENTS" | "COMPLIANCE" | "PAYROLL"
+    "PLACEMENTS" | "DOCUMENTS" | "COMPLIANCE" | "PAYROLL" | "COMMISSIONS"
   >("PLACEMENTS");
+
+  // Commissions state
+  const [commissions, setCommissions] = useState<any[]>([]);
+  const [guarantors, setGuarantors] = useState<any[]>([]);
+  const [generatingDecree, setGeneratingDecree] = useState(false);
+  const [selectedGuarantors, setSelectedGuarantors] = useState<{
+    [key: string]: string;
+  }>({});
 
   // Institutions (Compliance) state
   const [institutions, setInstitutions] = useState<any[]>([]);
@@ -114,6 +122,32 @@ export default function CoordinatorDashboard() {
         setInstitutions(insts);
       });
       return () => unsubscribe();
+    }
+    if (viewMode === "COMMISSIONS") {
+      const commQ = query(
+        collection(db, "commissions"),
+        orderBy("createdAt", "desc"),
+      );
+      const unsubscribeComm = onSnapshot(commQ, (snapshot) => {
+        const comms = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setCommissions(comms);
+      });
+
+      const userQ = query(collection(db, "users"));
+      const unsubscribeUsers = onSnapshot(userQ, (snapshot) => {
+        const guarantorsList = snapshot.docs
+          .map((doc) => ({ id: doc.id, ...doc.data() }))
+          .filter((u: any) => u.role === "coordinator" || u.role === "admin"); // Or specifically guarantors if there is a field
+        setGuarantors(guarantorsList);
+      });
+
+      return () => {
+        unsubscribeComm();
+        unsubscribeUsers();
+      };
     }
   }, [viewMode]);
 
@@ -282,6 +316,46 @@ export default function CoordinatorDashboard() {
   };
 
   const [exportingPayroll, setExportingPayroll] = useState(false);
+
+  const handleGenerateDecree = async (
+    commissionId: string,
+    guarantorId: string,
+    guarantorName: string,
+  ) => {
+    try {
+      setGeneratingDecree(true);
+      const generateCommissionDecree = httpsCallable(
+        functions,
+        "generateCommissionDecree",
+      );
+      await generateCommissionDecree({
+        commissionId,
+        guarantorId,
+        guarantorName,
+      });
+      alert("Dekret byl úspěšně vygenerován.");
+    } catch (error: any) {
+      console.error("Error generating decree:", error);
+      alert(`Chyba při generování dekretu: ${error.message}`);
+    } finally {
+      setGeneratingDecree(false);
+    }
+  };
+
+  const promoteToFinalExam = async (placementId: string) => {
+    try {
+      const transitionPlacementState = httpsCallable(
+        functions,
+        "transitionPlacementState",
+      );
+      await transitionPlacementState({ placementId, newState: "FINAL_EXAM" });
+      alert("Praxe byla úspěšně posunuta do fáze Státnic (FINAL_EXAM).");
+    } catch (error: any) {
+      console.error("Error promoting to final exam:", error);
+      alert(`Chyba při posunu do FINAL_EXAM: ${error.message}`);
+    }
+  };
+
   const handlePayrollExport = async () => {
     setExportingPayroll(true);
     try {
@@ -525,6 +599,12 @@ export default function CoordinatorDashboard() {
             Vyúčtování / Payroll
           </button>
           <button
+            onClick={() => setViewMode("COMMISSIONS")}
+            className={`py-3 px-6 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 whitespace-nowrap ${viewMode === "COMMISSIONS" ? "border-blue-600 text-blue-600" : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"}`}
+          >
+            Komise / Commissions
+          </button>
+          <button
             onClick={() => router.push("/admin/users")}
             className="py-3 px-6 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 flex items-center gap-2 whitespace-nowrap"
           >
@@ -664,8 +744,186 @@ export default function CoordinatorDashboard() {
                 className={`flex items-center justify-center gap-2 text-sm px-4 py-3 md:py-2 bg-indigo-900 text-white rounded-lg shadow hover:bg-indigo-800 transition-colors w-full md:w-auto ${exportingPayroll ? "opacity-50 cursor-not-allowed" : ""}`}
               >
                 <Download size={16} />
-                {exportingPayroll ? "Generuji výkaz..." : "Stáhnout mzdové výkazy (CSV)"}
+                {exportingPayroll
+                  ? "Generuji výkaz..."
+                  : "Stáhnout mzdové výkazy (CSV)"}
               </button>
+            </div>
+          </div>
+        ) : viewMode === "COMMISSIONS" ? (
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+            <h2 className="text-xl font-bold text-gray-900 mb-2">
+              Komise / Jmenovací dekrety
+            </h2>
+            <p className="text-gray-500 text-sm mb-6">
+              Správa komisí pro obhajoby a generování jmenovacích dekretů.
+            </p>
+
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      Student / Instituce
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      Stav
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      Garant IVP
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      Akce
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {commissions.map((comm) => (
+                    <tr key={comm.id}>
+                      <td className="px-6 py-4">
+                        <div className="font-medium text-gray-900">
+                          ID Praxe: {comm.placementId}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {comm.principalName} (Ředitel)
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span
+                          className={`px-2 py-1 text-xs font-medium rounded-full ${comm.status === "GENERATED" ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"}`}
+                        >
+                          {comm.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-500">
+                        {comm.status === "GENERATED" ? (
+                          comm.guarantorName
+                        ) : (
+                          <select
+                            className="border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            value={selectedGuarantors[comm.id] || ""}
+                            onChange={(e) =>
+                              setSelectedGuarantors((prev) => ({
+                                ...prev,
+                                [comm.id]: e.target.value,
+                              }))
+                            }
+                          >
+                            <option value="">Vyberte garanta...</option>
+                            {guarantors.map((g) => (
+                              <option key={g.id} value={g.id}>
+                                {g.name || g.email}
+                              </option>
+                            ))}
+                          </select>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 text-sm font-medium">
+                        {comm.status === "GENERATED" && comm.decreeUrl ? (
+                          <a
+                            href={comm.decreeUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-indigo-600 hover:text-indigo-900 flex items-center gap-1"
+                          >
+                            <Download size={16} /> Stáhnout
+                          </a>
+                        ) : (
+                          <button
+                            onClick={() => {
+                              const gId = selectedGuarantors[comm.id];
+                              if (!gId) {
+                                alert("Vyberte garanta IVP.");
+                                return;
+                              }
+                              const guarantor = guarantors.find(
+                                (g) => g.id === gId,
+                              );
+                              const gName = guarantor
+                                ? guarantor.name || guarantor.email
+                                : "Neznámý";
+                              handleGenerateDecree(comm.id, gId, gName);
+                            }}
+                            disabled={generatingDecree}
+                            className="bg-indigo-600 text-white px-3 py-1 rounded text-sm hover:bg-indigo-700 disabled:opacity-50"
+                          >
+                            Generovat dekret
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                  {commissions.length === 0 && (
+                    <tr>
+                      <td
+                        colSpan={4}
+                        className="px-6 py-8 text-center text-gray-500"
+                      >
+                        Zatím nebyly vytvořeny žádné komise. (Praxe musí být
+                        přesunuta do fáze FINAL_EXAM)
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="mt-12">
+              <h3 className="text-lg font-bold text-gray-900 mb-4">
+                Kandidáti na komisi (Praxe ve stavu CLOSED)
+              </h3>
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        ID Praxe
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Stav
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Akce
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {placements
+                      .filter((p) => p.status === "CLOSED")
+                      .map((p) => (
+                        <tr key={p.id}>
+                          <td className="px-6 py-4 text-sm font-medium text-gray-900">
+                            {p.id}
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">
+                              CLOSED
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-sm font-medium">
+                            <button
+                              onClick={() => promoteToFinalExam(p.id)}
+                              className="text-blue-600 hover:text-blue-900 font-medium"
+                            >
+                              Posunout do FINAL_EXAM
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    {placements.filter((p) => p.status === "CLOSED").length ===
+                      0 && (
+                      <tr>
+                        <td
+                          colSpan={3}
+                          className="px-6 py-8 text-center text-gray-500"
+                        >
+                          Žádní kandidáti ve stavu CLOSED.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         ) : viewMode === "COMPLIANCE" ? (
@@ -880,10 +1138,7 @@ export default function CoordinatorDashboard() {
                   Čeká na kontrolu
                 </p>
                 <p className="text-2xl font-bold text-yellow-600">
-                  {
-                    placements.filter((i) => i.status === "NEEDS_REVIEW")
-                      .length
-                  }
+                  {placements.filter((i) => i.status === "NEEDS_REVIEW").length}
                 </p>
               </div>
               <div
@@ -1199,8 +1454,7 @@ export default function CoordinatorDashboard() {
                     <div className="md:col-span-2">
                       <p className="text-xs text-gray-500">Název firmy</p>
                       <p className="text-lg font-bold text-gray-900">
-                        {selectedPlacement.organization_name ||
-                          "Neznámá firma"}
+                        {selectedPlacement.organization_name || "Neznámá firma"}
                       </p>
                     </div>
                     <div>

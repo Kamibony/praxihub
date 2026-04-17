@@ -10,5 +10,10 @@ service firebase.storage {
       allow list: if false;
       allow write: if false; // Only backend writes these
     }
+    match /decrees/{fileName} {
+      allow get: if true; // Public access to decrees so the verify page works
+      allow list: if false;
+      allow write: if false; // Only backend writes these
+    }
   }
 }
