@@ -46,7 +46,7 @@ export default function CoordinatorDashboard() {
 
   // View mode state
   const [viewMode, setViewMode] = useState<
-    "PLACEMENTS" | "DOCUMENTS" | "COMPLIANCE"
+    "PLACEMENTS" | "DOCUMENTS" | "COMPLIANCE" | "PAYROLL"
   >("PLACEMENTS");
 
   // Institutions (Compliance) state
@@ -293,12 +293,16 @@ export default function CoordinatorDashboard() {
       const data = result.data as {
         mentorName: string;
         mentorId: string;
+        organizationName: string;
+        organizationId: string;
         totalHours: number;
       }[];
 
       const headers = [
         "Jméno mentora",
         "ID mentora",
+        "Organizace",
+        "ID organizace",
         "Celkový počet schválených hodin",
       ];
       const csvContent = [
@@ -307,6 +311,8 @@ export default function CoordinatorDashboard() {
           [
             `"${item.mentorName || ""}"`,
             `"${item.mentorId || ""}"`,
+            `"${item.organizationName || ""}"`,
+            `"${item.organizationId || ""}"`,
             `"${item.totalHours || 0}"`,
           ].join(","),
         ),
@@ -483,14 +489,6 @@ export default function CoordinatorDashboard() {
               Exportovat CSV
             </button>
             <button
-              onClick={handlePayrollExport}
-              disabled={exportingPayroll}
-              className={`flex items-center gap-2 text-sm px-4 py-2 bg-green-50 border border-green-200 rounded text-green-700 hover:bg-green-100 transition-colors ${exportingPayroll ? "opacity-50 cursor-not-allowed" : ""}`}
-            >
-              <Download size={16} />
-              {exportingPayroll ? "Exportuji..." : "Mzdové výkazy"}
-            </button>
-            <button
               onClick={() => auth.signOut()}
               className="text-sm px-4 py-3 md:py-2 bg-white border border-gray-300 rounded-lg md:rounded hover:bg-gray-50 text-gray-700 transition-colors w-full md:w-auto"
             >
@@ -519,6 +517,12 @@ export default function CoordinatorDashboard() {
             className={`py-3 px-6 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 whitespace-nowrap ${viewMode === "COMPLIANCE" ? "border-blue-600 text-blue-600" : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"}`}
           >
             Spolupracující instituce
+          </button>
+          <button
+            onClick={() => setViewMode("PAYROLL")}
+            className={`py-3 px-6 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 whitespace-nowrap ${viewMode === "PAYROLL" ? "border-blue-600 text-blue-600" : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"}`}
+          >
+            Vyúčtování / Payroll
           </button>
           <button
             onClick={() => router.push("/admin/users")}
@@ -642,6 +646,27 @@ export default function CoordinatorDashboard() {
                 ))}
               </div>
             )}
+          </div>
+        ) : viewMode === "PAYROLL" ? (
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">
+                  Vyúčtování / Payroll
+                </h2>
+                <p className="text-gray-500 text-sm mt-1">
+                  Generování mzdových výkazů pro mentory.
+                </p>
+              </div>
+              <button
+                onClick={handlePayrollExport}
+                disabled={exportingPayroll}
+                className={`flex items-center justify-center gap-2 text-sm px-4 py-3 md:py-2 bg-indigo-900 text-white rounded-lg shadow hover:bg-indigo-800 transition-colors w-full md:w-auto ${exportingPayroll ? "opacity-50 cursor-not-allowed" : ""}`}
+              >
+                <Download size={16} />
+                {exportingPayroll ? "Generuji výkaz..." : "Stáhnout mzdové výkazy (CSV)"}
+              </button>
+            </div>
           </div>
         ) : viewMode === "COMPLIANCE" ? (
           <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">

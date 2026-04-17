@@ -105,6 +105,7 @@ export default function StudentDashboard() {
         description: newLogDescription,
         status: "pending",
         mentorId: placement.mentorId || null,
+        organizationId: placement.organizationId || null,
         createdAt: new Date().toISOString(),
       });
 
