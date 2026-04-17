@@ -496,6 +496,25 @@ exports.transitionPlacementState = functions.https.onCall(async (data, context) 
           if (!currentData.organizationId) {
               throw new functions.https.HttpsError('failed-precondition', 'Missing required fields for CONTRACT_LOCKED.');
           }
+
+          const major = currentData.studentMajor || currentData.major || "UPV";
+          if (major === "KPV") {
+              const orgDoc = await transaction.get(db.collection("users").doc(currentData.organizationId));
+              if (!orgDoc.exists) {
+                  throw new functions.https.HttpsError('failed-precondition', 'Organizace nenalezena.');
+              }
+              const orgData = orgDoc.data();
+              const expirationStr = orgData.frameworkAgreementExpiration;
+
+              if (!expirationStr) {
+                  throw new functions.https.HttpsError('failed-precondition', 'Organizace nemá platnou rámcovou smlouvu (chybí datum).');
+              }
+
+              const expDate = new Date(expirationStr);
+              if (isNaN(expDate.getTime()) || expDate <= new Date()) {
+                  throw new functions.https.HttpsError('failed-precondition', 'Organizace nemá platnou rámcovou smlouvu (vypršela).');
+              }
+          }
       }
 
       transaction.update(placementRef, {
@@ -768,11 +787,11 @@ exports.evaluateReflection = functions.https.onCall(async (data, context) => {
     const major = placementData.studentMajor || 'UPV';
     const configDocId = major === 'KPV' ? 'ai_rules_kpv' : 'ai_rules_upv';
 
-    let krauDoc = await db.collection("system_configs").doc(configDocId).get();
+    let krauDoc = await db.collection("system_rules").doc(configDocId).get();
 
     // Fallback to legacy rules if UPV rules not set yet
     if (!krauDoc.exists && major === 'UPV') {
-        krauDoc = await db.collection("system_configs").doc("ai_krau_rules").get();
+        krauDoc = await db.collection("system_rules").doc("ai_krau_rules").get();
     }
 
     let rulesContent = `Jste expertní hodnotitel studentských reflexí odborné praxe.
@@ -909,6 +928,14 @@ exports.signContract = functions.https.onCall(async (data, context) => {
 
     const updateData = {};
     updateData[`signatures.${role}`] = signatureData;
+
+    // Check if fully signed
+    const currentSignatures = placementData.signatures || {};
+    const newSignatures = { ...currentSignatures, [role]: signatureData };
+
+    if (newSignatures.student && newSignatures.coordinator && newSignatures.company) {
+        updateData.status = 'IN_PROGRESS'; // Maps to ACTIVE
+    }
 
     transaction.update(placementRef, updateData);
 
