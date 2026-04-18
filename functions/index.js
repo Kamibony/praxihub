@@ -687,7 +687,9 @@ exports.transitionPlacementState = functions.https.onCall(
 // 7. ROSTER IMPORT WITH SAFEGUARD
 const xlsx = require("xlsx");
 
-exports.importRoster = functions.https.onCall(async (data, context) => {
+exports.importRoster = functions
+  .runWith({ timeoutSeconds: 300, memory: "1GB" })
+  .https.onCall(async (data, context) => {
   if (!context.auth) {
     throw new functions.https.HttpsError(
       "unauthenticated",
@@ -835,9 +837,8 @@ exports.importRoster = functions.https.onCall(async (data, context) => {
     }
   };
 
-  for (const row of mappedData) {
-    await processUser(row);
-  }
+  // Execute processUser in parallel using Promise.all to improve batch import performance
+  await Promise.all(mappedData.map(row => processUser(row)));
 
   return { added, updated, ignored };
 });
