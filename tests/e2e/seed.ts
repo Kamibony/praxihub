@@ -1,3 +1,4 @@
+
 import { db, auth } from './setup-firebase-admin';
 
 export async function clearFirestore() {
@@ -18,6 +19,7 @@ export async function seedAdminUser() {
   await auth.createUser({ uid: 'admin123', email: 'admin@praxihub.cz' });
   await db.collection('users').doc('admin123').set({
     role: 'admin',
+    researchConsent: true,
     email: 'admin@praxihub.cz',
     createdAt: new Date().toISOString()
   });
@@ -27,6 +29,7 @@ export async function seedStudentUser() {
   await auth.createUser({ uid: 'student123', email: 'student@praxihub.cz' });
   await db.collection('users').doc('student123').set({
     role: 'student',
+    researchConsent: true,
     email: 'student@praxihub.cz',
     createdAt: new Date().toISOString()
   });
@@ -46,6 +49,7 @@ export async function seedMentorAndLog() {
   await auth.createUser({ uid: 'mentor123', email: 'mentor@praxihub.cz' });
   await db.collection('users').doc('mentor123').set({
     role: 'mentor',
+    researchConsent: true,
     email: 'mentor@praxihub.cz',
     companyIco: '87654321',
     createdAt: new Date().toISOString()
@@ -54,6 +58,7 @@ export async function seedMentorAndLog() {
   await auth.createUser({ uid: 'student-log-123', email: 'student-log@praxihub.cz' });
   await db.collection('users').doc('student-log-123').set({
     role: 'student',
+    researchConsent: true,
     email: 'student-log@praxihub.cz'
   });
 
@@ -67,5 +72,20 @@ export async function seedMentorAndLog() {
     studentEmail: 'student-log@praxihub.cz',
     createdAt: new Date().toISOString(),
     approvedAt: new Date().toISOString()
+  });
+}
+
+export async function seedClosedPlacementForCommission() {
+  await db.collection('placements').doc('placement-closed').set({
+    studentId: 'student123',
+    mentorId: 'mentor123',
+    status: 'CLOSED',
+    organization_name: 'Commission Co',
+    studentName: 'Test Student',
+    studentEmail: 'student@praxihub.cz',
+    major: 'KPV',
+    yearOfStudy: '3',
+    semester: 'Letní',
+    createdAt: new Date().toISOString()
   });
 }

@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
-import { db } from '../../../lib/firebase';
+import React, { useEffect, useState, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { db } from '../../lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import {
   Radar,
@@ -24,15 +24,19 @@ interface PortfolioData {
   totalHours: number;
 }
 
-export default function PublicPortfolioPage() {
-  const { slug } = useParams() as { slug: string };
+function PortfolioContent() {
+  const searchParams = useSearchParams();
+  const slug = searchParams?.get('id') as string | null;
   const [portfolio, setPortfolio] = useState<PortfolioData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchPortfolio() {
-      if (!slug) return;
+      if (!slug) {
+        setLoading(false);
+        return;
+      }
       try {
         const docRef = doc(db, 'public_portfolios', slug);
         const docSnap = await getDoc(docRef);
@@ -72,7 +76,7 @@ export default function PublicPortfolioPage() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+    <div data-testid="portfolio-content" className="max-w-5xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
       {/* Header Profile */}
       <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden mb-8">
         <div className="h-32 bg-gradient-to-r from-indigo-500 to-purple-600"></div>
@@ -157,5 +161,14 @@ export default function PublicPortfolioPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+
+export default function PublicPortfolioPage() {
+  return (
+    <Suspense fallback={<div data-testid="portfolio-loading" className="min-h-screen bg-slate-50 flex items-center justify-center"><p>Načítám data...</p></div>}>
+      <PortfolioContent />
+    </Suspense>
   );
 }

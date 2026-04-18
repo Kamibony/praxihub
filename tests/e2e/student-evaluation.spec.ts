@@ -1,9 +1,22 @@
+
 import { test, expect } from './test-utils';
 import { loginAs } from './login-helper';
 
 test.describe('Scenario 2: Student AI Evaluation', () => {
   test('Student logs in, types reflection, and submits for AI Evaluation', async ({ page }) => {
     test.setTimeout(60000);
+
+    // Make sure we re-seed placement123 with EVALUATION state because maybe another test changed it
+    const { db } = require('./setup-firebase-admin');
+    await db.collection('placements').doc('placement123').set({
+      studentId: 'student123',
+      status: 'EVALUATION',
+      organization_name: 'Mock Company s.r.o.',
+      createdAt: new Date().toISOString(),
+      start_date: '2023-01-01',
+      end_date: '2023-01-31',
+      organization_ico: '12345678'
+    });
 
     await loginAs(page, 'student123');
     await page.goto('/student/dashboard');
