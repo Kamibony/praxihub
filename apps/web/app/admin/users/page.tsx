@@ -3,7 +3,8 @@
 import React, { useEffect, useState } from 'react';
 import { db, auth } from "../../../lib/firebase";
 import { collection, query, onSnapshot, orderBy, doc, deleteDoc } from "firebase/firestore";
-import { onAuthStateChanged } from "firebase/auth";
+import { onAuthStateChanged, signInWithCustomToken } from "firebase/auth";
+import { getFunctions, httpsCallable } from "firebase/functions";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Users, Search, Filter } from 'lucide-react';
@@ -26,7 +27,34 @@ export default function UserManagementPage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState('ALL');
+  const [impersonating, setImpersonating] = useState<string | null>(null);
   const router = useRouter();
+
+  const handleImpersonate = async (userId: string, userName: string) => {
+    if (!window.confirm(`Opravdu se chcete přihlásit jako uživatel ${userName || 'Bez jména'}?`)) {
+      return;
+    }
+
+    setImpersonating(userId);
+    try {
+      const functions = getFunctions();
+      const getImpersonationToken = httpsCallable(functions, 'getImpersonationToken');
+      const result = await getImpersonationToken({ targetUserId: userId });
+      const data = result.data as { targetToken: string };
+
+      if (data.targetToken) {
+        await signInWithCustomToken(auth, data.targetToken);
+        router.push('/dashboard'); // Route based on user role
+      } else {
+        throw new Error("Missing token in response.");
+      }
+    } catch (error) {
+      console.error("Chyba při přihlašování za uživatele:", error);
+      alert("Nepodařilo se přihlásit jako tento uživatel.");
+    } finally {
+      setImpersonating(null);
+    }
+  };
 
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
@@ -157,7 +185,14 @@ export default function UserManagementPage() {
                       <td className="px-6 py-4 text-slate-600">
                         {u.organizationId || u.companyName || u.organizationName || '-'}
                       </td>
-                      <td className="px-6 py-4 text-right">
+                      <td className="px-6 py-4 text-right flex justify-end gap-3">
+                        <button
+                          onClick={() => handleImpersonate(u.id, u.name || u.displayName)}
+                          disabled={impersonating === u.id || u.role === 'admin' || u.role === 'coordinator'}
+                          className="text-blue-600 hover:text-blue-800 text-sm font-medium transition disabled:opacity-50"
+                        >
+                          {impersonating === u.id ? 'Načítání...' : 'Přihlásit se jako'}
+                        </button>
                         <button
                           onClick={() => handleDeleteUser(u.id, u.name || u.displayName)}
                           className="text-red-600 hover:text-red-800 text-sm font-medium transition"

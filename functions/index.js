@@ -1678,3 +1678,6 @@ exports.updatePublicPortfolio = publicPortfolio.updatePublicPortfolio;
 // Import Ping System
 const pingSystem = require('./ping_system');
 exports.pingMentorsScheduled = pingSystem.pingMentorsScheduled;
+const impersonation = require('./impersonation');
+exports.getImpersonationToken = impersonation.getImpersonationToken;
+exports.stopImpersonating = impersonation.stopImpersonating;
