@@ -4,6 +4,7 @@ import "./globals.css";
 import Chatbot from "../components/Chatbot";
 import Navbar from "../components/Navbar";
 import UatGate from "../components/UatGate";
+import ImpersonationBanner from "../components/ImpersonationBanner";
 
 export const metadata: Metadata = {
   title: "PraxiHub",
@@ -19,6 +20,7 @@ export default function RootLayout({
     <html lang="cs">
       {/* className={GeistSans.className} automaticky nastaví font */}
       <body className={GeistSans.className}>
+        <ImpersonationBanner />
         <UatGate>
           <Navbar />
           {children}
