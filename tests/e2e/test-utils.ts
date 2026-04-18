@@ -1,5 +1,5 @@
 import { test as baseTest, expect } from '@playwright/test';
-import { clearFirestore, clearAuth, seedAdminUser, seedStudentUser, seedMentorAndLog } from './seed';
+import { clearFirestore, clearAuth, seedAdminUser, seedStudentUser, seedMentorAndLog, seedClosedPlacementForCommission } from './seed';
 
 export const test = baseTest.extend({});
 
@@ -14,6 +14,7 @@ test.beforeEach(async ({ page }) => {
     await seedAdminUser();
     await seedStudentUser();
     await seedMentorAndLog();
+    await seedClosedPlacementForCommission();
 
     // Explicit pause to let emulators catch up with index writes
     await new Promise(r => setTimeout(r, 2000));

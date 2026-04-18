@@ -1519,6 +1519,7 @@ exports.generateCommissionDecree = functions.https.onCall(
 // 13. RESOLVE LOGIN IDENTIFIER
 exports.resolveLoginIdentifier = functions.https.onCall(
   async (data, context) => {
+    const db = admin.firestore();
     const { identifier } = data;
     if (!identifier) {
       throw new functions.https.HttpsError(
