@@ -31,13 +31,13 @@ test.describe('Phase 3 Features', () => {
      // Explicitly wait for the container
      await page.waitForSelector('[data-testid="portfolio-content"]', { timeout: 15000 });
 
-     try { await expect(page.getByText('Student Portfolio Test')).toBeVisible({timeout: 15000}); } catch (e) { console.log('Body:', await page.evaluate(() => document.body.innerText)); throw e; }
+     await expect(page.getByText('Student Portfolio Test')).toBeVisible({timeout: 15000});
      await expect(page.getByText('120')).toBeVisible(); // hours
   });
 
   test('QR Scanner button on Mentor dashboard', async ({ page }) => {
      await loginAs(page, 'mentor123');
-     await page.goto('/mentor/dashboard');
+     await page.goto('/institution/dashboard');
 
      await expect(page.getByText('Načítám data...')).not.toBeVisible({ timeout: 20000 });
 

@@ -17,7 +17,7 @@ test.beforeEach(async ({ page }) => {
     await seedClosedPlacementForCommission();
 
     // Explicit pause to let emulators catch up with index writes
-    await new Promise(r => setTimeout(r, 2000));
+    await new Promise(r => setTimeout(r, 3000));
 });
 
 export { expect };

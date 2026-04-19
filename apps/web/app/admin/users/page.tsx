@@ -7,7 +7,7 @@ import { onAuthStateChanged, signInWithCustomToken } from "firebase/auth";
 import { getFunctions, httpsCallable } from "firebase/functions";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Users, Search, Filter } from 'lucide-react';
+import { Users, Search, Filter, X } from 'lucide-react';
 
 export default function UserManagementPage() {
   const handleDeleteUser = async (userId: string, userName: string) => {
@@ -28,6 +28,7 @@ export default function UserManagementPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState('ALL');
   const [impersonating, setImpersonating] = useState<string | null>(null);
+  const [selectedUser, setSelectedUser] = useState<any | null>(null);
   const router = useRouter();
 
   const handleImpersonate = async (userId: string, userName: string) => {
@@ -80,18 +81,31 @@ export default function UserManagementPage() {
   const filteredUsers = users.filter(u => {
     const matchesSearch = (u.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
                           (u.email || '').toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesRole = roleFilter === 'ALL' || u.role === roleFilter;
+
+    let matchesRole = false;
+    if (roleFilter === 'ALL') {
+      matchesRole = true;
+    } else if (roleFilter === 'institution') {
+      matchesRole = u.role === 'institution' || u.role === 'company' || u.role === 'mentor';
+    } else if (roleFilter === 'coordinator') {
+      matchesRole = u.role === 'coordinator' || u.role === 'admin';
+    } else {
+      matchesRole = u.role === roleFilter;
+    }
+
     return matchesSearch && matchesRole;
   });
 
   const getRoleBadge = (role: string) => {
     switch(role) {
       case 'student': return <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-semibold">Student</span>;
-      case 'mentor': return <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">Mentor</span>;
-      case 'company': return <span className="px-2 py-1 bg-purple-100 text-purple-800 rounded-full text-xs font-semibold">Firma</span>;
-      case 'coordinator': return <span className="px-2 py-1 bg-orange-100 text-orange-800 rounded-full text-xs font-semibold">Koordinátor</span>;
-      case 'admin': return <span className="px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs font-semibold">Admin</span>;
-      case 'institution': return <span className="px-2 py-1 bg-teal-100 text-teal-800 rounded-full text-xs font-semibold">Instituce</span>;
+      case 'institution':
+      case 'company':
+      case 'mentor':
+        return <span className="px-2 py-1 bg-teal-100 text-teal-800 rounded-full text-xs font-semibold">Instituce</span>;
+      case 'coordinator':
+      case 'admin':
+        return <span className="px-2 py-1 bg-orange-100 text-orange-800 rounded-full text-xs font-semibold">Koordinátor</span>;
       default: return <span className="px-2 py-1 bg-slate-100 text-slate-800 rounded-full text-xs font-semibold">{role}</span>;
     }
   };
@@ -145,10 +159,8 @@ export default function UserManagementPage() {
               >
                 <option value="ALL">Všechny role</option>
                 <option value="student">Studenti</option>
-                <option value="mentor">Mentoři</option>
-                <option value="company">Firmy</option>
-                <option value="coordinator">Koordinátoři</option>
                 <option value="institution">Instituce</option>
+                <option value="coordinator">Koordinátoři</option>
               </select>
             </div>
           </div>
@@ -162,13 +174,17 @@ export default function UserManagementPage() {
                   <th className="px-6 py-4">Zaměření (Major)</th>
                   <th className="px-6 py-4">Ročník</th>
                   <th className="px-6 py-4">Škola / Organizace</th>
-                  <th className="px-6 py-4 text-right">Akce</th>
+                  <th className="px-6 py-4 text-right"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {filteredUsers.length > 0 ? (
                   filteredUsers.map((u) => (
-                    <tr key={u.id} className="hover:bg-slate-50 transition">
+                    <tr
+                      key={u.id}
+                      className="hover:bg-slate-50 transition cursor-pointer"
+                      onClick={() => setSelectedUser(u)}
+                    >
                       <td className="px-6 py-4">
                         <div className="font-semibold text-slate-900">{u.name || u.displayName || 'Bez jména'}</div>
                         <div className="text-slate-500 text-xs">{u.email || 'Bez e-mailu'}</div>
@@ -185,20 +201,8 @@ export default function UserManagementPage() {
                       <td className="px-6 py-4 text-slate-600">
                         {u.organizationId || u.companyName || u.organizationName || '-'}
                       </td>
-                      <td className="px-6 py-4 text-right flex justify-end gap-3">
-                        <button
-                          onClick={() => handleImpersonate(u.id, u.name || u.displayName)}
-                          disabled={impersonating === u.id || u.role === 'admin' || u.role === 'coordinator'}
-                          className="text-blue-600 hover:text-blue-800 text-sm font-medium transition disabled:opacity-50"
-                        >
-                          {impersonating === u.id ? 'Načítání...' : 'Přihlásit se jako'}
-                        </button>
-                        <button
-                          onClick={() => handleDeleteUser(u.id, u.name || u.displayName)}
-                          className="text-red-600 hover:text-red-800 text-sm font-medium transition"
-                        >
-                          Odstranit
-                        </button>
+                      <td className="px-6 py-4 text-right">
+                         <span className="text-blue-600 font-medium text-sm">Detail &rarr;</span>
                       </td>
                     </tr>
                   ))
@@ -219,6 +223,87 @@ export default function UserManagementPage() {
           </div>
         </div>
       </div>
+
+      {/* Slide-over CRM Panel */}
+      {selectedUser && (
+        <>
+          <div
+            className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-40 transition-opacity"
+            onClick={() => setSelectedUser(null)}
+          ></div>
+          <div className="fixed inset-y-0 right-0 w-full max-w-md bg-white shadow-2xl z-50 transform transition-transform duration-300 overflow-y-auto border-l border-slate-200 flex flex-col">
+            <div className="p-6 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+              <h2 className="text-xl font-bold text-slate-900">Detail uživatele</h2>
+              <button
+                onClick={() => setSelectedUser(null)}
+                className="p-2 hover:bg-slate-200 rounded-lg transition text-slate-500"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="p-6 flex-grow flex flex-col gap-6">
+               <div className="flex flex-col items-center text-center gap-2">
+                  <div className="w-20 h-20 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-2xl font-bold">
+                    {(selectedUser.name || selectedUser.displayName || 'U')[0].toUpperCase()}
+                  </div>
+                  <h3 className="text-2xl font-bold text-slate-900 mt-2">{selectedUser.name || selectedUser.displayName || 'Bez jména'}</h3>
+                  <p className="text-slate-500">{selectedUser.email || 'Bez e-mailu'}</p>
+                  <div className="mt-2">
+                    {getRoleBadge(selectedUser.role)}
+                  </div>
+               </div>
+
+               <div className="bg-slate-50 rounded-xl p-5 border border-slate-200 space-y-4">
+                  <h4 className="text-sm font-semibold text-slate-900 uppercase tracking-wider mb-2">Informace</h4>
+                  <div className="grid grid-cols-2 gap-y-4 text-sm">
+                    <div>
+                      <span className="block text-slate-500 mb-1">ID Uživatele</span>
+                      <span className="font-medium font-mono text-xs text-slate-700">{selectedUser.id}</span>
+                    </div>
+                    <div>
+                      <span className="block text-slate-500 mb-1">Založeno</span>
+                      <span className="font-medium text-slate-900">{selectedUser.createdAt ? new Date(selectedUser.createdAt).toLocaleDateString('cs-CZ') : '-'}</span>
+                    </div>
+                    <div>
+                      <span className="block text-slate-500 mb-1">Zaměření (Major)</span>
+                      <span className="font-medium text-slate-900">{selectedUser.major || '-'}</span>
+                    </div>
+                    <div>
+                      <span className="block text-slate-500 mb-1">Ročník</span>
+                      <span className="font-medium text-slate-900">{selectedUser.year || '-'}</span>
+                    </div>
+                    <div className="col-span-2">
+                      <span className="block text-slate-500 mb-1">Organizace / Škola</span>
+                      <span className="font-medium text-slate-900">{selectedUser.organizationId || selectedUser.companyName || selectedUser.organizationName || '-'}</span>
+                    </div>
+                  </div>
+               </div>
+            </div>
+
+            <div className="p-6 border-t border-slate-200 bg-slate-50 space-y-3">
+               <button
+                  onClick={() => {
+                    handleImpersonate(selectedUser.id, selectedUser.name || selectedUser.displayName);
+                  }}
+                  disabled={impersonating === selectedUser.id || selectedUser.role === 'admin' || selectedUser.role === 'coordinator'}
+                  className="w-full py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+               >
+                 {impersonating === selectedUser.id ? 'Načítání...' : 'Přihlásit se jako tento uživatel'}
+               </button>
+               <button
+                  onClick={() => {
+                    handleDeleteUser(selectedUser.id, selectedUser.name || selectedUser.displayName);
+                    setSelectedUser(null);
+                  }}
+                  className="w-full py-3 bg-white text-red-600 border border-red-200 font-semibold rounded-lg hover:bg-red-50 transition flex items-center justify-center gap-2"
+               >
+                 Odstranit uživatele
+               </button>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

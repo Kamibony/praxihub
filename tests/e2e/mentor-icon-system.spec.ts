@@ -22,8 +22,6 @@ test.describe('Scenario 3: Mentor Icon System', () => {
 
     await expect(studentPage.getByText('Načítám data...')).not.toBeVisible({ timeout: 20000 });
 
-    // We expect the student to see the "Nový záznam" section (add time log)
-    // The seeded placement is in APPROVED state, which reveals time logs UI.
     const dateInput = studentPage.locator('input[type="date"]');
     await expect(dateInput).toBeVisible({ timeout: 15000 });
 
@@ -32,9 +30,9 @@ test.describe('Scenario 3: Mentor Icon System', () => {
     mentorPage.on('pageerror', err => console.log('MENTOR ERROR:', err.message));
 
     await loginAs(mentorPage, 'mentor123');
-    await mentorPage.goto('/mentor/dashboard');
+    await mentorPage.goto('/institution/dashboard');
 
-    await expect(mentorPage.getByText('Načítám data...')).not.toBeVisible({ timeout: 20000 });
+    // Dashboard doesn't show loading text, wait for it to be removed if exists, or just wait for Mentor Hub
     await expect(mentorPage.getByRole('heading', { name: 'Mentor Hub' })).toBeVisible({ timeout: 15000 });
 
     // 3. Student Creates Time Log
@@ -55,13 +53,7 @@ test.describe('Scenario 3: Mentor Icon System', () => {
 
     // 4. Mentor views and approves the time log
     // According to memory, pending time logs show directly on the Mentor Dashboard. Let's look for it.
-    try {
-        await expect(mentorPage.getByText('Test time log description for e2e test.').first()).toBeVisible({ timeout: 10000 });
-    } catch (e) {
-        console.log("Could not find the time log on Mentor Dashboard. Current text:");
-        console.log(await mentorPage.evaluate(() => document.body.innerText));
-        throw e;
-    }
+    await expect(mentorPage.getByText('Test time log description for e2e test.').first()).toBeVisible({ timeout: 10000 });
 
     // Click approve button
     // Wait for the specific approve button. The Mentor Dashboard has a specific UI for this. Let's look for the button containing text "Schválit"

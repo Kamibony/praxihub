@@ -36,7 +36,7 @@ export default function Navbar() {
   // Hide navbar on dashboard pages and auth pages where we want custom layout
   const isHidden =
     pathname.startsWith('/student') ||
-    pathname.startsWith('/company') ||
+    pathname.startsWith('/institution') ||
     pathname.startsWith('/admin') ||
     pathname === '/login' ||
     pathname === '/signup';
@@ -47,7 +47,7 @@ export default function Navbar() {
 
   const getDashboardLink = () => {
     if (role === 'student') return '/student/dashboard';
-    if (role === 'company') return '/company/dashboard';
+    if (role === 'institution') return '/institution/dashboard';
     if (role === 'coordinator') return '/admin/dashboard';
     return '/';
   };

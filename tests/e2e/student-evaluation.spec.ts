@@ -8,11 +8,20 @@ test.describe('Scenario 2: Student AI Evaluation', () => {
 
     // Make sure we re-seed placement123 with EVALUATION state because maybe another test changed it
     const { db } = require('./setup-firebase-admin');
+
+    // Ensure the date is in the future or present to be picked up properly if orderBy plays tricks
+    const createdAtLog = new Date();
+    createdAtLog.setHours(createdAtLog.getHours() + 1);
+
+    await db.collection('users').doc('student123').update({
+      active_placement_id: 'placement123'
+    });
+
     await db.collection('placements').doc('placement123').set({
       studentId: 'student123',
       status: 'EVALUATION',
       organization_name: 'Mock Company s.r.o.',
-      createdAt: new Date().toISOString(),
+      createdAt: createdAtLog.toISOString(),
       start_date: '2023-01-01',
       end_date: '2023-01-31',
       organization_ico: '12345678'
@@ -23,13 +32,7 @@ test.describe('Scenario 2: Student AI Evaluation', () => {
 
     await expect(page.getByText('Načítám data...')).not.toBeVisible({ timeout: 20000 });
 
-    try {
-        await expect(page.getByText('Závěrečná reflexe')).toBeVisible({ timeout: 15000 });
-    } catch (e) {
-        console.log('Failed to find Závěrečná reflexe. Current body:');
-        console.log(await page.evaluate(() => document.body.innerText));
-        throw e;
-    }
+    await expect(page.getByText('Závěrečná reflexe')).toBeVisible({ timeout: 15000 });
 
     const textarea = page.locator('textarea[placeholder="Zde napište svou reflexi..."]');
     await expect(textarea).toBeVisible();
