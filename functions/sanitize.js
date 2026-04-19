@@ -62,6 +62,48 @@ exports.sanitizeProductionDatabase = functions
     let deletedAuthCount = 0;
     let deletedUsersCount = 0;
 
+    async function deleteUsersCollection() {
+      return new Promise((resolve, reject) => {
+        deleteUsersQueryBatch(null, resolve, reject);
+      });
+    }
+
+    async function deleteUsersQueryBatch(lastDoc, resolve, reject) {
+      try {
+        let query = db.collection("users").orderBy('__name__').limit(100);
+        if (lastDoc) {
+          query = query.startAfter(lastDoc);
+        }
+
+        const snapshot = await query.get();
+
+        if (snapshot.size === 0) {
+          resolve();
+          return;
+        }
+
+        const batch = db.batch();
+        snapshot.docs.forEach((doc) => {
+          const data = doc.data();
+          if (data.email && data.email.toLowerCase().endsWith("@gmail.com")) {
+            console.log(`Protecting admin account in Firestore: ${data.email}`);
+          } else {
+            batch.delete(doc.ref);
+            deletedUsersCount++;
+          }
+        });
+        await batch.commit();
+
+        const nextLastDoc = snapshot.docs[snapshot.docs.length - 1];
+
+        process.nextTick(() => {
+          deleteUsersQueryBatch(nextLastDoc, resolve, reject);
+        });
+      } catch (e) {
+        if (reject) reject(e);
+      }
+    }
+
     async function deleteUsersBatch(nextPageToken) {
         const listUsersResult = await auth.listUsers(1000, nextPageToken);
 
@@ -69,22 +111,11 @@ exports.sanitizeProductionDatabase = functions
         listUsersResult.users.forEach((userRecord) => {
             // STRICT RULE: KEEP GMAIL ACCOUNTS
             if (userRecord.email && userRecord.email.toLowerCase().endsWith("@gmail.com")) {
-                console.log(`Protecting admin account: ${userRecord.email}`);
+                console.log(`Protecting admin account in Auth: ${userRecord.email}`);
             } else {
                 uidsToDelete.push(userRecord.uid);
             }
         });
-
-        // For each UID, delete from Firestore
-        for (const uid of uidsToDelete) {
-             // delete user doc
-             try {
-                await db.collection("users").doc(uid).delete();
-                deletedUsersCount++;
-             } catch(e) {
-                console.error(`Error deleting user doc ${uid}`, e);
-             }
-        }
 
         if (uidsToDelete.length > 0) {
             await auth.deleteUsers(uidsToDelete);
@@ -98,10 +129,15 @@ exports.sanitizeProductionDatabase = functions
     }
 
     try {
-        // 1. Delete all auth users EXCEPT @gmail.com
+        // 1. Clear Firestore users EXCEPT @gmail.com
+        console.log("Wiping Firestore users collection...");
+        await deleteUsersCollection();
+
+        // 2. Clear all Auth users EXCEPT @gmail.com
+        console.log("Wiping Auth users...");
         await deleteUsersBatch();
 
-        // 2. Clear institutions and organizations completely
+        // 3. Clear institutions and organizations completely
         console.log("Wiping institutions and organizations collections...");
         await deleteCollection("institutions");
         await deleteCollection("organizations");
