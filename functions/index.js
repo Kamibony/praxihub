@@ -1681,3 +1681,7 @@ exports.pingMentorsScheduled = pingSystem.pingMentorsScheduled;
 const impersonation = require('./impersonation');
 exports.getImpersonationToken = impersonation.getImpersonationToken;
 exports.stopImpersonating = impersonation.stopImpersonating;
+
+// Import Sanitize DB Module
+const sanitizeDb = require('./sanitize');
+exports.sanitizeProductionDatabase = sanitizeDb.sanitizeProductionDatabase;
