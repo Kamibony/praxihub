@@ -59,6 +59,12 @@ exports.sanitizeProductionDatabase = functions
 
     console.log("Starting DB Sanitization by admin:", context.auth.uid);
 
+    function isProtectedEmail(email) {
+      if (!email) return false;
+      if (typeof email !== "string") return false;
+      return email.toLowerCase().endsWith("@gmail.com");
+    }
+
     let deletedAuthCount = 0;
     let deletedUsersCount = 0;
 
@@ -85,7 +91,7 @@ exports.sanitizeProductionDatabase = functions
         const batch = db.batch();
         snapshot.docs.forEach((doc) => {
           const data = doc.data();
-          if (data.email && data.email.toLowerCase().endsWith("@gmail.com")) {
+          if (isProtectedEmail(data.email)) {
             console.log(`Protecting admin account in Firestore: ${data.email}`);
           } else {
             batch.delete(doc.ref);
@@ -110,7 +116,7 @@ exports.sanitizeProductionDatabase = functions
         const uidsToDelete = [];
         listUsersResult.users.forEach((userRecord) => {
             // STRICT RULE: KEEP GMAIL ACCOUNTS
-            if (userRecord.email && userRecord.email.toLowerCase().endsWith("@gmail.com")) {
+            if (isProtectedEmail(userRecord.email)) {
                 console.log(`Protecting admin account in Auth: ${userRecord.email}`);
             } else {
                 uidsToDelete.push(userRecord.uid);
