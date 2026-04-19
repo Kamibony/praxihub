@@ -24,8 +24,8 @@ export default function LandingPage() {
           if (userDoc.exists()) {
             const role = userDoc.data().role;
             if (role === "student") router.push("/student/dashboard");
-            else if (role === "company") router.push("/company/dashboard");
-            else if (role === "coordinator") router.push("/admin/dashboard");
+            else if (role === "institution" || role === "company" || role === "mentor") router.push("/institution/dashboard");
+            else if (role === "coordinator" || role === "admin") router.push("/admin/dashboard");
             else setLoading(false); // Neznáma rola, ukážeme web
           } else {
             // Používateľ prihlásený ale bez profilu
@@ -82,11 +82,11 @@ export default function LandingPage() {
               <Link href="/login?role=student" className="px-8 py-4 bg-blue-600 text-white rounded-xl text-lg font-semibold hover:bg-blue-700 transition shadow-lg hover:-translate-y-1">
                 Jsem Student
               </Link>
-              <Link href="/login?role=company" className="px-8 py-4 bg-white text-slate-700 border border-slate-200 rounded-xl text-lg font-semibold hover:bg-slate-50 transition shadow-sm hover:-translate-y-1">
-                Jsem Firma
+              <Link href="/login?role=institution" className="px-8 py-4 bg-white text-slate-700 border border-slate-200 rounded-xl text-lg font-semibold hover:bg-slate-50 transition shadow-sm hover:-translate-y-1">
+                Jsem Instituce
               </Link>
-              <Link href="/manual" className="px-8 py-4 text-slate-500 font-semibold hover:text-blue-600 transition flex items-center justify-center gap-2">
-                Pro Univerzity
+              <Link href="/login?role=coordinator" className="px-8 py-4 text-slate-500 font-semibold hover:text-blue-600 transition flex items-center justify-center gap-2">
+                Pro Koordinátory
               </Link>
             </div>
           </div>

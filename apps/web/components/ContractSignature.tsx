@@ -6,10 +6,11 @@ import { CheckCircle2, PenTool, Loader2 } from "lucide-react";
 
 interface ContractSignatureProps {
   placementId: string;
-  role: 'student' | 'coordinator' | 'company';
+  role: 'student' | 'coordinator' | 'institution';
   signatures?: {
     student?: { timestamp: any; userId: string };
     coordinator?: { timestamp: any; userId: string };
+    institution?: { timestamp: any; userId: string };
     company?: { timestamp: any; userId: string };
   };
 }
@@ -18,7 +19,7 @@ export default function ContractSignature({ placementId, role, signatures }: Con
   const [isSigning, setIsSigning] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const signatureData = signatures?.[role];
+  const signatureData = signatures?.[role === 'institution' ? 'company' : role]; // Map institution to company for legacy signatures if needed
   const isSigned = !!signatureData;
 
   const handleSign = async () => {
@@ -39,7 +40,7 @@ export default function ContractSignature({ placementId, role, signatures }: Con
     switch (role) {
       case 'student': return 'Student';
       case 'coordinator': return 'Koordinátor';
-      case 'company': return 'Společnost';
+      case 'institution': return 'Společnost';
     }
   };
 

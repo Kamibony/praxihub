@@ -18,7 +18,7 @@ export async function clearAuth() {
 export async function seedAdminUser() {
   await auth.createUser({ uid: 'admin123', email: 'admin@praxihub.cz' });
   await db.collection('users').doc('admin123').set({
-    role: 'admin',
+    role: 'coordinator',
     researchConsent: true,
     email: 'admin@praxihub.cz',
     createdAt: new Date().toISOString()
@@ -31,6 +31,7 @@ export async function seedStudentUser() {
     role: 'student',
     researchConsent: true,
     email: 'student@praxihub.cz',
+    active_placement_id: 'placement123',
     createdAt: new Date().toISOString()
   });
 
@@ -48,7 +49,7 @@ export async function seedStudentUser() {
 export async function seedMentorAndLog() {
   await auth.createUser({ uid: 'mentor123', email: 'mentor@praxihub.cz' });
   await db.collection('users').doc('mentor123').set({
-    role: 'mentor',
+    role: 'institution',
     researchConsent: true,
     email: 'mentor@praxihub.cz',
     companyIco: '87654321',
@@ -59,8 +60,13 @@ export async function seedMentorAndLog() {
   await db.collection('users').doc('student-log-123').set({
     role: 'student',
     researchConsent: true,
-    email: 'student-log@praxihub.cz'
+    email: 'student-log@praxihub.cz',
+    active_placement_id: 'placement-log' // Relational mapping for frontend UI fallback if needed
   });
+
+  // Ensure the date is in the future or present to be picked up properly if orderBy plays tricks
+  const createdAtLog = new Date();
+  createdAtLog.setHours(createdAtLog.getHours() + 1);
 
   await db.collection('placements').doc('placement-log').set({
     studentId: 'student-log-123',
@@ -70,14 +76,17 @@ export async function seedMentorAndLog() {
     organization_email: 'mentor@praxihub.cz',
     organization_ico: '87654321',
     studentEmail: 'student-log@praxihub.cz',
-    createdAt: new Date().toISOString(),
-    approvedAt: new Date().toISOString()
+    createdAt: createdAtLog.toISOString(),
+    approvedAt: createdAtLog.toISOString()
   });
 }
 
 export async function seedClosedPlacementForCommission() {
+  const oldDate = new Date();
+  oldDate.setFullYear(oldDate.getFullYear() - 1);
+
   await db.collection('placements').doc('placement-closed').set({
-    studentId: 'student123',
+    studentId: 'student123', // Same student, so make sure createdAt is OLDER than placement123
     mentorId: 'mentor123',
     status: 'CLOSED',
     organization_name: 'Commission Co',
@@ -86,6 +95,6 @@ export async function seedClosedPlacementForCommission() {
     major: 'KPV',
     yearOfStudy: '3',
     semester: 'Letní',
-    createdAt: new Date().toISOString()
+    createdAt: oldDate.toISOString()
   });
 }

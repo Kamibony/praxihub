@@ -36,14 +36,10 @@ export default function DashboardRouter() {
           if (role === 'student') {
 
             router.push('/student/dashboard');
-          } else if (role === 'company') {
-            router.push('/company/dashboard');
+          } else if (role === 'institution' || role === 'company' || role === 'mentor') {
+            router.push('/institution/dashboard');
           } else if (role === 'coordinator' || role === 'admin') {
             router.push('/admin/dashboard');
-          } else if (role === 'mentor') {
-            router.push('/mentor/dashboard');
-          } else if (role === 'institution') {
-            router.push('/institution/dashboard');
           } else {
             console.error('Unknown role:', role);
             router.push('/login');

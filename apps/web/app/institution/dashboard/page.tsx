@@ -9,7 +9,7 @@ import { CheckCircle, XCircle, Star, LogOut, Clock, User, Building } from 'lucid
 import Chatbot from "@/components/Chatbot";
 import QrScanner from "@/components/QrScanner";
 
-export default function MentorDashboard() {
+export default function InstitutionDashboard() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [placements, setPlacements] = useState<any[]>([]);
@@ -39,7 +39,7 @@ export default function MentorDashboard() {
         const userDocRef = doc(db, "users", currentUser.uid);
         const userDoc = await getDoc(userDocRef);
 
-        if (userDoc.exists() && userDoc.data().role === 'mentor') {
+        if (userDoc.exists() && ['institution', 'mentor', 'company'].includes(userDoc.data().role)) {
           if (!userDoc.data().researchConsent) {
             router.push('/consent');
             return;
