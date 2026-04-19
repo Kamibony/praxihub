@@ -7,9 +7,13 @@ import { onAuthStateChanged, signInWithCustomToken } from "firebase/auth";
 import { getFunctions, httpsCallable } from "firebase/functions";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Users, Search, Filter, X } from 'lucide-react';
+import { Users, Search, Filter, X, AlertTriangle } from 'lucide-react';
 
 export default function UserManagementPage() {
+  const [showWipeModal, setShowWipeModal] = useState(false);
+  const [wipeConfirmation, setWipeConfirmation] = useState('');
+  const [wipingDb, setWipingDb] = useState(false);
+  const [currentUserRole, setCurrentUserRole] = useState<string | null>(null);
   const handleDeleteUser = async (userId: string, userName: string) => {
     if (window.confirm(`Opravdu chcete smazat uživatele ${userName || 'Bez jména'}? Tato akce je nevratná.`)) {
       try {
@@ -58,10 +62,17 @@ export default function UserManagementPage() {
   };
 
   useEffect(() => {
-    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+    const unsubscribeAuth = onAuthStateChanged(auth, async (user) => {
       if (!user) {
         router.push("/login");
       } else {
+        const userDocRef = doc(db, "users", user.uid);
+        const unsubscribeCurrentUser = onSnapshot(userDocRef, (docSnap) => {
+            if (docSnap.exists()) {
+                setCurrentUserRole(docSnap.data().role);
+            }
+        });
+
         const q = query(collection(db, "users"), orderBy("createdAt", "desc"));
         const unsubscribeFirestore = onSnapshot(q, (snapshot) => {
           const data = snapshot.docs.map(doc => ({
@@ -71,12 +82,39 @@ export default function UserManagementPage() {
           setUsers(data);
           setLoading(false);
         });
-        return () => unsubscribeFirestore();
+        return () => {
+            unsubscribeFirestore();
+            unsubscribeCurrentUser();
+        };
       }
     });
 
     return () => unsubscribeAuth();
   }, [router]);
+
+  const handleWipeDatabase = async () => {
+    if (wipeConfirmation !== 'WIPE') return;
+
+    setWipingDb(true);
+    try {
+        const functions = getFunctions();
+        const sanitizeDb = httpsCallable(functions, 'sanitizeProductionDatabase');
+        const result = await sanitizeDb();
+        const data = result.data as any;
+        if (data && data.success) {
+            alert(`Úspěšně smazáno ${data.deletedAuthCount} uživatelů z Auth a ${data.deletedUsersCount} uživatelů z Firestore.`);
+        } else {
+            alert('Nastala chyba při mazání databáze.');
+        }
+    } catch (e: any) {
+        console.error('Chyba mazání DB', e);
+        alert('Chyba: ' + e.message);
+    } finally {
+        setWipingDb(false);
+        setShowWipeModal(false);
+        setWipeConfirmation('');
+    }
+  };
 
   const filteredUsers = users.filter(u => {
     const matchesSearch = (u.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -129,13 +167,73 @@ export default function UserManagementPage() {
             </h1>
             <p className="text-slate-600 mt-2">Komplexní přehled a správa všech uživatelů v systému.</p>
           </div>
-          <Link
-            href="/admin/dashboard"
-            className="px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 transition"
-          >
-            Zpět na Dashboard
-          </Link>
+          <div className="flex items-center gap-4">
+             {(currentUserRole === 'admin' || currentUserRole === 'coordinator') && (
+                <button
+                    onClick={() => setShowWipeModal(true)}
+                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition flex items-center gap-2 font-semibold"
+                >
+                    <AlertTriangle size={18} />
+                    Hard Reset Users
+                </button>
+             )}
+            <Link
+              href="/admin/dashboard"
+              className="px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 transition"
+            >
+              Zpět na Dashboard
+            </Link>
+          </div>
         </div>
+
+        {/* WIPE MODAL */}
+        {showWipeModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+              <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 relative">
+                <button
+                  onClick={() => setShowWipeModal(false)}
+                  className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition"
+                >
+                  <X size={24} />
+                </button>
+                <div className="flex items-center gap-4 mb-4 text-red-600">
+                  <AlertTriangle size={32} />
+                  <h2 className="text-2xl font-bold">Wipe Database</h2>
+                </div>
+                <p className="text-slate-600 mb-6">
+                  Tato akce je nevratná. Smaže všechny dummy uživatele, instituce a stáže,
+                  kromě těch, kteří mají e-mail končící na <strong className="text-slate-800">@gmail.com</strong>.
+                  <br /><br />
+                  Pro potvrzení napište <strong>WIPE</strong> do pole níže:
+                </p>
+                <input
+                    type="text"
+                    value={wipeConfirmation}
+                    onChange={(e) => setWipeConfirmation(e.target.value)}
+                    placeholder="WIPE"
+                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-red-500 outline-none text-center font-bold tracking-widest mb-6"
+                />
+                <div className="flex gap-4">
+                    <button
+                        onClick={() => setShowWipeModal(false)}
+                        className="flex-1 py-2 px-4 border border-slate-300 rounded-lg text-slate-700 font-semibold hover:bg-slate-50 transition"
+                        disabled={wipingDb}
+                    >
+                        Zrušit
+                    </button>
+                    <button
+                        onClick={handleWipeDatabase}
+                        disabled={wipeConfirmation !== 'WIPE' || wipingDb}
+                        className="flex-1 py-2 px-4 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                        {wipingDb ? (
+                           <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                        ) : 'Spustit Wipe'}
+                    </button>
+                </div>
+              </div>
+            </div>
+        )}
 
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
           <div className="p-4 border-b border-slate-200 bg-slate-50 flex flex-col md:flex-row gap-4 justify-between items-center">
