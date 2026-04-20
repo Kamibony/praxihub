@@ -834,6 +834,7 @@ exports.importRoster = functions
           transaction.update(existingPlacementDoc.ref, {
             organizationId: orgId || existingPlacementDoc.data().organizationId,
             migratedHours: Number(userObj.migratedHours) || existingPlacementDoc.data().migratedHours || 0,
+            targetHours: Number(userObj.targetHours) || existingPlacementDoc.data().targetHours || 15,
             studentMajor: userObj.major || existingPlacementDoc.data().studentMajor || null,
             updatedAt: admin.firestore.FieldValue.serverTimestamp(),
           });
@@ -844,6 +845,7 @@ exports.importRoster = functions
             organizationId: orgId,
             status: "DRAFT",
             migratedHours: Number(userObj.migratedHours) || 0,
+            targetHours: Number(userObj.targetHours) || 15,
             studentMajor: userObj.major || null,
             createdAt: admin.firestore.FieldValue.serverTimestamp(),
           });
