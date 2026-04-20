@@ -51,6 +51,8 @@ export default function UserManagementPage() {
   const [editUserMajor, setEditUserMajor] = useState('');
   const [editUserYear, setEditUserYear] = useState('');
   const [editUserOrganizationId, setEditUserOrganizationId] = useState('');
+  const [editUserUid, setEditUserUid] = useState('');
+  const [editUserTargetHours, setEditUserTargetHours] = useState<number | ''>('');
   const [isEditingUser, setIsEditingUser] = useState(false);
   const [editUserError, setEditUserError] = useState('');
 
@@ -64,6 +66,8 @@ export default function UserManagementPage() {
     setEditUserMajor(user.major || '');
     setEditUserYear(user.year || '');
     setEditUserOrganizationId(user.organizationId || user.companyName || user.organizationName || '');
+    setEditUserUid(user.uid || '');
+    setEditUserTargetHours(user.targetHours !== undefined ? user.targetHours : 15);
     setEditUserError('');
     setShowEditUserModal(true);
   };
@@ -81,7 +85,9 @@ export default function UserManagementPage() {
         role: editUserRole,
         major: editUserMajor,
         year: editUserYear,
-        organizationId: editUserOrganizationId
+        organizationId: editUserOrganizationId,
+        uid: editUserUid,
+        targetHours: editUserTargetHours === '' ? 15 : Number(editUserTargetHours)
       });
 
       setShowEditUserModal(false);
@@ -95,7 +101,9 @@ export default function UserManagementPage() {
           role: editUserRole,
           major: editUserMajor,
           year: editUserYear,
-          organizationId: editUserOrganizationId
+          organizationId: editUserOrganizationId,
+          uid: editUserUid,
+          targetHours: editUserTargetHours === '' ? 15 : Number(editUserTargetHours)
         });
       }
     } catch (error: any) {
@@ -486,6 +494,25 @@ export default function UserManagementPage() {
                             className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
                         />
                     </div>
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Student ID (uid)</label>
+                        <input
+                            type="text"
+                            value={editUserUid}
+                            onChange={(e) => setEditUserUid(e.target.value)}
+                            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Cílový počet hodin (Target Hours)</label>
+                        <input
+                            type="number"
+                            value={editUserTargetHours}
+                            onChange={(e) => setEditUserTargetHours(e.target.value === '' ? '' : Number(e.target.value))}
+                            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
+                            min="0"
+                        />
+                    </div>
                     <div className="flex gap-4 pt-4">
                         <button
                             type="button"
@@ -684,8 +711,16 @@ export default function UserManagementPage() {
                       <span className="font-medium font-mono text-xs text-slate-700">{selectedUser.id}</span>
                     </div>
                     <div>
+                      <span className="block text-slate-500 mb-1">Student ID (UID)</span>
+                      <span className="font-medium font-mono text-xs text-slate-700">{selectedUser.uid || '-'}</span>
+                    </div>
+                    <div>
                       <span className="block text-slate-500 mb-1">Založeno</span>
                       <span className="font-medium text-slate-900">{selectedUser.createdAt ? new Date(selectedUser.createdAt).toLocaleDateString('cs-CZ') : '-'}</span>
+                    </div>
+                    <div>
+                      <span className="block text-slate-500 mb-1">Cílové hodiny</span>
+                      <span className="font-medium text-slate-900">{selectedUser.targetHours !== undefined ? selectedUser.targetHours : 15}</span>
                     </div>
                     <div>
                       <span className="block text-slate-500 mb-1">Zaměření (Major)</span>
