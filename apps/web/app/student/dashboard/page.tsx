@@ -205,16 +205,39 @@ export default function StudentDashboard() {
     }
     setSubmittingOrg(true);
     try {
-      await addDoc(collection(db, "placements"), {
+      const isKpv = user.major === 'KPV' || user.studentMajor === 'KPV';
+
+      const docRef = await addDoc(collection(db, "placements"), {
         studentId: user.uid,
         studentEmail: user.email,
         studentName: user.displayName || user.email,
-        status: "PENDING_ORG_APPROVAL",
+        status: "DRAFT", // Start as DRAFT
         createdAt: new Date().toISOString(),
         organization_name: orgRequest.name,
         organization_ico: orgRequest.ico,
         organization_web: orgRequest.web,
+        major: user.major || 'UPV',
+        studentMajor: user.major || 'UPV'
       });
+
+      if (isKpv) {
+        try {
+          const fetchAres = httpsCallable(functions, 'fetchAresAndLink');
+          await fetchAres({ ico: orgRequest.ico, placementId: docRef.id });
+          alert("Žádost odeslána. Organizace byla automaticky ověřena v registru ARES (Fast-Track)!");
+        } catch (aresError) {
+          console.error("ARES error:", aresError);
+          // Fallback if ARES fails
+          const transitionFn = httpsCallable(functions, 'transitionPlacementState');
+          await transitionFn({ placementId: docRef.id, newState: 'PENDING_MATCH' });
+          alert("Žádost odeslána, ale ověření v ARES se nezdařilo. Přesunuto k manuálnímu schválení.");
+        }
+      } else {
+        const transitionFn = httpsCallable(functions, 'transitionPlacementState');
+        await transitionFn({ placementId: docRef.id, newState: 'PENDING_MATCH' });
+        alert("Žádost odeslána a čeká na manuální přiřazení koordinátorem (UPV).");
+      }
+
       setOrgRequest({ name: "", ico: "", web: "" });
     } catch (error) {
       console.error("Error submitting org request:", error);
