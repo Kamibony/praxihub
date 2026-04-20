@@ -821,7 +821,7 @@ exports.importRoster = functions
         if (existingPlacementDoc) {
           transaction.update(existingPlacementDoc.ref, {
             organizationId: orgId || existingPlacementDoc.data().organizationId,
-            migratedHours: userObj.hours || existingPlacementDoc.data().migratedHours || 0,
+            migratedHours: Number(userObj.migratedHours) || existingPlacementDoc.data().migratedHours || 0,
             studentMajor: userObj.major || existingPlacementDoc.data().studentMajor || null,
             updatedAt: admin.firestore.FieldValue.serverTimestamp(),
           });
@@ -831,7 +831,7 @@ exports.importRoster = functions
             studentId: userId,
             organizationId: orgId,
             status: "DRAFT",
-            migratedHours: userObj.hours || 0,
+            migratedHours: Number(userObj.migratedHours) || 0,
             studentMajor: userObj.major || null,
             createdAt: admin.firestore.FieldValue.serverTimestamp(),
           });
