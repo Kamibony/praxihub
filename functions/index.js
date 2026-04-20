@@ -1703,3 +1703,8 @@ exports.stopImpersonating = impersonation.stopImpersonating;
 // Import Sanitize DB Module
 const sanitizeDb = require('./sanitize');
 exports.sanitizeProductionDatabase = sanitizeDb.sanitizeProductionDatabase;
+
+
+// Import Users Management Module
+const usersModule = require('./users');
+exports.createUserManually = usersModule.createUserManually;

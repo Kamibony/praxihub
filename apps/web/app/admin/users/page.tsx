@@ -33,7 +33,43 @@ export default function UserManagementPage() {
   const [roleFilter, setRoleFilter] = useState('ALL');
   const [impersonating, setImpersonating] = useState<string | null>(null);
   const [selectedUser, setSelectedUser] = useState<any | null>(null);
+
+  // New User Form State
+  const [showNewUserModal, setShowNewUserModal] = useState(false);
+  const [newUserName, setNewUserName] = useState('');
+  const [newUserEmail, setNewUserEmail] = useState('');
+  const [newUserRole, setNewUserRole] = useState('student');
+  const [isCreatingUser, setIsCreatingUser] = useState(false);
+  const [createUserError, setCreateUserError] = useState('');
+
   const router = useRouter();
+
+  const handleCreateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setCreateUserError('');
+    setIsCreatingUser(true);
+
+    try {
+      const functions = getFunctions();
+      const createUserManually = httpsCallable(functions, 'createUserManually');
+      await createUserManually({
+        name: newUserName,
+        email: newUserEmail,
+        role: newUserRole,
+      });
+
+      setShowNewUserModal(false);
+      setNewUserName('');
+      setNewUserEmail('');
+      setNewUserRole('student');
+      alert('Uživatel byl úspěšně vytvořen.');
+    } catch (error: any) {
+      console.error("Chyba při vytváření uživatele:", error);
+      setCreateUserError(error.message || 'Nepodařilo se vytvořit uživatele.');
+    } finally {
+      setIsCreatingUser(false);
+    }
+  };
 
   const handleExportCSV = () => {
     if (filteredUsers.length === 0) return;
@@ -193,6 +229,13 @@ export default function UserManagementPage() {
           </div>
           <div className="flex items-center gap-4">
              <button
+               onClick={() => setShowNewUserModal(true)}
+               className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center gap-2 font-semibold"
+             >
+               <Users size={18} />
+               Nový uživatel
+             </button>
+             <button
                onClick={handleExportCSV}
                className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition flex items-center gap-2 font-semibold"
              >
@@ -217,6 +260,88 @@ export default function UserManagementPage() {
             </Link>
           </div>
         </div>
+
+        {/* NEW USER MODAL */}
+        {showNewUserModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+              <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 relative">
+                <button
+                  onClick={() => setShowNewUserModal(false)}
+                  className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition"
+                >
+                  <X size={24} />
+                </button>
+                <div className="flex items-center gap-4 mb-4 text-blue-600">
+                  <div className="bg-blue-100 p-3 rounded-full">
+                    <Users size={24} />
+                  </div>
+                  <h2 className="text-2xl font-bold">Nový uživatel</h2>
+                </div>
+                {createUserError && (
+                    <div className="mb-4 p-3 bg-red-50 text-red-700 border border-red-200 rounded-lg text-sm">
+                        {createUserError}
+                    </div>
+                )}
+                <form onSubmit={handleCreateUser} className="space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Jméno a příjmení</label>
+                        <input
+                            type="text"
+                            required
+                            value={newUserName}
+                            onChange={(e) => setNewUserName(e.target.value)}
+                            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                            placeholder="Jan Novák"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">E-mail</label>
+                        <input
+                            type="email"
+                            required
+                            value={newUserEmail}
+                            onChange={(e) => setNewUserEmail(e.target.value)}
+                            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                            placeholder="jan.novak@example.com"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Role</label>
+                        <select
+                            value={newUserRole}
+                            onChange={(e) => setNewUserRole(e.target.value)}
+                            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                        >
+                            <option value="student">Student</option>
+                            <option value="institution">Instituce</option>
+                            <option value="mentor">Mentor</option>
+                            <option value="company">Firma</option>
+                            <option value="coordinator">Koordinátor</option>
+                        </select>
+                    </div>
+                    <div className="flex gap-4 pt-4">
+                        <button
+                            type="button"
+                            onClick={() => setShowNewUserModal(false)}
+                            className="flex-1 py-2 px-4 border border-slate-300 rounded-lg text-slate-700 font-semibold hover:bg-slate-50 transition"
+                            disabled={isCreatingUser}
+                        >
+                            Zrušit
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={isCreatingUser}
+                            className="flex-1 py-2 px-4 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        >
+                            {isCreatingUser ? (
+                               <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                            ) : 'Vytvořit uživatele'}
+                        </button>
+                    </div>
+                </form>
+              </div>
+            </div>
+        )}
 
         {/* WIPE MODAL */}
         {showWipeModal && (
