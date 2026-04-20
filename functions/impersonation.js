@@ -34,13 +34,23 @@ exports.getImpersonationToken = functions.https.onCall(async (data, context) => 
       throw new functions.https.HttpsError("permission-denied", "Nelze se přihlásit jako administrátor nebo koordinátor.");
   }
 
+  if (!targetUserId) {
+    throw new functions.https.HttpsError("invalid-argument", "Cílové ID (targetUserId) je prázdné nebo nedefinované.");
+  }
 
   try {
+    console.log(`Vytváření impersonation tokenu pro targetUserId: ${targetUserId}, volající callerUid: ${callerUid}`);
     const targetToken = await admin.auth().createCustomToken(targetUserId, { impersonatorUid: callerUid });
     return { targetToken };
   } catch (error) {
-    console.error("Chyba při vytváření tokenu:", error);
-    throw new functions.https.HttpsError("internal", "Nepodařilo se vygenerovat token.");
+    console.error("Kritická chyba při vytváření custom tokenu pro impersonaci:", {
+      error: error.message,
+      targetUserId,
+      callerUid,
+      stack: error.stack
+    });
+    // Původní error message
+    throw new functions.https.HttpsError("internal", `Nepodařilo se vygenerovat token pro UID ${targetUserId}. Zkontrolujte Service Account IAM role.`);
   }
 });
 

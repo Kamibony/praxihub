@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { db, auth } from "../../../lib/firebase";
-import { collection, query, onSnapshot, orderBy, doc, deleteDoc } from "firebase/firestore";
+import { collection, query, onSnapshot, orderBy, doc, deleteDoc, updateDoc } from "firebase/firestore";
 import { onAuthStateChanged, signInWithCustomToken } from "firebase/auth";
 import { getFunctions, httpsCallable } from "firebase/functions";
 import { useRouter } from "next/navigation";
@@ -42,7 +42,69 @@ export default function UserManagementPage() {
   const [isCreatingUser, setIsCreatingUser] = useState(false);
   const [createUserError, setCreateUserError] = useState('');
 
+  // Edit User Form State
+  const [showEditUserModal, setShowEditUserModal] = useState(false);
+  const [editUserId, setEditUserId] = useState('');
+  const [editUserName, setEditUserName] = useState('');
+  const [editUserEmail, setEditUserEmail] = useState('');
+  const [editUserRole, setEditUserRole] = useState('student');
+  const [editUserMajor, setEditUserMajor] = useState('');
+  const [editUserYear, setEditUserYear] = useState('');
+  const [editUserOrganizationId, setEditUserOrganizationId] = useState('');
+  const [isEditingUser, setIsEditingUser] = useState(false);
+  const [editUserError, setEditUserError] = useState('');
+
   const router = useRouter();
+
+  const openEditModal = (user: any) => {
+    setEditUserId(user.id);
+    setEditUserName(user.name || user.displayName || '');
+    setEditUserEmail(user.email || '');
+    setEditUserRole(user.role || 'student');
+    setEditUserMajor(user.major || '');
+    setEditUserYear(user.year || '');
+    setEditUserOrganizationId(user.organizationId || user.companyName || user.organizationName || '');
+    setEditUserError('');
+    setShowEditUserModal(true);
+  };
+
+  const handleEditUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setEditUserError('');
+    setIsEditingUser(true);
+
+    try {
+      const userRef = doc(db, "users", editUserId);
+      await updateDoc(userRef, {
+        name: editUserName,
+        email: editUserEmail,
+        role: editUserRole,
+        major: editUserMajor,
+        year: editUserYear,
+        organizationId: editUserOrganizationId
+      });
+
+      setShowEditUserModal(false);
+      alert('Uživatel byl úspěšně upraven.');
+      // Refresh selected user if it's the one we're editing
+      if (selectedUser && selectedUser.id === editUserId) {
+        setSelectedUser({
+          ...selectedUser,
+          name: editUserName,
+          email: editUserEmail,
+          role: editUserRole,
+          major: editUserMajor,
+          year: editUserYear,
+          organizationId: editUserOrganizationId
+        });
+      }
+    } catch (error: any) {
+      console.error("Chyba při úpravě uživatele:", error);
+      setEditUserError(error.message || 'Nepodařilo se upravit uživatele.');
+    } finally {
+      setIsEditingUser(false);
+    }
+  };
 
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -314,8 +376,6 @@ export default function UserManagementPage() {
                         >
                             <option value="student">Student</option>
                             <option value="institution">Instituce</option>
-                            <option value="mentor">Mentor</option>
-                            <option value="company">Firma</option>
                             <option value="coordinator">Koordinátor</option>
                         </select>
                     </div>
@@ -336,6 +396,113 @@ export default function UserManagementPage() {
                             {isCreatingUser ? (
                                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
                             ) : 'Vytvořit uživatele'}
+                        </button>
+                    </div>
+                </form>
+              </div>
+            </div>
+        )}
+
+        {/* EDIT USER MODAL */}
+        {showEditUserModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+              <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 relative">
+                <button
+                  onClick={() => setShowEditUserModal(false)}
+                  className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition"
+                >
+                  <X size={24} />
+                </button>
+                <div className="flex items-center gap-4 mb-4 text-emerald-600">
+                  <div className="bg-emerald-100 p-3 rounded-full">
+                    <Users size={24} />
+                  </div>
+                  <h2 className="text-2xl font-bold">Upravit uživatele</h2>
+                </div>
+                {editUserError && (
+                    <div className="mb-4 p-3 bg-red-50 text-red-700 border border-red-200 rounded-lg text-sm">
+                        {editUserError}
+                    </div>
+                )}
+                <form onSubmit={handleEditUser} className="space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Jméno a příjmení</label>
+                        <input
+                            type="text"
+                            required
+                            value={editUserName}
+                            onChange={(e) => setEditUserName(e.target.value)}
+                            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
+                            placeholder="Jan Novák"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">E-mail</label>
+                        <input
+                            type="email"
+                            required
+                            value={editUserEmail}
+                            onChange={(e) => setEditUserEmail(e.target.value)}
+                            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
+                            placeholder="jan.novak@example.com"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Role</label>
+                        <select
+                            value={editUserRole}
+                            onChange={(e) => setEditUserRole(e.target.value)}
+                            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
+                        >
+                            <option value="student">Student</option>
+                            <option value="institution">Instituce</option>
+                            <option value="coordinator">Koordinátor</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Zaměření (Major)</label>
+                        <input
+                            type="text"
+                            value={editUserMajor}
+                            onChange={(e) => setEditUserMajor(e.target.value)}
+                            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Ročník</label>
+                        <input
+                            type="text"
+                            value={editUserYear}
+                            onChange={(e) => setEditUserYear(e.target.value)}
+                            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Organizace / Škola</label>
+                        <input
+                            type="text"
+                            value={editUserOrganizationId}
+                            onChange={(e) => setEditUserOrganizationId(e.target.value)}
+                            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
+                        />
+                    </div>
+                    <div className="flex gap-4 pt-4">
+                        <button
+                            type="button"
+                            onClick={() => setShowEditUserModal(false)}
+                            className="flex-1 py-2 px-4 border border-slate-300 rounded-lg text-slate-700 font-semibold hover:bg-slate-50 transition"
+                            disabled={isEditingUser}
+                        >
+                            Zrušit
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={isEditingUser}
+                            className="flex-1 py-2 px-4 bg-emerald-600 text-white rounded-lg font-semibold hover:bg-emerald-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        >
+                            {isEditingUser ? (
+                               <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                            ) : 'Uložit změny'}
                         </button>
                     </div>
                 </form>
@@ -545,6 +712,12 @@ export default function UserManagementPage() {
                   className="w-full py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                >
                  {impersonating === selectedUser.id ? 'Načítání...' : 'Přihlásit se jako tento uživatel'}
+               </button>
+               <button
+                  onClick={() => openEditModal(selectedUser)}
+                  className="w-full py-3 bg-white text-emerald-600 border border-emerald-200 font-semibold rounded-lg hover:bg-emerald-50 transition flex items-center justify-center gap-2"
+               >
+                 Upravit uživatele
                </button>
                <button
                   onClick={() => {
