@@ -780,6 +780,7 @@ exports.importRoster = functions
             organizationId:
               userObj.organizationId || existingUserDoc.data().organizationId,
             year: userObj.year || existingUserDoc.data().year,
+            major: userObj.major || existingUserDoc.data().major || null,
             email:
               userObj.email ||
               existingUserDoc.data().email ||
@@ -795,7 +796,8 @@ exports.importRoster = functions
             role: "student",
             organizationId: userObj.organizationId || null,
             year: userObj.year || null,
-            email: `${normalizedName.replace(/\s+/g, ".").toLowerCase()}@placeholder.com`, // Mock email
+            major: userObj.major || null,
+            email: userObj.email || `${normalizedName.replace(/\s+/g, ".").toLowerCase()}@placeholder.com`, // Mock email
             createdAt: admin.firestore.FieldValue.serverTimestamp(),
           });
           added++;
@@ -819,6 +821,8 @@ exports.importRoster = functions
         if (existingPlacementDoc) {
           transaction.update(existingPlacementDoc.ref, {
             organizationId: orgId || existingPlacementDoc.data().organizationId,
+            migratedHours: userObj.hours || existingPlacementDoc.data().migratedHours || 0,
+            studentMajor: userObj.major || existingPlacementDoc.data().studentMajor || null,
             updatedAt: admin.firestore.FieldValue.serverTimestamp(),
           });
         } else {
@@ -827,6 +831,8 @@ exports.importRoster = functions
             studentId: userId,
             organizationId: orgId,
             status: "DRAFT",
+            migratedHours: userObj.hours || 0,
+            studentMajor: userObj.major || null,
             createdAt: admin.firestore.FieldValue.serverTimestamp(),
           });
         }

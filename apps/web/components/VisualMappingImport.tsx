@@ -23,6 +23,8 @@ export default function VisualMappingImport({ onSuccess }: VisualMappingImportPr
     email: -1,
     organizationId: -1,
     year: -1,
+    major: -1,
+    hours: -1,
     name: -1 // Optional: combined name
   });
 
@@ -63,6 +65,8 @@ export default function VisualMappingImport({ onSuccess }: VisualMappingImportPr
           if (lower.includes('email') || lower.includes('e-mail')) newMapping.email = i;
           if (lower.includes('škola') || lower.includes('organizace') || lower.includes('lokace')) newMapping.organizationId = i;
           if (lower.includes('ročník') || lower.includes('rok')) newMapping.year = i;
+          if (lower.includes('major') || lower.includes('zaměření') || lower.includes('obor')) newMapping.major = i;
+          if (lower.includes('hodiny') || lower.includes('hours') || lower.includes('odpracováno')) newMapping.hours = i;
       });
       setMapping(newMapping);
     };
@@ -98,6 +102,8 @@ export default function VisualMappingImport({ onSuccess }: VisualMappingImportPr
         if (mapping.lastName !== -1) mappedRow.lastName = row[mapping.lastName];
         if (mapping.email !== -1) mappedRow.email = row[mapping.email];
         if (mapping.year !== -1) mappedRow.year = row[mapping.year];
+        if (mapping.major !== -1) mappedRow.major = row[mapping.major];
+        if (mapping.hours !== -1) mappedRow.hours = Number(row[mapping.hours]) || 0;
 
         mappedRow.organizationId = mapping.organizationId !== -1 ? (row[mapping.organizationId] || activeSchoolId) : null;
 
@@ -218,6 +224,20 @@ export default function VisualMappingImport({ onSuccess }: VisualMappingImportPr
                   <div className="flex items-center justify-between">
                       <label className="text-sm font-medium text-slate-700">Ročník</label>
                       <select value={mapping.year} onChange={(e) => handleMappingChange('year', e.target.value)} className="border p-1.5 rounded text-sm w-48 bg-slate-50">
+                          <option value={-1}>-- Ignorovat --</option>
+                          {headers.map((h, i) => <option key={i} value={i}>{h}</option>)}
+                      </select>
+                  </div>
+                  <div className="flex items-center justify-between">
+                      <label className="text-sm font-medium text-slate-700">Zaměření (Major)</label>
+                      <select value={mapping.major} onChange={(e) => handleMappingChange('major', e.target.value)} className="border p-1.5 rounded text-sm w-48 bg-slate-50">
+                          <option value={-1}>-- Ignorovat --</option>
+                          {headers.map((h, i) => <option key={i} value={i}>{h}</option>)}
+                      </select>
+                  </div>
+                  <div className="flex items-center justify-between">
+                      <label className="text-sm font-medium text-slate-700">Odpracované hodiny</label>
+                      <select value={mapping.hours} onChange={(e) => handleMappingChange('hours', e.target.value)} className="border p-1.5 rounded text-sm w-48 bg-slate-50">
                           <option value={-1}>-- Ignorovat --</option>
                           {headers.map((h, i) => <option key={i} value={i}>{h}</option>)}
                       </select>
