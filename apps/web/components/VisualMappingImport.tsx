@@ -24,7 +24,7 @@ export default function VisualMappingImport({ onSuccess }: VisualMappingImportPr
     organizationId: -1,
     year: -1,
     major: -1,
-    hours: -1,
+    migratedHours: -1,
     name: -1 // Optional: combined name
   });
 
@@ -66,7 +66,7 @@ export default function VisualMappingImport({ onSuccess }: VisualMappingImportPr
           if (lower.includes('škola') || lower.includes('organizace') || lower.includes('lokace')) newMapping.organizationId = i;
           if (lower.includes('ročník') || lower.includes('rok')) newMapping.year = i;
           if (lower.includes('major') || lower.includes('zaměření') || lower.includes('obor')) newMapping.major = i;
-          if (lower.includes('hodiny') || lower.includes('hours') || lower.includes('odpracováno')) newMapping.hours = i;
+          if (lower.includes('hodiny') || lower.includes('hours') || lower.includes('odpracováno')) newMapping.migratedHours = i;
       });
       setMapping(newMapping);
     };
@@ -103,7 +103,7 @@ export default function VisualMappingImport({ onSuccess }: VisualMappingImportPr
         if (mapping.email !== -1) mappedRow.email = row[mapping.email];
         if (mapping.year !== -1) mappedRow.year = row[mapping.year];
         if (mapping.major !== -1) mappedRow.major = row[mapping.major];
-        if (mapping.hours !== -1) mappedRow.hours = Number(row[mapping.hours]) || 0;
+        if (mapping.migratedHours !== -1) mappedRow.migratedHours = Number(row[mapping.migratedHours]) || 0;
 
         mappedRow.organizationId = mapping.organizationId !== -1 ? (row[mapping.organizationId] || activeSchoolId) : null;
 
@@ -237,7 +237,7 @@ export default function VisualMappingImport({ onSuccess }: VisualMappingImportPr
                   </div>
                   <div className="flex items-center justify-between">
                       <label className="text-sm font-medium text-slate-700">Odpracované hodiny</label>
-                      <select value={mapping.hours} onChange={(e) => handleMappingChange('hours', e.target.value)} className="border p-1.5 rounded text-sm w-48 bg-slate-50">
+                      <select value={mapping.migratedHours} onChange={(e) => handleMappingChange('migratedHours', e.target.value)} className="border p-1.5 rounded text-sm w-48 bg-slate-50">
                           <option value={-1}>-- Ignorovat --</option>
                           {headers.map((h, i) => <option key={i} value={i}>{h}</option>)}
                       </select>

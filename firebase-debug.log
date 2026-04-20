@@ -1,0 +1,164 @@
+[debug] [2026-04-20T02:16:55.287Z] ----------------------------------------------------------------------
+[debug] [2026-04-20T02:16:55.289Z] Command:       /home/jules/.nvm/versions/node/v22.22.1/bin/node /app/node_modules/.bin/firebase emulators:start --project demo-project --only firestore,auth,functions,storage
+[debug] [2026-04-20T02:16:55.290Z] CLI Version:   15.14.0
+[debug] [2026-04-20T02:16:55.290Z] Platform:      linux
+[debug] [2026-04-20T02:16:55.290Z] Node Version:  v22.22.1
+[debug] [2026-04-20T02:16:55.291Z] Time:          Mon Apr 20 2026 02:16:55 GMT+0000 (Coordinated Universal Time)
+[debug] [2026-04-20T02:16:55.291Z] ----------------------------------------------------------------------
+[debug]
+[debug] [2026-04-20T02:16:56.412Z] openjdk version "21.0.10" 2026-01-20
+OpenJDK Runtime Environment (build 21.0.10+7-Ubuntu-124.04)
+
+[debug] [2026-04-20T02:16:56.413Z] OpenJDK 64-Bit Server VM (build 21.0.10+7-Ubuntu-124.04, mixed mode, sharing)
+
+[debug] [2026-04-20T02:16:56.416Z] Parsed Java major version: 21
+[info] i  emulators: Starting emulators: auth, functions, firestore, storage {"metadata":{"emulator":{"name":"hub"},"message":"Starting emulators: auth, functions, firestore, storage"}}
+[info] i  emulators: Detected demo project ID "demo-project", emulated services will use a demo configuration and attempts to access non-emulated services for this project will fail. {"metadata":{"emulator":{"name":"hub"},"message":"Detected demo project ID \"demo-project\", emulated services will use a demo configuration and attempts to access non-emulated services for this project will fail."}}
+[debug] [2026-04-20T02:16:56.429Z] [logging] Logging Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2026-04-20T02:16:56.429Z] [auth] Authentication Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2026-04-20T02:16:56.430Z] [firestore] Firestore Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2026-04-20T02:16:56.430Z] [firestore.websocket] websocket server for firestore only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2026-04-20T02:16:56.430Z] [storage] Storage Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2026-04-20T02:16:56.430Z] assigned listening specs for emulators {"user":{"hub":[{"address":"127.0.0.1","family":"IPv4","port":4400},{"address":"::1","family":"IPv6","port":4400}],"ui":[{"address":"127.0.0.1","family":"IPv4","port":4000},{"address":"::1","family":"IPv6","port":4000}],"logging":[{"address":"127.0.0.1","family":"IPv4","port":4500}],"auth":[{"address":"127.0.0.1","family":"IPv4","port":9099}],"firestore":[{"address":"127.0.0.1","family":"IPv4","port":8080}],"firestore.websocket":[{"address":"127.0.0.1","family":"IPv4","port":9150}],"storage":[{"address":"127.0.0.1","family":"IPv4","port":9199}]},"metadata":{"message":"assigned listening specs for emulators"}}
+[debug] [2026-04-20T02:16:56.434Z] Found emulator hub locator: {"version":"15.14.0","origins":["http://127.0.0.1:4400","http://[::1]:4400"],"pid":47228}
+[debug] [2026-04-20T02:16:56.435Z] Write emulator hub locator at /tmp/hub-demo-project.json
+[debug] [2026-04-20T02:16:56.441Z] [functions] Functions Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2026-04-20T02:16:56.441Z] [eventarc] Eventarc Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2026-04-20T02:16:56.441Z] [tasks] Cloud Tasks Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2026-04-20T02:16:56.441Z] late-assigned ports for functions and eventarc emulators {"user":{"hub":[{"address":"127.0.0.1","family":"IPv4","port":4400},{"address":"::1","family":"IPv6","port":4400}],"ui":[{"address":"127.0.0.1","family":"IPv4","port":4000},{"address":"::1","family":"IPv6","port":4000}],"logging":[{"address":"127.0.0.1","family":"IPv4","port":4500}],"auth":[{"address":"127.0.0.1","family":"IPv4","port":9099}],"firestore":[{"address":"127.0.0.1","family":"IPv4","port":8080}],"firestore.websocket":[{"address":"127.0.0.1","family":"IPv4","port":9150}],"storage":[{"address":"127.0.0.1","family":"IPv4","port":9199}],"functions":[{"address":"127.0.0.1","family":"IPv4","port":5001}],"eventarc":[{"address":"127.0.0.1","family":"IPv4","port":9299}],"tasks":[{"address":"127.0.0.1","family":"IPv4","port":9499}]},"metadata":{"message":"late-assigned ports for functions and eventarc emulators"}}
+[debug] [2026-04-20T02:16:56.468Z] Ignoring unsupported arg: auto_download {"metadata":{"emulator":{"name":"firestore"},"message":"Ignoring unsupported arg: auto_download"}}
+[debug] [2026-04-20T02:16:56.468Z] Ignoring unsupported arg: single_project_mode_error {"metadata":{"emulator":{"name":"firestore"},"message":"Ignoring unsupported arg: single_project_mode_error"}}
+[debug] [2026-04-20T02:16:56.469Z] Starting Firestore Emulator with command {"binary":"java","args":["-Dgoogle.cloud_firestore.debug_log_level=FINE","-Duser.language=en","-jar","/home/jules/.cache/firebase/emulators/cloud-firestore-emulator-v1.20.4.jar","--host","127.0.0.1","--port",8080,"--websocket_port",9150,"--database-edition","standard","--project_id","demo-project","--rules","/app/firestore.rules","--single_project_mode",true,"--functions_emulator","127.0.0.1:5001"],"optionalArgs":["port","webchannel_port","host","rules","websocket_port","database-edition","functions_emulator","seed_from_export","project_id","single_project_mode"],"joinArgs":false,"shell":false,"port":8080} {"metadata":{"emulator":{"name":"firestore"},"message":"Starting Firestore Emulator with command {\"binary\":\"java\",\"args\":[\"-Dgoogle.cloud_firestore.debug_log_level=FINE\",\"-Duser.language=en\",\"-jar\",\"/home/jules/.cache/firebase/emulators/cloud-firestore-emulator-v1.20.4.jar\",\"--host\",\"127.0.0.1\",\"--port\",8080,\"--websocket_port\",9150,\"--database-edition\",\"standard\",\"--project_id\",\"demo-project\",\"--rules\",\"/app/firestore.rules\",\"--single_project_mode\",true,\"--functions_emulator\",\"127.0.0.1:5001\"],\"optionalArgs\":[\"port\",\"webchannel_port\",\"host\",\"rules\",\"websocket_port\",\"database-edition\",\"functions_emulator\",\"seed_from_export\",\"project_id\",\"single_project_mode\"],\"joinArgs\":false,\"shell\":false,\"port\":8080}"}}
+[info] i  firestore: Firestore Emulator logging to firestore-debug.log {"metadata":{"emulator":{"name":"firestore"},"message":"Firestore Emulator logging to \u001b[1mfirestore-debug.log\u001b[22m"}}
+[debug] [2026-04-20T02:16:57.930Z] Apr 20, 2026 2:16:57 AM com.google.cloud.datastore.emulator.firestore.websocket.WebSocketServer start
+INFO: Started WebSocket server on ws://127.0.0.1:9150
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Apr 20, 2026 2:16:57 AM com.google.cloud.datastore.emulator.firestore.websocket.WebSocketServer start\nINFO: Started WebSocket server on ws://127.0.0.1:9150\n"}}
+[debug] [2026-04-20T02:16:57.965Z]
+API endpoint: http://127.0.0.1:8080 {"metadata":{"emulator":{"name":"firestore"},"message":"\nAPI endpoint: http://127.0.0.1:8080"}}
+[debug] [2026-04-20T02:16:57.965Z]
+Database Edition: STANDARD
+Database Mode: CLOUD_FIRESTORE
+
+If you are using a library that supports the FIRESTORE_EMULATOR_HOST environment variable, run:
+
+   export FIRESTORE_EMULATOR_HOST=127.0.0.1:8080
+
+If you are running a Firestore in Datastore Mode project, run:
+
+   export DATASTORE_EMULATOR_HOST=127.0.0.1:8080
+
+Note: Support for Datastore Mode is in preview. If you encounter any bugs please file at https://github.com/firebase/firebase-tools/issues.
+Dev App Server is now running.
+
+ {"metadata":{"emulator":{"name":"firestore"},"message":"\nDatabase Edition: STANDARD\nDatabase Mode: CLOUD_FIRESTORE\n\nIf you are using a library that supports the FIRESTORE_EMULATOR_HOST environment variable, run:\n\n   export FIRESTORE_EMULATOR_HOST=127.0.0.1:8080\n\nIf you are running a Firestore in Datastore Mode project, run:\n\n   export DATASTORE_EMULATOR_HOST=127.0.0.1:8080\n\nNote: Support for Datastore Mode is in preview. If you encounter any bugs please file at https://github.com/firebase/firebase-tools/issues.\nDev App Server is now running.\n\n"}}
+[info] ✔  firestore: Firestore Emulator was started in standard edition. {"metadata":{"emulator":{"name":"firestore"},"message":"Firestore Emulator was started in standard edition."}}
+[info] ✔  firestore: Firestore Emulator UI websocket is running on 9150. {"metadata":{"emulator":{"name":"firestore"},"message":"Firestore Emulator UI websocket is running on 9150."}}
+[debug] [2026-04-20T02:17:06.588Z] Ignoring unsupported arg: port {"metadata":{"emulator":{"name":"storage"},"message":"Ignoring unsupported arg: port"}}
+[debug] [2026-04-20T02:17:07.604Z] Temp file directory for storage emulator: /tmp/firebase/storage/blobs {"metadata":{"emulator":{"name":"storage"},"message":"Temp file directory for storage emulator: /tmp/firebase/storage/blobs"}}
+[info] i  functions: Watching "/app/functions" for Cloud Functions... {"metadata":{"emulator":{"name":"functions"},"message":"Watching \"/app/functions\" for Cloud Functions..."}}
+[debug] [2026-04-20T02:17:07.617Z] Validating nodejs source
+[warn] ⚠  functions: package.json indicates an outdated version of firebase-functions. Please upgrade using npm install --save firebase-functions@latest in your functions directory.
+[debug] [2026-04-20T02:17:08.148Z] > [functions] package.json contents: {
+  "name": "functions",
+  "description": "Cloud Functions for Firebase",
+  "scripts": {
+    "serve": "firebase emulators:start --only functions",
+    "shell": "firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log"
+  },
+  "engines": {
+    "node": "20"
+  },
+  "main": "index.js",
+  "dependencies": {
+    "@google-cloud/storage": "^7.19.0",
+    "@google/generative-ai": "^0.21.0",
+    "@opentelemetry/api": "^1.9.0",
+    "@pdf-lib/fontkit": "^1.1.1",
+    "@types/qrcode": "^1.5.6",
+    "axios": "^1.6.2",
+    "cors": "^2.8.5",
+    "firebase-admin": "^13.8.0",
+    "firebase-functions": "^7.0.0",
+    "pdf-lib": "^1.17.1",
+    "qrcode": "^1.5.4",
+    "uuid": "^8.3.2",
+    "xlsx": "^0.18.5"
+  },
+  "private": true
+}
+[debug] [2026-04-20T02:17:08.148Z] Building nodejs source
+[debug] [2026-04-20T02:17:08.149Z] Failed to find version of module node: reached end of search path /app/functions/node_modules
+[warn] ⚠  functions: Your requested "node" version "20" doesn't match your global version "22". Using node@22 from host.
+[debug] [2026-04-20T02:17:08.151Z] Could not find functions.yaml. Must use http discovery
+[debug] [2026-04-20T02:17:08.155Z] Found firebase-functions binary at '/app/node_modules/.bin/firebase-functions'
+[info] Serving at port 8625
+
+[debug] [2026-04-20T02:17:08.813Z] Got response from /__/functions.yaml {"endpoints":{"analyzeContract":{"platform":"gcfv1","availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"serviceAccountEmail":null,"vpc":null,"eventTrigger":{"eventType":"providers/cloud.firestore/eventTypes/document.write","eventFilters":{"resource":"projects/demo-project/databases/(default)/documents/placements/{docId}"},"retry":false},"labels":{},"entryPoint":"analyzeContract"},"sendEmailNotification":{"platform":"gcfv1","availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"serviceAccountEmail":null,"vpc":null,"eventTrigger":{"eventType":"providers/cloud.firestore/eventTypes/document.update","eventFilters":{"resource":"projects/demo-project/databases/(default)/documents/placements/{docId}"},"retry":false},"labels":{},"entryPoint":"sendEmailNotification"},"chatWithAI":{"platform":"gcfv1","labels":{},"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"serviceAccountEmail":null,"vpc":null,"callableTrigger":{},"entryPoint":"chatWithAI"},"createContractPDF":{"platform":"gcfv1","availableMemoryMb":512,"timeoutSeconds":60,"minInstances":null,"maxInstances":null,"ingressSettings":null,"serviceAccountEmail":null,"vpc":null,"httpsTrigger":{},"entryPoint":"createContractPDF"},"findMatches":{"platform":"gcfv1","labels":{},"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"serviceAccountEmail":null,"vpc":null,"callableTrigger":{},"entryPoint":"findMatches"},"transitionPlacementState":{"platform":"gcfv1","labels":{},"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"serviceAccountEmail":null,"vpc":null,"callableTrigger":{},"entryPoint":"transitionPlacementState"},"importRoster":{"platform":"gcfv1","labels":{},"availableMemoryMb":1024,"timeoutSeconds":300,"minInstances":null,"maxInstances":null,"ingressSettings":null,"serviceAccountEmail":null,"vpc":null,"callableTrigger":{},"entryPoint":"importRoster"},"evaluateReflection":{"platform":"gcfv1","labels":{},"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"serviceAccountEmail":null,"vpc":null,"callableTrigger":{},"entryPoint":"evaluateReflection"},"signContract":{"platform":"gcfv1","labels":{},"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"serviceAccountEmail":null,"vpc":null,"callableTrigger":{},"entryPoint":"signContract"},"generatePayrollReport":{"platform":"gcfv1","labels":{},"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"serviceAccountEmail":null,"vpc":null,"callableTrigger":{},"entryPoint":"generatePayrollReport"},"testEvaluateReflection":{"platform":"gcfv1","labels":{},"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"serviceAccountEmail":null,"vpc":null,"callableTrigger":{},"entryPoint":"testEvaluateReflection"},"generateCommissionDecree":{"platform":"gcfv1","labels":{},"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"serviceAccountEmail":null,"vpc":null,"callableTrigger":{},"entryPoint":"generateCommissionDecree"},"resolveLoginIdentifier":{"platform":"gcfv1","labels":{},"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"serviceAccountEmail":null,"vpc":null,"callableTrigger":{},"entryPoint":"resolveLoginIdentifier"},"updateSystemConfig":{"platform":"gcfv1","labels":{},"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"serviceAccountEmail":null,"vpc":null,"callableTrigger":{},"entryPoint":"updateSystemConfig"},"correctReflectionGrammar":{"platform":"gcfv1","labels":{},"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"serviceAccountEmail":null,"vpc":null,"callableTrigger":{},"entryPoint":"correctReflectionGrammar"},"updatePublicPortfolio":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"eventTrigger":{"eventType":"google.cloud.firestore.document.v1.updated","eventFilters":{"database":"(default)","namespace":"(default)"},"eventFilterPathPatterns":{"document":"users/{userId}"},"retry":false},"entryPoint":"updatePublicPortfolio"},"pingMentorsScheduled":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"scheduleTrigger":{"schedule":"0 8 * * *","retryConfig":{"retryCount":null,"maxDoublings":null,"maxRetrySeconds":null,"minBackoffSeconds":null,"maxBackoffSeconds":null},"timeZone":null},"entryPoint":"pingMentorsScheduled"},"getImpersonationToken":{"platform":"gcfv1","labels":{},"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"serviceAccountEmail":null,"vpc":null,"callableTrigger":{},"entryPoint":"getImpersonationToken"},"stopImpersonating":{"platform":"gcfv1","labels":{},"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"serviceAccountEmail":null,"vpc":null,"callableTrigger":{},"entryPoint":"stopImpersonating"},"sanitizeProductionDatabase":{"platform":"gcfv1","labels":{},"availableMemoryMb":1024,"timeoutSeconds":540,"minInstances":null,"maxInstances":null,"ingressSettings":null,"serviceAccountEmail":null,"vpc":null,"callableTrigger":{},"entryPoint":"sanitizeProductionDatabase"}},"specVersion":"v1alpha1","requiredAPIs":[{"api":"cloudscheduler.googleapis.com","reason":"Needed for scheduled functions."}],"extensions":{}}
+[info] ✔  functions: Loaded functions definitions from source: analyzeContract, sendEmailNotification, chatWithAI, createContractPDF, findMatches, transitionPlacementState, importRoster, evaluateReflection, signContract, generatePayrollReport, testEvaluateReflection, generateCommissionDecree, resolveLoginIdentifier, updateSystemConfig, correctReflectionGrammar, updatePublicPortfolio, pingMentorsScheduled, getImpersonationToken, stopImpersonating, sanitizeProductionDatabase. {"metadata":{"emulator":{"name":"functions"},"message":"Loaded functions definitions from source: analyzeContract, sendEmailNotification, chatWithAI, createContractPDF, findMatches, transitionPlacementState, importRoster, evaluateReflection, signContract, generatePayrollReport, testEvaluateReflection, generateCommissionDecree, resolveLoginIdentifier, updateSystemConfig, correctReflectionGrammar, updatePublicPortfolio, pingMentorsScheduled, getImpersonationToken, stopImpersonating, sanitizeProductionDatabase."}}
+[debug] [2026-04-20T02:17:12.872Z] addFirestoreTrigger "{\"eventTrigger\":{\"eventType\":\"providers/cloud.firestore/eventTypes/document.write\",\"resource\":\"projects/demo-project/databases/(default)/documents/placements/{docId}\",\"service\":\"firestore.googleapis.com\"}}"
+[debug] [2026-04-20T02:17:12.874Z] >>> [apiv2][query] PUT http://127.0.0.1:8080/emulator/v1/projects/demo-project/triggers/us-central1-analyzeContract-0 [none]
+[debug] [2026-04-20T02:17:12.874Z] >>> [apiv2][body] PUT http://127.0.0.1:8080/emulator/v1/projects/demo-project/triggers/us-central1-analyzeContract-0 "{\"eventTrigger\":{\"eventType\":\"providers/cloud.firestore/eventTypes/document.write\",\"resource\":\"projects/demo-project/databases/(default)/documents/placements/{docId}\",\"service\":\"firestore.googleapis.com\"}}"
+[debug] [2026-04-20T02:17:12.884Z] Apr 20, 2026 2:17:12 AM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Apr 20, 2026 2:17:12 AM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-04-20T02:17:13.230Z] Apr 20, 2026 2:17:13 AM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Apr 20, 2026 2:17:13 AM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected HTTP/2 connection.\n"}}
+[debug] [2026-04-20T02:17:15.004Z] <<< [apiv2][status] PUT http://127.0.0.1:8080/emulator/v1/projects/demo-project/triggers/us-central1-analyzeContract-0 200
+[debug] [2026-04-20T02:17:15.004Z] <<< [apiv2][body] PUT http://127.0.0.1:8080/emulator/v1/projects/demo-project/triggers/us-central1-analyzeContract-0 {}
+[info] ✔  functions[us-central1-analyzeContract]: firestore function initialized. {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mfirestore\u001b[22m function initialized."}}
+[debug] [2026-04-20T02:17:15.009Z] addFirestoreTrigger "{\"eventTrigger\":{\"eventType\":\"providers/cloud.firestore/eventTypes/document.update\",\"resource\":\"projects/demo-project/databases/(default)/documents/placements/{docId}\",\"service\":\"firestore.googleapis.com\"}}"
+[debug] [2026-04-20T02:17:15.010Z] >>> [apiv2][query] PUT http://127.0.0.1:8080/emulator/v1/projects/demo-project/triggers/us-central1-sendEmailNotification-0 [none]
+[debug] [2026-04-20T02:17:15.010Z] >>> [apiv2][body] PUT http://127.0.0.1:8080/emulator/v1/projects/demo-project/triggers/us-central1-sendEmailNotification-0 "{\"eventTrigger\":{\"eventType\":\"providers/cloud.firestore/eventTypes/document.update\",\"resource\":\"projects/demo-project/databases/(default)/documents/placements/{docId}\",\"service\":\"firestore.googleapis.com\"}}"
+[debug] [2026-04-20T02:17:15.046Z] <<< [apiv2][status] PUT http://127.0.0.1:8080/emulator/v1/projects/demo-project/triggers/us-central1-sendEmailNotification-0 200
+[debug] [2026-04-20T02:17:15.047Z] <<< [apiv2][body] PUT http://127.0.0.1:8080/emulator/v1/projects/demo-project/triggers/us-central1-sendEmailNotification-0 {}
+[info] ✔  functions[us-central1-sendEmailNotification]: firestore function initialized. {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mfirestore\u001b[22m function initialized."}}
+[info] ✔  functions[us-central1-chatWithAI]: http function initialized (http://127.0.0.1:5001/demo-project/us-central1/chatWithAI). {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mhttp\u001b[22m function initialized (http://127.0.0.1:5001/demo-project/us-central1/chatWithAI)."}}
+[info] ✔  functions[us-central1-createContractPDF]: http function initialized (http://127.0.0.1:5001/demo-project/us-central1/createContractPDF). {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mhttp\u001b[22m function initialized (http://127.0.0.1:5001/demo-project/us-central1/createContractPDF)."}}
+[info] ✔  functions[us-central1-findMatches]: http function initialized (http://127.0.0.1:5001/demo-project/us-central1/findMatches). {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mhttp\u001b[22m function initialized (http://127.0.0.1:5001/demo-project/us-central1/findMatches)."}}
+[info] ✔  functions[us-central1-transitionPlacementState]: http function initialized (http://127.0.0.1:5001/demo-project/us-central1/transitionPlacementState). {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mhttp\u001b[22m function initialized (http://127.0.0.1:5001/demo-project/us-central1/transitionPlacementState)."}}
+[info] ✔  functions[us-central1-importRoster]: http function initialized (http://127.0.0.1:5001/demo-project/us-central1/importRoster). {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mhttp\u001b[22m function initialized (http://127.0.0.1:5001/demo-project/us-central1/importRoster)."}}
+[info] ✔  functions[us-central1-evaluateReflection]: http function initialized (http://127.0.0.1:5001/demo-project/us-central1/evaluateReflection). {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mhttp\u001b[22m function initialized (http://127.0.0.1:5001/demo-project/us-central1/evaluateReflection)."}}
+[info] ✔  functions[us-central1-signContract]: http function initialized (http://127.0.0.1:5001/demo-project/us-central1/signContract). {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mhttp\u001b[22m function initialized (http://127.0.0.1:5001/demo-project/us-central1/signContract)."}}
+[info] ✔  functions[us-central1-generatePayrollReport]: http function initialized (http://127.0.0.1:5001/demo-project/us-central1/generatePayrollReport). {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mhttp\u001b[22m function initialized (http://127.0.0.1:5001/demo-project/us-central1/generatePayrollReport)."}}
+[info] ✔  functions[us-central1-testEvaluateReflection]: http function initialized (http://127.0.0.1:5001/demo-project/us-central1/testEvaluateReflection). {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mhttp\u001b[22m function initialized (http://127.0.0.1:5001/demo-project/us-central1/testEvaluateReflection)."}}
+[info] ✔  functions[us-central1-generateCommissionDecree]: http function initialized (http://127.0.0.1:5001/demo-project/us-central1/generateCommissionDecree). {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mhttp\u001b[22m function initialized (http://127.0.0.1:5001/demo-project/us-central1/generateCommissionDecree)."}}
+[info] ✔  functions[us-central1-resolveLoginIdentifier]: http function initialized (http://127.0.0.1:5001/demo-project/us-central1/resolveLoginIdentifier). {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mhttp\u001b[22m function initialized (http://127.0.0.1:5001/demo-project/us-central1/resolveLoginIdentifier)."}}
+[info] ✔  functions[us-central1-updateSystemConfig]: http function initialized (http://127.0.0.1:5001/demo-project/us-central1/updateSystemConfig). {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mhttp\u001b[22m function initialized (http://127.0.0.1:5001/demo-project/us-central1/updateSystemConfig)."}}
+[info] ✔  functions[us-central1-correctReflectionGrammar]: http function initialized (http://127.0.0.1:5001/demo-project/us-central1/correctReflectionGrammar). {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mhttp\u001b[22m function initialized (http://127.0.0.1:5001/demo-project/us-central1/correctReflectionGrammar)."}}
+[debug] [2026-04-20T02:17:15.055Z] Found a v2 firestore trigger.
+[debug] [2026-04-20T02:17:15.055Z] addFirestoreTrigger "{\"eventType\":\"google.cloud.firestore.document.v1.updated\",\"database\":\"(default)\",\"namespace\":\"(default)\",\"document\":{\"value\":\"users/{userId}\",\"matchType\":\"PATH_PATTERN\"}}"
+[debug] [2026-04-20T02:17:15.056Z] >>> [apiv2][query] POST http://127.0.0.1:8080/emulator/v1/projects/demo-project/eventarcTrigger?eventarcTriggerId=us-central1-updatePublicPortfolio-0 [none]
+[debug] [2026-04-20T02:17:15.056Z] >>> [apiv2][body] POST http://127.0.0.1:8080/emulator/v1/projects/demo-project/eventarcTrigger?eventarcTriggerId=us-central1-updatePublicPortfolio-0 "{\"eventType\":\"google.cloud.firestore.document.v1.updated\",\"database\":\"(default)\",\"namespace\":\"(default)\",\"document\":{\"value\":\"users/{userId}\",\"matchType\":\"PATH_PATTERN\"}}"
+[debug] [2026-04-20T02:17:15.147Z] <<< [apiv2][status] POST http://127.0.0.1:8080/emulator/v1/projects/demo-project/eventarcTrigger?eventarcTriggerId=us-central1-updatePublicPortfolio-0 200
+[debug] [2026-04-20T02:17:15.147Z] <<< [apiv2][body] POST http://127.0.0.1:8080/emulator/v1/projects/demo-project/eventarcTrigger?eventarcTriggerId=us-central1-updatePublicPortfolio-0 {"eventType":"google.cloud.firestore.document.v1.updated","database":"(default)","namespace":"(default)","document":{"value":"users/{userId}","matchType":"PATH_PATTERN"}}
+[info] ✔  functions[us-central1-updatePublicPortfolio]: firestore function initialized. {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mfirestore\u001b[22m function initialized."}}
+[info] i  functions[us-central1-pingMentorsScheduled]: function ignored because the pubsub emulator does not exist or is not running. {"metadata":{"emulator":{"name":"functions"},"message":"function ignored because the pubsub emulator does not exist or is not running."}}
+[info] ✔  functions[us-central1-getImpersonationToken]: http function initialized (http://127.0.0.1:5001/demo-project/us-central1/getImpersonationToken). {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mhttp\u001b[22m function initialized (http://127.0.0.1:5001/demo-project/us-central1/getImpersonationToken)."}}
+[info] ✔  functions[us-central1-stopImpersonating]: http function initialized (http://127.0.0.1:5001/demo-project/us-central1/stopImpersonating). {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mhttp\u001b[22m function initialized (http://127.0.0.1:5001/demo-project/us-central1/stopImpersonating)."}}
+[info] ✔  functions[us-central1-sanitizeProductionDatabase]: http function initialized (http://127.0.0.1:5001/demo-project/us-central1/sanitizeProductionDatabase). {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mhttp\u001b[22m function initialized (http://127.0.0.1:5001/demo-project/us-central1/sanitizeProductionDatabase)."}}
+[debug] [2026-04-20T02:17:15.160Z] Could not find VSCode notification endpoint: FetchError: request to http://localhost:40001/vscode/notify failed, reason: . If you are not running the Firebase Data Connect VSCode extension, this is expected and not an issue.
+[info]
+┌─────────────────────────────────────────────────────────────┐
+│ ✔  All emulators ready! It is now safe to connect your app. │
+│ i  View Emulator UI at http://127.0.0.1:4000/               │
+└─────────────────────────────────────────────────────────────┘
+
+┌────────────────┬────────────────┬─────────────────────────────────┐
+│ Emulator       │ Host:Port      │ View in Emulator UI             │
+├────────────────┼────────────────┼─────────────────────────────────┤
+│ Authentication │ 127.0.0.1:9099 │ http://127.0.0.1:4000/auth      │
+├────────────────┼────────────────┼─────────────────────────────────┤
+│ Functions      │ 127.0.0.1:5001 │ http://127.0.0.1:4000/functions │
+├────────────────┼────────────────┼─────────────────────────────────┤
+│ Firestore      │ 127.0.0.1:8080 │ http://127.0.0.1:4000/firestore │
+├────────────────┼────────────────┼─────────────────────────────────┤
+│ Storage        │ 127.0.0.1:9199 │ http://127.0.0.1:4000/storage   │
+└────────────────┴────────────────┴─────────────────────────────────┘
+  Emulator Hub host: 127.0.0.1 port: 4400
+  Other reserved ports: 4500, 9150
+
+Issues? Report them at https://github.com/firebase/firebase-tools/issues and attach the *-debug.log files.
