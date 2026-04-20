@@ -7,7 +7,7 @@ import { onAuthStateChanged, signInWithCustomToken } from "firebase/auth";
 import { getFunctions, httpsCallable } from "firebase/functions";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Users, Search, Filter, X, AlertTriangle } from 'lucide-react';
+import { Users, Search, Filter, X, AlertTriangle, Download } from 'lucide-react';
 
 export default function UserManagementPage() {
   const [showWipeModal, setShowWipeModal] = useState(false);
@@ -34,6 +34,30 @@ export default function UserManagementPage() {
   const [impersonating, setImpersonating] = useState<string | null>(null);
   const [selectedUser, setSelectedUser] = useState<any | null>(null);
   const router = useRouter();
+
+  const handleExportCSV = () => {
+    if (filteredUsers.length === 0) return;
+
+    const headers = ['Jméno', 'E-mail', 'Role', 'Zaměření (Major)', 'Ročník', 'Organizace/Škola', 'Vytvořeno'];
+    const rows = filteredUsers.map(u => [
+      `"${u.name || u.displayName || ''}"`,
+      `"${u.email || ''}"`,
+      `"${u.role || ''}"`,
+      `"${u.major || ''}"`,
+      `"${u.year || ''}"`,
+      `"${u.organizationId || u.companyName || u.organizationName || ''}"`,
+      `"${u.createdAt ? new Date(u.createdAt).toLocaleDateString('cs-CZ') : ''}"`
+    ]);
+
+    const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `export_uzivatelu_${new Date().toISOString().slice(0,10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   const handleImpersonate = async (userId: string, userName: string) => {
     if (!window.confirm(`Opravdu se chcete přihlásit jako uživatel ${userName || 'Bez jména'}?`)) {
@@ -168,6 +192,14 @@ export default function UserManagementPage() {
             <p className="text-slate-600 mt-2">Komplexní přehled a správa všech uživatelů v systému.</p>
           </div>
           <div className="flex items-center gap-4">
+             <button
+               onClick={handleExportCSV}
+               className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition flex items-center gap-2 font-semibold"
+             >
+               <Download size={18} />
+               Exportovat CSV
+             </button>
+
              {(currentUserRole === 'admin' || currentUserRole === 'coordinator') && (
                 <button
                     onClick={() => setShowWipeModal(true)}
