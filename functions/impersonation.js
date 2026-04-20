@@ -30,8 +30,8 @@ exports.getImpersonationToken = functions.https.onCall(async (data, context) => 
   }
 
   const targetRole = targetDoc.data().role;
-  if (targetRole !== "student" && targetRole !== "mentor") {
-      throw new functions.https.HttpsError("permission-denied", "Lze se přihlásit pouze jako student nebo mentor.");
+  if (targetRole === "admin" || targetRole === "coordinator") {
+      throw new functions.https.HttpsError("permission-denied", "Nelze se přihlásit jako administrátor nebo koordinátor.");
   }
 
 
