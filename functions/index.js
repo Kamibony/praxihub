@@ -735,18 +735,30 @@ exports.importRoster = functions
     try {
       await db.runTransaction(async (transaction) => {
         const usersRef = db.collection("users");
-        // Simple search by normalized name or ID for UPSERT. Note: Firestore queries inside transactions require care.
-        // We do a simple get based on a where clause.
-        const q = usersRef
-          .where("normalizedName", "==", normalizedName)
-          .limit(1);
-        const snapshot = await transaction.get(q);
+
+        let existingUserDoc = null;
 
         // 1. ALL READS FIRST
 
-        let existingUserDoc = null;
-        if (!snapshot.empty) {
-          existingUserDoc = snapshot.docs[0];
+        if (userObj.uid) {
+            // Priority 1: Match by explicit UID
+            const docRef = usersRef.doc(String(userObj.uid));
+            const docSnapshot = await transaction.get(docRef);
+            if (docSnapshot.exists) {
+                existingUserDoc = docSnapshot;
+            }
+        }
+
+        if (!existingUserDoc) {
+            // Priority 2: Fallback to normalized name search
+            const q = usersRef
+              .where("normalizedName", "==", normalizedName)
+              .limit(1);
+            const snapshot = await transaction.get(q);
+
+            if (!snapshot.empty) {
+              existingUserDoc = snapshot.docs[0];
+            }
         }
 
         const orgsRef = db.collection("organizations");
@@ -761,7 +773,7 @@ exports.importRoster = functions
           }
         }
 
-        let userId = existingUserDoc ? existingUserDoc.id : usersRef.doc().id;
+        let userId = existingUserDoc ? existingUserDoc.id : (userObj.uid ? String(userObj.uid) : usersRef.doc().id);
 
         const placementsRef = db.collection("placements");
         const placementQ = placementsRef

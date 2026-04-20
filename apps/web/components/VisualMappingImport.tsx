@@ -18,6 +18,7 @@ export default function VisualMappingImport({ onSuccess }: VisualMappingImportPr
 
   // Mapping state: destination field -> source column index
   const [mapping, setMapping] = useState({
+    uid: -1,
     firstName: -1,
     lastName: -1,
     email: -1,
@@ -59,6 +60,7 @@ export default function VisualMappingImport({ onSuccess }: VisualMappingImportPr
       const newMapping = { ...mapping };
       cleanHeaders.forEach((h, i) => {
           const lower = h.toLowerCase();
+          if (lower.includes('id') || lower.includes('uid')) newMapping.uid = i;
           if (lower.includes('jméno') && !lower.includes('příjmení')) newMapping.firstName = i;
           if (lower.includes('příjmení')) newMapping.lastName = i;
           if (lower.includes('jméno') && lower.includes('příjmení')) newMapping.name = i;
@@ -97,6 +99,7 @@ export default function VisualMappingImport({ onSuccess }: VisualMappingImportPr
 
         const mappedRow: any = {};
 
+        if (mapping.uid !== -1) mappedRow.uid = row[mapping.uid];
         if (mapping.name !== -1) mappedRow.name = row[mapping.name];
         if (mapping.firstName !== -1) mappedRow.firstName = row[mapping.firstName];
         if (mapping.lastName !== -1) mappedRow.lastName = row[mapping.lastName];
@@ -207,6 +210,13 @@ export default function VisualMappingImport({ onSuccess }: VisualMappingImportPr
 
                   <h4 className="font-semibold text-slate-800 border-b pb-2 mt-4 pt-2">Volitelná pole</h4>
 
+                  <div className="flex items-center justify-between">
+                      <label className="text-sm font-medium text-slate-700">ID Studenta (UID)</label>
+                      <select value={mapping.uid} onChange={(e) => handleMappingChange('uid', e.target.value)} className="border p-1.5 rounded text-sm w-48 bg-slate-50">
+                          <option value={-1}>-- Generovat automaticky --</option>
+                          {headers.map((h, i) => <option key={i} value={i}>{h}</option>)}
+                      </select>
+                  </div>
                   <div className="flex items-center justify-between">
                       <label className="text-sm font-medium text-slate-700">Email</label>
                       <select value={mapping.email} onChange={(e) => handleMappingChange('email', e.target.value)} className="border p-1.5 rounded text-sm w-48 bg-slate-50">
