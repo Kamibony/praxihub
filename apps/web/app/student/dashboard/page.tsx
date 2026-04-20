@@ -1741,6 +1741,70 @@ export default function StudentDashboard() {
 
           {/* BOČNÝ PANEL (INFO & LOG) */}
           <div className="space-y-6">
+            {/* Circular Progress Component */}
+            {placement && ["APPROVED", "EVALUATION", "CLOSED"].includes(placement.status) && (
+              <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 text-center">
+                <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">
+                  Postup praxe
+                </h3>
+                {(() => {
+                  const targetHours = placement.targetHours || 15;
+                  const migratedHours = placement.migratedHours || 0;
+                  const approvedHours = timeLogs.filter(log => log.status === 'approved').reduce((sum, log) => sum + (Number(log.hours) || 0), 0);
+                  const totalHours = migratedHours + approvedHours;
+                  const progressPercent = Math.min(100, Math.round((totalHours / targetHours) * 100));
+
+                  const circleRadius = 50;
+                  const circleCircumference = 2 * Math.PI * circleRadius;
+                  const strokeDashoffset = circleCircumference - (progressPercent / 100) * circleCircumference;
+
+                  return (
+                    <div className="flex flex-col items-center">
+                      <div className="relative w-32 h-32 flex items-center justify-center">
+                        <svg className="w-full h-full transform -rotate-90" viewBox="0 0 120 120">
+                          {/* Background Circle */}
+                          <circle
+                            className="text-gray-100"
+                            strokeWidth="10"
+                            stroke="currentColor"
+                            fill="transparent"
+                            r={circleRadius}
+                            cx="60"
+                            cy="60"
+                          />
+                          {/* Progress Circle */}
+                          <circle
+                            className={`${progressPercent >= 100 ? 'text-green-500' : 'text-blue-600'} transition-all duration-1000 ease-out`}
+                            strokeWidth="10"
+                            strokeDasharray={circleCircumference}
+                            strokeDashoffset={strokeDashoffset}
+                            strokeLinecap="round"
+                            stroke="currentColor"
+                            fill="transparent"
+                            r={circleRadius}
+                            cx="60"
+                            cy="60"
+                          />
+                        </svg>
+                        <div className="absolute inset-0 flex flex-col items-center justify-center">
+                          <span className="text-2xl font-bold text-gray-900">{totalHours}</span>
+                          <span className="text-xs text-gray-500">/ {targetHours} hod</span>
+                        </div>
+                      </div>
+                      <p className="mt-4 text-sm text-gray-600 font-medium">
+                        Splněno <span className={progressPercent >= 100 ? "text-green-600 font-bold" : "text-blue-600 font-bold"}>{progressPercent}%</span>
+                      </p>
+                      {migratedHours > 0 && (
+                        <p className="text-xs text-gray-400 mt-2">
+                          (Z toho {migratedHours} hod migrováno)
+                        </p>
+                      )}
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+
             {/* QR Kód pro mentora */}
             {placement && placement.status !== "PENDING_ORG_APPROVAL" && placement.status !== "REJECTED" && (
               <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 text-center">
