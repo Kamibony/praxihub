@@ -498,6 +498,7 @@ export default function StudentDashboard() {
       case "NEEDS_REVIEW":
         return "Analyzoval jsem tvou smlouvu. Prosím, zkontroluj níže, zda jsem všechny údaje přečetl správně.";
       case "APPROVED":
+      case "ACTIVE":
         return "Vše hotovo! Tvá praxe je schválena. Hodně štěstí!";
       default:
         return undefined;
@@ -958,7 +959,7 @@ export default function StudentDashboard() {
                   {/* EXISTING STATUSES */}
                   {(placement.status === "ANALYZING" ||
                     placement.status === "NEEDS_REVIEW" ||
-                    placement.status === "APPROVED" ||
+                    placement.status === "APPROVED" || placement.status === "ACTIVE" ||
                     placement.status === "EVALUATION" ||
                     placement.status === "CLOSED") && (
                     <div className="space-y-6">
@@ -968,7 +969,7 @@ export default function StudentDashboard() {
                           className={`p-3 rounded-full ${
                             placement.status === "ANALYZING"
                               ? "bg-blue-100 text-blue-600"
-                              : placement.status === "APPROVED"
+                              : placement.status === "APPROVED" || placement.status === "ACTIVE"
                                 ? "bg-green-100 text-green-600"
                                 : placement.status === "NEEDS_REVIEW"
                                   ? "bg-yellow-100 text-yellow-600"
@@ -996,7 +997,7 @@ export default function StudentDashboard() {
                               ></path>
                             </svg>
                           )}
-                          {placement.status === "APPROVED" && (
+                          {placement.status === "APPROVED" || placement.status === "ACTIVE" && (
                             <svg
                               className="w-6 h-6"
                               fill="none"
@@ -1049,7 +1050,7 @@ export default function StudentDashboard() {
                               "AI zpracovává dokument..."}
                             {placement.status === "NEEDS_REVIEW" &&
                               "Nutná kontrola údajů"}
-                            {placement.status === "APPROVED" &&
+                            {placement.status === "APPROVED" || placement.status === "ACTIVE" &&
                               "Praxe je oficiálně schválena"}
                             {placement.status === "EVALUATION" &&
                               "Čeká se na hodnocení"}
@@ -1060,7 +1061,7 @@ export default function StudentDashboard() {
                               "Čekejte prosím, čtu data ze smlouvy."}
                             {placement.status === "NEEDS_REVIEW" &&
                               "AI předvyplnila data. Prosím o vaši kontrolu níže."}
-                            {placement.status === "APPROVED" &&
+                            {placement.status === "APPROVED" || placement.status === "ACTIVE" &&
                               `Schváleno dne ${formatDateCZ(placement.approvedAt)}. E-mail odeslán firmě.`}
                             {placement.status === "EVALUATION" &&
                               "Napiš svou reflexi z praxe."}
@@ -1152,7 +1153,7 @@ export default function StudentDashboard() {
                       )}
 
                       {/* SCHVÁLENÉ ÚDAJE (Iba ak APPROVED alebo EVALUATION alebo CLOSED) */}
-                      {(placement.status === "APPROVED" ||
+                      {(placement.status === "APPROVED" || placement.status === "ACTIVE" ||
                         placement.status === "EVALUATION" ||
                         placement.status === "CLOSED") && (
                         <div className="space-y-6">
@@ -1539,7 +1540,7 @@ export default function StudentDashboard() {
                           )}
 
                           {/* EVIDENCE HODIN (Time Logs) - Zobrazia sa len ak je APPROVED alebo EVALUATION alebo CLOSED */}
-                          {(placement.status === "APPROVED" ||
+                          {(placement.status === "APPROVED" || placement.status === "ACTIVE" ||
                             placement.status === "EVALUATION" ||
                             placement.status === "CLOSED") && (
                             <div className="bg-blue-50 p-6 rounded-lg border border-blue-200 mb-6">
@@ -1765,7 +1766,7 @@ export default function StudentDashboard() {
           {/* BOČNÝ PANEL (INFO & LOG) */}
           <div className="space-y-6">
             {/* Circular Progress Component */}
-            {placement && ["APPROVED", "EVALUATION", "CLOSED"].includes(placement.status) && (
+            {placement && ["APPROVED", "ACTIVE", "EVALUATION", "CLOSED"].includes(placement.status) && (
               <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 text-center">
                 <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">
                   Postup praxe
@@ -1927,7 +1928,7 @@ export default function StudentDashboard() {
                       ["ANALYZING", "NEEDS_REVIEW"].includes(placement.status)
                     )
                       currentStepIndex = 1;
-                    if (placement.status === "APPROVED") currentStepIndex = 2;
+                    if (placement.status === "APPROVED" || placement.status === "ACTIVE") currentStepIndex = 2;
                     if (placement.status === "EVALUATION") currentStepIndex = 3;
                     if (placement.status === "CLOSED") currentStepIndex = 4;
                     if (placement.status === "REJECTED") currentStepIndex = -1;
@@ -2001,7 +2002,7 @@ export default function StudentDashboard() {
                       "Student (čeká se na nahrání smlouvy)"}
                     {["ANALYZING", "NEEDS_REVIEW"].includes(placement.status) &&
                       "Koordinátor (kontrola smlouvy)"}
-                    {placement.status === "APPROVED" &&
+                    {placement.status === "APPROVED" || placement.status === "ACTIVE" &&
                       "Student (vykonává praxi)"}
                     {placement.status === "EVALUATION" &&
                       "Student / AI (vyplnění a vyhodnocení reflexe)"}
