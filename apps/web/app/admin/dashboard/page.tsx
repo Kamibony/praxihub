@@ -28,13 +28,19 @@ import { storage } from "../../../lib/firebase";
 // Define filter type
 type FilterStatus =
   | "ALL"
-  | "PENDING_ORG_APPROVAL"
+  | "PENDING_MATCH"
+  | "PENDING_INSTITUTION"
+  | "PENDING_COORDINATOR"
   | "APPROVED"
-  | "NEEDS_REVIEW"
-  | "ANALYZING";
+  | "ACTIVE"
+  | "EVALUATION"
+  | "CLOSED";
 
 export default function CoordinatorDashboard() {
   const [placements, setPlacements] = useState<any[]>([]);
+  const [organizations, setOrganizations] = useState<any[]>([]);
+  const [matchmakingOrgId, setMatchmakingOrgId] = useState<string>("");
+  const [linkingPlacementId, setLinkingPlacementId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState<FilterStatus>("ALL");
   const [selectedPlacement, setSelectedPlacement] = useState<any>(null);
@@ -72,6 +78,10 @@ export default function CoordinatorDashboard() {
   // OPRAVA: Bezpečný useEffect s cleanup logikou
   useEffect(() => {
     let unsubscribeFirestore: (() => void) | null = null;
+
+    const unsubOrgs = onSnapshot(query(collection(db, "organizations")), (snap) => {
+          setOrganizations(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+        });
 
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
       // 1. Vyčistiť predchádzajúci listener
@@ -424,6 +434,29 @@ export default function CoordinatorDashboard() {
   };
 
   // Actions for Organization Approval
+
+  const handleMatchPlacement = async (placementId: string) => {
+    if (!matchmakingOrgId) {
+      alert("Vyberte organizaci pro propojení.");
+      return;
+    }
+    try {
+      const placementRef = doc(db, "placements", placementId);
+      await updateDoc(placementRef, {
+        organizationId: matchmakingOrgId,
+        status: "PENDING_INSTITUTION",
+        updatedAt: new Date().toISOString()
+      });
+      alert("Praxe úspěšně propojena s organizací.");
+      setLinkingPlacementId(null);
+      setMatchmakingOrgId("");
+    } catch (error) {
+      console.error("Chyba při propojování:", error);
+      alert("Nepodařilo se propojit praxi.");
+    }
+  };
+
+
   const handleApproveOrg = async (id: string) => {
     if (!confirm("Opravdu chcete schválit tuto firmu?")) return;
     try {
@@ -475,9 +508,7 @@ export default function CoordinatorDashboard() {
     }`;
   };
 
-  const pendingOrgs = placements.filter(
-    (i) => i.status === "PENDING_ORG_APPROVAL",
-  ).length;
+  const pendingOrgs = placements.filter((i) => i.status === "PENDING_MATCH").length;
   const pendingReview = placements.filter(
     (i) => i.status === "NEEDS_REVIEW",
   ).length;
@@ -1105,17 +1136,12 @@ export default function CoordinatorDashboard() {
                 </p>
               </div>
               <div
-                className={getCardClasses("PENDING_ORG_APPROVAL")}
-                onClick={() => setFilterStatus("PENDING_ORG_APPROVAL")}
+                className={getCardClasses("PENDING_MATCH")} onClick={() => setFilterStatus("PENDING_MATCH")}
               >
-                <p className="text-xs text-gray-500 uppercase font-bold">
-                  Žádosti o schválení
-                </p>
+                <p className="text-xs text-gray-500 uppercase font-bold">Matchmaking</p>
                 <p className="text-2xl font-bold text-blue-800">
                   {
-                    placements.filter(
-                      (i) => i.status === "PENDING_ORG_APPROVAL",
-                    ).length
+                    placements.filter((i) => i.status === "PENDING_MATCH").length
                   }
                 </p>
               </div>
@@ -1131,25 +1157,19 @@ export default function CoordinatorDashboard() {
                 </p>
               </div>
               <div
-                className={getCardClasses("NEEDS_REVIEW")}
-                onClick={() => setFilterStatus("NEEDS_REVIEW")}
+                className={getCardClasses("PENDING_INSTITUTION")} onClick={() => setFilterStatus("PENDING_INSTITUTION")}
               >
-                <p className="text-xs text-gray-500 uppercase font-bold">
-                  Čeká na kontrolu
-                </p>
+                <p className="text-xs text-gray-500 uppercase font-bold">Čeká Firma</p>
                 <p className="text-2xl font-bold text-yellow-600">
-                  {placements.filter((i) => i.status === "NEEDS_REVIEW").length}
+                  {placements.filter((i) => i.status === "PENDING_INSTITUTION").length}
                 </p>
               </div>
               <div
-                className={getCardClasses("ANALYZING")}
-                onClick={() => setFilterStatus("ANALYZING")}
+                className={getCardClasses("PENDING_COORDINATOR")} onClick={() => setFilterStatus("PENDING_COORDINATOR")}
               >
-                <p className="text-xs text-gray-500 uppercase font-bold">
-                  AI zpracovává
-                </p>
+                <p className="text-xs text-gray-500 uppercase font-bold">Čeká Koord</p>
                 <p className="text-2xl font-bold text-blue-600">
-                  {placements.filter((i) => i.status === "ANALYZING").length}
+                  {placements.filter((i) => i.status === "PENDING_COORDINATOR").length}
                 </p>
               </div>
             </div>
@@ -1258,26 +1278,58 @@ export default function CoordinatorDashboard() {
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span
                             className={`px-2.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full border ${
-                              item.status === "APPROVED"
-                                ? "bg-green-50 text-green-700 border-green-200"
-                                : item.status === "ORG_APPROVED"
-                                  ? "bg-indigo-50 text-indigo-700 border-indigo-200"
-                                  : item.status === "PENDING_ORG_APPROVAL"
-                                    ? "bg-blue-100 text-blue-800 border-blue-300"
-                                    : item.status === "REJECTED"
-                                      ? "bg-red-50 text-red-700 border-red-200"
-                                      : item.status === "NEEDS_REVIEW"
-                                        ? "bg-yellow-50 text-yellow-700 border-yellow-200"
-                                        : "bg-blue-50 text-blue-700 border-blue-200 animate-pulse"
+                              item.status === "PENDING_MATCH"
+                                ? "bg-purple-100 text-purple-800"
+                                : item.status === "PENDING_INSTITUTION"
+                                  ? "bg-blue-100 text-blue-800"
+                                  : item.status === "PENDING_COORDINATOR"
+                                    ? "bg-yellow-100 text-yellow-800"
+                                    : item.status === "APPROVED"
+                                      ? "bg-green-100 text-green-800"
+                                      : item.status === "ACTIVE"
+                                        ? "bg-teal-100 text-teal-800"
+                                        : item.status === "EVALUATION"
+                                          ? "bg-orange-100 text-orange-800"
+                                          : item.status === "CLOSED"
+                                            ? "bg-gray-100 text-gray-800"
+                                            : "bg-gray-100 text-gray-800"
                             }`}
                           >
-                            {item.status === "PENDING_ORG_APPROVAL"
-                              ? "Schválení firmy"
-                              : item.status === "ORG_APPROVED"
-                                ? "Firma schválena"
-                                : item.status}
+                            {item.status}
                           </span>
                         </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                            {item.status === "PENDING_MATCH" ? (
+                              <div className="flex flex-col gap-1 min-w-[150px]" onClick={(e) => e.stopPropagation()}>
+                                <select
+                                  className="text-xs p-1 border border-gray-300 rounded"
+                                  value={linkingPlacementId === item.id ? matchmakingOrgId : ""}
+                                  onChange={(e) => {
+                                    setLinkingPlacementId(item.id);
+                                    setMatchmakingOrgId(e.target.value);
+                                  }}
+                                >
+                                  <option value="">Vyberte organizaci...</option>
+                                  {organizations && organizations.map(org => (
+                                    <option key={org.id} value={org.id}>{org.name}</option>
+                                  ))}
+                                </select>
+                                {linkingPlacementId === item.id && matchmakingOrgId && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      if (typeof handleMatchPlacement === "function") { handleMatchPlacement(item.id); }
+                                    }}
+                                    className="text-xs bg-indigo-600 text-white px-2 py-1 rounded hover:bg-indigo-700 mt-1"
+                                  >
+                                    Propojit
+                                  </button>
+                                )}
+                              </div>
+                            ) : (
+                              <span className="text-xs text-gray-400">-</span>
+                            )}
+                          </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-3">
                           {item.status === "PENDING_ORG_APPROVAL" ? (
                             <>
