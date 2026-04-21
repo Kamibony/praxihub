@@ -516,7 +516,7 @@ export default function CoordinatorDashboard() {
 
   // Statistics for Overview Section
   const approvedCount = placements.filter(
-    (i) => i.status === "APPROVED",
+    (i) => i.status === "APPROVED" || i.status === "ACTIVE", "ACTIVE",
   ).length;
   const totalCount = placements.length;
   const progressPercentage =
@@ -1153,7 +1153,7 @@ export default function CoordinatorDashboard() {
                   Schváleno
                 </p>
                 <p className="text-2xl font-bold text-green-600">
-                  {placements.filter((i) => i.status === "APPROVED").length}
+                  {placements.filter((i) => i.status === "APPROVED" || i.status === "ACTIVE").length}
                 </p>
               </div>
               <div
@@ -1284,7 +1284,7 @@ export default function CoordinatorDashboard() {
                                   ? "bg-blue-100 text-blue-800"
                                   : item.status === "PENDING_COORDINATOR"
                                     ? "bg-yellow-100 text-yellow-800"
-                                    : item.status === "APPROVED"
+                                    : item.status === "APPROVED" || item.status === "ACTIVE"
                                       ? "bg-green-100 text-green-800"
                                       : item.status === "ACTIVE"
                                         ? "bg-teal-100 text-teal-800"
@@ -1433,7 +1433,7 @@ export default function CoordinatorDashboard() {
                   <div className="mt-2">
                     <span
                       className={`px-2.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full border ${
-                        selectedPlacement.status === "APPROVED"
+                        selectedPlacement.status === "APPROVED" || selectedPlacement.status === "ACTIVE"
                           ? "bg-green-50 text-green-700 border-green-200"
                           : selectedPlacement.status === "ORG_APPROVED"
                             ? "bg-indigo-50 text-indigo-700 border-indigo-200"
