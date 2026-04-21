@@ -518,12 +518,18 @@ exports.transitionPlacementState = functions.https.onCall(
     // Definitive State Transition Matrix
     const validTransitions = {
       DRAFT: ["PENDING_MATCH", "PENDING_INSTITUTION"],
-      PENDING_MATCH: ["PENDING_INSTITUTION", "DRAFT"],
+      PENDING_MATCH: ["PENDING_INSTITUTION", "PENDING_ORG_APPROVAL", "DRAFT"],
+      PENDING_ORG_APPROVAL: ["ORG_APPROVED", "REJECTED"],
+      ORG_APPROVED: ["ANALYZING"],
+      ANALYZING: ["NEEDS_REVIEW", "REJECTED"],
+      NEEDS_REVIEW: ["APPROVED", "REJECTED"],
+      APPROVED: ["ACTIVE", "PENDING_COORDINATOR"],
       PENDING_INSTITUTION: ["PENDING_COORDINATOR", "DRAFT"],
       PENDING_COORDINATOR: ["ACTIVE", "DRAFT"],
       ACTIVE: ["EVALUATION"],
       EVALUATION: ["CLOSED"],
       CLOSED: ["FINAL_EXAM"],
+      REJECTED: ["DRAFT"], // In case they can reset or start over
     };
 
     const { placementId, newState } = data;
