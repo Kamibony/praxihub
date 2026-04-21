@@ -515,12 +515,13 @@ exports.transitionPlacementState = functions.https.onCall(
       );
     }
 
-    // Define valid states to replace legacy string flags
+    // Definitive State Transition Matrix
     const validTransitions = {
-      DRAFT: ["PENDING_INSTITUTION"],
-      PENDING_INSTITUTION: ["CONTRACT_LOCKED", "DRAFT"], // DRAFT allowed for rejection/corrections
-      CONTRACT_LOCKED: ["IN_PROGRESS", "DRAFT"],
-      IN_PROGRESS: ["EVALUATION"],
+      DRAFT: ["PENDING_MATCH", "PENDING_INSTITUTION"],
+      PENDING_MATCH: ["PENDING_INSTITUTION", "DRAFT"],
+      PENDING_INSTITUTION: ["PENDING_COORDINATOR", "DRAFT"],
+      PENDING_COORDINATOR: ["ACTIVE", "DRAFT"],
+      ACTIVE: ["EVALUATION"],
       EVALUATION: ["CLOSED"],
       CLOSED: ["FINAL_EXAM"],
     };
@@ -548,87 +549,81 @@ exports.transitionPlacementState = functions.https.onCall(
         }
 
         const currentData = doc.data();
-
-        // Temporarily bypass strict state machine if the current status is a legacy flag,
-        // mapping them roughly to the new states to avoid breaking everything at once.
-        // E.g. 'PENDING_ORG_APPROVAL' -> 'PENDING_INSTITUTION'
-        //      'ORG_APPROVED' -> 'CONTRACT_LOCKED'
-        //      'ANALYZING' / 'NEEDS_REVIEW' / 'APPROVED' -> 'IN_PROGRESS'
-
-        // However, for the first PR we just want to ensure the backend validates the exact requested state transition if the user is using the new flow.
-        // But since we are incrementally rolling this out, we'll allow *any* transition IF the new state is part of the 6-step state machine
-        // to act as a bridge.
-
         const currentState = currentData.status || "DRAFT";
 
-        const newValidStates = [
-          "DRAFT",
-          "PENDING_INSTITUTION",
-          "CONTRACT_LOCKED",
-          "IN_PROGRESS",
-          "EVALUATION",
-          "CLOSED",
-          "FINAL_EXAM",
-        ];
+        // Strictly enforce the state machine matrix
+        const allowedNextStates = validTransitions[currentState];
 
-        // If newState is NOT part of the new flow AND NOT a legacy state we still need, block it.
-        // We will temporarily allow legacy states for backward compatibility while we refactor the frontend in the next phase.
-        const allowedLegacyStates = [
-          "PENDING_ORG_APPROVAL",
-          "ORG_APPROVED",
-          "ANALYZING",
-          "NEEDS_REVIEW",
-          "APPROVED",
-          "REJECTED",
-        ];
-
-        if (
-          !newValidStates.includes(newState) &&
-          !allowedLegacyStates.includes(newState)
-        ) {
-          throw new functions.https.HttpsError(
+        if (!allowedNextStates || !allowedNextStates.includes(newState)) {
+           throw new functions.https.HttpsError(
             "failed-precondition",
-            `Invalid target state: ${newState}`,
+            `Neplatný přechod stavu. Ze stavu '${currentState}' nelze přejít do '${newState}'.`
           );
         }
 
         // Add guardrails here for the new states
-        if (newState === "CONTRACT_LOCKED") {
+        if (newState === "PENDING_COORDINATOR" || newState === "ACTIVE") {
           // ensure required fields exist
           if (!currentData.organizationId) {
             throw new functions.https.HttpsError(
               "failed-precondition",
-              "Missing required fields for CONTRACT_LOCKED.",
+              `Missing required fields for ${newState}.`,
             );
           }
 
           const major = currentData.studentMajor || currentData.major || "UPV";
           if (major === "KPV") {
             const orgDoc = await transaction.get(
-              db.collection("users").doc(currentData.organizationId),
+              db.collection("organizations").doc(currentData.organizationId),
             );
+
+            // Check if organization exists. Note that in current implementation we link with organizations collection, not users
             if (!orgDoc.exists) {
-              throw new functions.https.HttpsError(
-                "failed-precondition",
-                "Organizace nenalezena.",
+              const userOrgDoc = await transaction.get(
+                db.collection("users").doc(currentData.organizationId),
               );
-            }
-            const orgData = orgDoc.data();
-            const expirationStr = orgData.frameworkAgreementExpiration;
+              if (!userOrgDoc.exists) {
+                 throw new functions.https.HttpsError(
+                  "failed-precondition",
+                  "Organizace nenalezena.",
+                );
+              } else {
+                const userOrgData = userOrgDoc.data();
+                const expirationStr = userOrgData.frameworkAgreementExpiration;
 
-            if (!expirationStr) {
-              throw new functions.https.HttpsError(
-                "failed-precondition",
-                "Organizace nemá platnou rámcovou smlouvu (chybí datum).",
-              );
-            }
+                if (!expirationStr) {
+                  throw new functions.https.HttpsError(
+                    "failed-precondition",
+                    "Organizace nemá platnou rámcovou smlouvu (chybí datum).",
+                  );
+                }
 
-            const expDate = new Date(expirationStr);
-            if (isNaN(expDate.getTime()) || expDate <= new Date()) {
-              throw new functions.https.HttpsError(
-                "failed-precondition",
-                "Organizace nemá platnou rámcovou smlouvu (vypršela).",
-              );
+                const expDate = new Date(expirationStr);
+                if (isNaN(expDate.getTime()) || expDate <= new Date()) {
+                  throw new functions.https.HttpsError(
+                    "failed-precondition",
+                    "Organizace nemá platnou rámcovou smlouvu (vypršela).",
+                  );
+                }
+              }
+            } else {
+               const orgData = orgDoc.data();
+                const expirationStr = orgData.frameworkAgreementExpiration;
+
+                if (!expirationStr) {
+                  throw new functions.https.HttpsError(
+                    "failed-precondition",
+                    "Organizace nemá platnou rámcovou smlouvu (chybí datum).",
+                  );
+                }
+
+                const expDate = new Date(expirationStr);
+                if (isNaN(expDate.getTime()) || expDate <= new Date()) {
+                  throw new functions.https.HttpsError(
+                    "failed-precondition",
+                    "Organizace nemá platnou rámcovou smlouvu (vypršela).",
+                  );
+                }
             }
           }
         }
