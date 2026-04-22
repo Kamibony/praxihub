@@ -478,6 +478,40 @@ export default function StudentDashboard() {
     }
   };
 
+  const handleDemoBypass = async () => {
+    if (!user) return;
+    try {
+      if (placement && placement.id) {
+        const docRef = doc(db, "placements", placement.id);
+        await updateDoc(docRef, {
+          status: "EVALUATION",
+          targetHours: 80,
+          migratedHours: 80
+        });
+        alert("UAT: Placement status forced to EVALUATION.");
+      } else {
+        const newPlacement = {
+          studentId: user.uid,
+          studentEmail: user.email,
+          studentName: user.displayName || user.email,
+          status: "EVALUATION",
+          createdAt: new Date().toISOString(),
+          organization_name: "UAT Demo Company",
+          organization_ico: "12345678",
+          major: user.major || 'UPV',
+          studentMajor: user.major || 'UPV',
+          targetHours: 80,
+          migratedHours: 80
+        };
+        await addDoc(collection(db, "placements"), newPlacement);
+        alert("UAT: Dummy placement created and forced to EVALUATION.");
+      }
+    } catch (error) {
+      console.error("UAT Bypass Error:", error);
+      alert("Chyba při UAT bypassu.");
+    }
+  };
+
   // Helper funkcia pre formátovanie dátumu
   const formatDateCZ = (dateString: string) => {
     if (!dateString) return "-";
@@ -696,6 +730,20 @@ export default function StudentDashboard() {
       )}
 
       <div className="max-w-5xl mx-auto">
+        {/* DEMO BYPASS BUTTON */}
+        <div className="mb-8 bg-orange-900/20 border border-orange-500/50 p-4 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h3 className="text-orange-400 font-bold">UAT Mode</h3>
+            <p className="text-sm text-orange-300/80">Bypass the regular workflow for presentation purposes.</p>
+          </div>
+          <button
+            onClick={handleDemoBypass}
+            className="w-full sm:w-auto bg-orange-600 hover:bg-orange-700 text-white font-bold py-2 px-6 rounded-2xl transition shadow-lg whitespace-nowrap"
+          >
+            🚀 UAT: Jump to Final Reflection
+          </button>
+        </div>
+
         <header className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center border-b border-white/10 pb-4 gap-4">
           <div>
             <h1 className="text-2xl md:text-3xl font-bold text-white">
