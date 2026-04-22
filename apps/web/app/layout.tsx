@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { GeistSans } from "geist/font/sans"; // Importujeme z balíčka
+import "@fontsource/plus-jakarta-sans";
 import "./globals.css";
 import Chatbot from "../components/Chatbot";
 import Navbar from "../components/Navbar";
@@ -18,8 +18,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="cs">
-      {/* className={GeistSans.className} automaticky nastaví font */}
-      <body className={GeistSans.className}>
+      <body>
         <ImpersonationBanner />
         <UatGate>
           <Navbar />
