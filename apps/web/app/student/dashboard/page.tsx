@@ -27,6 +27,8 @@ import { Mic, MicOff } from "lucide-react";
 import QRCode from "react-qr-code";
 
 export default function StudentDashboard() {
+
+
   const [user, setUser] = useState<any>(null);
   const [placement, setPlacement] = useState<any>(null);
   const [uploading, setUploading] = useState(false);
@@ -627,7 +629,7 @@ export default function StudentDashboard() {
     return <div className="p-8 text-center">Načítám data...</div>;
 
   return (
-    <div className="min-h-screen bg-slate-800/50 p-8 font-sans">
+    <div className="min-h-screen bg-gray-50 p-8 font-sans card-glass">
       <Chatbot initialMessage={getChatbotMessage()} />
 
       {/* SKILLS MODAL */}
