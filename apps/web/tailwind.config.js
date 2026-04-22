@@ -8,9 +8,13 @@ module.exports = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+      },
       colors: {
         slate: {
           800: '#1e293b',
+          900: '#0f172a',
         },
         indigo: {
           900: '#312e81',

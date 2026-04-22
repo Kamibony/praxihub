@@ -3,37 +3,26 @@
 @tailwind utilities;
 
 :root {
-  --foreground-rgb: 30, 41, 59; /* slate-800 */
-  --background-start-rgb: 248, 250, 252; /* slate-50 */
-  --background-end-rgb: 255, 255, 255;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --foreground-rgb: 248, 250, 252; /* slate-50 */
-    --background-start-rgb: 30, 41, 59; /* slate-800 */
-    --background-end-rgb: 15, 23, 42; /* slate-900 */
-  }
+  --foreground-rgb: 255, 255, 255;
+  --background-rgb: 15, 23, 42; /* slate-900 */
 }
 
 body {
   color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+  @apply bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-[#0f172a] to-[#0f172a] min-h-screen text-slate-100;
 }
 
 @layer components {
   .card {
-    @apply bg-white p-6 rounded-xl shadow-sm border border-slate-100;
+    @apply bg-slate-800/75 backdrop-blur-md border border-white/10 p-6 rounded-3xl shadow-sm;
+  }
+  .card-gradient {
+    @apply bg-gradient-to-br from-slate-800/80 to-slate-900/90 backdrop-blur-sm border border-white/5 p-6 rounded-3xl shadow-sm;
   }
   .btn-primary {
-    @apply px-6 py-3 bg-indigo-900 text-white rounded-xl font-bold shadow-sm hover:bg-indigo-800 transition disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply px-6 py-3 bg-indigo-900 text-white rounded-3xl font-bold shadow-sm hover:bg-indigo-800 transition disabled:opacity-50 disabled:cursor-not-allowed;
   }
   .icon-btn {
-    @apply p-4 bg-slate-100 text-slate-800 rounded-2xl hover:bg-slate-200 transition flex flex-col items-center justify-center gap-2;
+    @apply p-4 bg-slate-800/75 backdrop-blur-md text-slate-100 border border-white/10 rounded-3xl hover:bg-slate-700/75 transition flex flex-col items-center justify-center gap-2;
   }
 }
