@@ -512,8 +512,8 @@ export default function StudentDashboard() {
     // Ak užívateľ nemá schválenú organizáciu, zobrazíme pôvodnú správu (defenzívne, hoci rodič to kontroluje)
     if (placement?.status !== "ORG_APPROVED") {
       return (
-        <div className="text-center py-10 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
-          <p className="text-gray-500">Zatím nemáš žádnou aktivní praxi.</p>
+        <div className="text-center py-10 bg-slate-800/50 rounded-2xl border-2 border-dashed border-white/10">
+          <p className="text-slate-400">Zatím nemáš žádnou aktivní praxi.</p>
         </div>
       );
     }
@@ -521,21 +521,9 @@ export default function StudentDashboard() {
     return (
       <div className="space-y-6">
         {/* Success Banner */}
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-start gap-3">
+        <div className="bg-green-50 border border-green-200 rounded-2xl p-4 flex items-start gap-3">
           <div className="shrink-0 text-green-600 mt-0.5">
-            <svg
-              className="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
+            <span className="text-2xl">✨</span>
           </div>
           <div>
             <h3 className="font-bold text-green-800">
@@ -550,8 +538,8 @@ export default function StudentDashboard() {
         {/* Steps Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Step 1 */}
-          <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex flex-col h-full">
-            <h4 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
+          <div className="bg-slate-800/75 backdrop-blur-md border border-white/10 p-5 rounded-3xl border border-white/5 shadow-sm flex flex-col h-full">
+            <h4 className="font-bold text-slate-100 mb-4 flex items-center gap-2">
               <span className="bg-blue-100 text-blue-700 w-6 h-6 flex items-center justify-center rounded-full text-xs">
                 1
               </span>
@@ -560,21 +548,9 @@ export default function StudentDashboard() {
 
             <div className="flex-1 flex flex-col gap-3">
               <Link href="/student/generate" className="block">
-                <div className="w-full h-full p-4 bg-blue-50 border-2 border-blue-100 rounded-xl hover:border-blue-300 hover:bg-blue-100 transition group cursor-pointer text-center flex flex-col items-center justify-center gap-2">
-                  <div className="p-2 bg-white rounded-full text-blue-600 shadow-sm group-hover:scale-110 transition">
-                    <svg
-                      className="w-6 h-6"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                      />
-                    </svg>
+                <div className="w-full h-full p-4 bg-blue-50 border-2 border-blue-100 rounded-3xl hover:border-blue-300 hover:bg-blue-100 transition group cursor-pointer text-center flex flex-col items-center justify-center gap-2">
+                  <div className="p-2 bg-slate-800/75 backdrop-blur-md border border-white/10 rounded-full text-blue-600 shadow-sm group-hover:scale-110 transition">
+                    <span className="text-2xl">📄</span>
                   </div>
                   <span className="font-bold text-blue-700">
                     Generovat novou smlouvu
@@ -590,21 +566,9 @@ export default function StudentDashboard() {
                   href="https://moodle.czu.cz"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-sm text-gray-500 hover:text-blue-600 hover:underline flex items-center justify-center gap-1"
+                  className="text-sm text-slate-400 hover:text-blue-600 hover:underline flex items-center justify-center gap-1"
                 >
-                  <svg
-                    className="w-3 h-3"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
-                    />
-                  </svg>
+                  <span className="text-2xl">✨</span>
                   Stáhnout šablonu z Moodle
                 </a>
               </div>
@@ -612,8 +576,8 @@ export default function StudentDashboard() {
           </div>
 
           {/* Step 2 */}
-          <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex flex-col h-full">
-            <h4 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
+          <div className="bg-slate-800/75 backdrop-blur-md border border-white/10 p-5 rounded-3xl border border-white/5 shadow-sm flex flex-col h-full">
+            <h4 className="font-bold text-slate-100 mb-4 flex items-center gap-2">
               <span className="bg-blue-100 text-blue-700 w-6 h-6 flex items-center justify-center rounded-full text-xs">
                 2
               </span>
@@ -630,54 +594,24 @@ export default function StudentDashboard() {
                   className="hidden"
                 />
                 <div
-                  className={`w-full h-full border-2 border-dashed rounded-xl flex flex-col items-center justify-center p-4 transition ${uploading ? "bg-gray-50 border-gray-300 cursor-not-allowed" : "border-gray-300 hover:border-blue-400 hover:bg-blue-50"}`}
+                  className={`w-full h-full border-2 border-dashed rounded-3xl flex flex-col items-center justify-center p-4 transition ${uploading ? "bg-slate-800/50 border-gray-300 cursor-not-allowed" : "border-gray-300 hover:border-blue-400 hover:bg-blue-50"}`}
                 >
                   {uploading ? (
                     <div className="text-center">
-                      <svg
-                        className="w-8 h-8 text-blue-500 animate-spin mx-auto mb-2"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                      >
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                        ></circle>
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        ></path>
-                      </svg>
+                      <span className="text-2xl">✨</span>
                       <span className="text-sm text-blue-600 font-medium">
                         Nahrávám a analyzuji...
                       </span>
                     </div>
                   ) : (
                     <>
-                      <div className="p-3 bg-gray-100 rounded-full text-gray-400 mb-3 group-hover:bg-blue-100 group-hover:text-blue-500 transition">
-                        <svg
-                          className="w-6 h-6"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
-                          />
-                        </svg>
+                      <div className="p-3 bg-slate-700/50 rounded-full text-slate-500 mb-3 group-hover:bg-blue-100 group-hover:text-blue-500 transition">
+                        <span className="text-2xl">✨</span>
                       </div>
-                      <span className="font-medium text-gray-700 group-hover:text-blue-700">
+                      <span className="font-medium text-slate-200 group-hover:text-blue-700">
                         Vybrat soubor
                       </span>
-                      <span className="text-xs text-gray-400 mt-1">
+                      <span className="text-xs text-slate-500 mt-1">
                         PDF, JPG, PNG (max 10MB)
                       </span>
                     </>
@@ -701,20 +635,20 @@ export default function StudentDashboard() {
       {/* SKILLS MODAL */}
       {isSkillsModalOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
+          <div className="bg-slate-800/75 backdrop-blur-md border border-white/10 rounded-3xl shadow-2xl max-w-md w-full p-6">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold text-gray-900">
+              <h3 className="text-xl font-bold text-white">
                 Moje dovednosti
               </h3>
               <button
                 onClick={() => setIsSkillsModalOpen(false)}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-slate-500 hover:text-slate-300"
               >
                 ✕
               </button>
             </div>
 
-            <p className="text-sm text-gray-600 mb-4">
+            <p className="text-sm text-slate-300 mb-4">
               Přidej technologie a nástroje, které ovládáš (např. React, Python,
               Marketing...). Pomůže nám to najít ti lepší praxi.
             </p>
@@ -725,12 +659,12 @@ export default function StudentDashboard() {
                 value={newSkill}
                 onChange={(e) => setNewSkill(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && addSkill()}
-                className="flex-1 border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-blue-500"
+                className="flex-1 border border-gray-300 rounded-2xl px-3 py-2 outline-none focus:border-blue-500"
                 placeholder="Např. JavaScript"
               />
               <button
                 onClick={addSkill}
-                className="px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700"
+                className="px-4 py-2 bg-blue-600 text-white font-medium rounded-2xl hover:bg-blue-700"
               >
                 Přidat
               </button>
@@ -752,7 +686,7 @@ export default function StudentDashboard() {
                 </span>
               ))}
               {skills.length === 0 && (
-                <p className="text-gray-400 text-sm italic">
+                <p className="text-slate-500 text-sm italic">
                   Zatím žádné dovednosti.
                 </p>
               )}
@@ -762,26 +696,26 @@ export default function StudentDashboard() {
       )}
 
       <div className="max-w-5xl mx-auto">
-        <header className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center border-b border-gray-200 pb-4 gap-4">
+        <header className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center border-b border-white/10 pb-4 gap-4">
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
+            <h1 className="text-2xl md:text-3xl font-bold text-white">
               Můj přehled praxe
             </h1>
-            <p className="text-gray-600 mt-1 text-sm md:text-base">
+            <p className="text-slate-300 mt-1 text-sm md:text-base">
               Vítej, {user?.displayName || user?.email}
             </p>
           </div>
           <div className="flex flex-col sm:flex-row gap-3 items-stretch w-full md:w-auto">
             <Link
               href="/student/generate"
-              className="text-blue-600 border border-blue-200 bg-white px-4 py-3 md:py-2 rounded-lg font-medium hover:bg-blue-50 transition block text-center"
+              className="text-blue-600 border border-blue-200 bg-slate-800/75 backdrop-blur-md border border-white/10 px-4 py-3 md:py-2 rounded-2xl font-medium hover:bg-blue-50 transition block text-center"
             >
               + Nová smlouva / Opravit
             </Link>
 
             <button
               onClick={() => auth.signOut()}
-              className="text-sm px-4 py-3 md:py-2 border border-gray-300 rounded-lg hover:bg-gray-100 transition"
+              className="text-sm px-4 py-3 md:py-2 border border-gray-300 rounded-2xl hover:bg-slate-700/50 transition"
             >
               Odhlásit se
             </button>
@@ -792,7 +726,7 @@ export default function StudentDashboard() {
           {/* HLAVNÁ KARTA (STAV) */}
           <div className="lg:col-span-2 space-y-6">
             {/* AI MATCHMAKING & SKILLS TEASER */}
-            <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
+            <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-3xl p-6 text-white shadow-lg relative overflow-hidden">
               <div className="relative z-10">
                 <h2 className="text-2xl font-bold mb-2">
                   Hledáš ideální praxi?
@@ -804,7 +738,7 @@ export default function StudentDashboard() {
 
                 <div className="flex flex-wrap gap-4 items-center">
                   <Link href="/student/matchmaking">
-                    <button className="px-6 py-2 bg-white text-blue-700 font-bold rounded-lg shadow-md hover:bg-blue-50 transition">
+                    <button className="px-6 py-2 bg-slate-800/75 backdrop-blur-md border border-white/10 text-blue-700 font-bold rounded-2xl shadow-md hover:bg-blue-50 transition">
                       🔍 Najít praxi pomocí AI
                     </button>
                   </Link>
@@ -819,40 +753,28 @@ export default function StudentDashboard() {
                 </div>
               </div>
               {/* Decorative background circle */}
-              <div className="absolute -right-10 -bottom-20 w-64 h-64 bg-white opacity-10 rounded-full blur-3xl"></div>
+              <div className="absolute -right-10 -bottom-20 w-64 h-64 bg-slate-800/75 backdrop-blur-md border border-white/10 opacity-10 rounded-full blur-3xl"></div>
             </div>
 
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-              <h2 className="text-xl font-semibold text-gray-800 mb-6 flex items-center gap-2">
-                <svg
-                  className="w-5 h-5 text-blue-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
+            <div className="bg-slate-800/75 backdrop-blur-md border border-white/10 p-6 rounded-3xl shadow-sm border border-white/5">
+              <h2 className="text-xl font-semibold text-slate-100 mb-6 flex items-center gap-2">
+                <span className="text-2xl">✨</span>
                 Aktuální stav
               </h2>
 
               {/* LOGIC FLOW */}
               {!placement || placement.status === "REJECTED" ? (
-                <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
-                  <h3 className="text-lg font-bold text-gray-800 mb-4">
+                <div className="bg-slate-800/75 backdrop-blur-md border border-white/10 p-6 rounded-2xl border border-white/10 shadow-sm">
+                  <h3 className="text-lg font-bold text-slate-100 mb-4">
                     Žádost o schválení organizace
                   </h3>
-                  <p className="text-gray-600 text-sm mb-6">
+                  <p className="text-slate-300 text-sm mb-6">
                     Než začnete s generováním smlouvy, koordinátor musí schválit
                     vámi vybranou organizaci.
                   </p>
 
                   {placement?.status === "REJECTED" && (
-                    <div className="bg-red-50 text-red-700 p-4 rounded-lg mb-6 border border-red-200">
+                    <div className="bg-red-50 text-red-700 p-4 rounded-2xl mb-6 border border-red-200">
                       <p className="font-bold">
                         Vaša predchádzajúca žiadosť bola zamietnutá.
                       </p>
@@ -872,7 +794,7 @@ export default function StudentDashboard() {
                     className="space-y-4 max-w-lg"
                   >
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-slate-200 mb-1">
                         Název organizace *
                       </label>
                       <input
@@ -881,13 +803,13 @@ export default function StudentDashboard() {
                         onChange={(e) =>
                           setOrgRequest({ ...orgRequest, name: e.target.value })
                         }
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full border border-gray-300 rounded-2xl px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
                         placeholder="Např. Acme Corp s.r.o."
                         required
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-slate-200 mb-1">
                         IČO *
                       </label>
                       <input
@@ -896,13 +818,13 @@ export default function StudentDashboard() {
                         onChange={(e) =>
                           setOrgRequest({ ...orgRequest, ico: e.target.value })
                         }
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full border border-gray-300 rounded-2xl px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
                         placeholder="12345678"
                         required
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-slate-200 mb-1">
                         Webové stránky (nepovinné)
                       </label>
                       <input
@@ -911,14 +833,14 @@ export default function StudentDashboard() {
                         onChange={(e) =>
                           setOrgRequest({ ...orgRequest, web: e.target.value })
                         }
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full border border-gray-300 rounded-2xl px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
                         placeholder="www.example.com"
                       />
                     </div>
                     <button
                       type="submit"
                       disabled={submittingOrg}
-                      className="w-full py-2 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 disabled:opacity-50 transition"
+                      className="w-full py-2 bg-blue-600 text-white font-bold rounded-2xl hover:bg-blue-700 disabled:opacity-50 transition"
                     >
                       {submittingOrg ? "Odesílám..." : "Odeslat žádost"}
                     </button>
@@ -928,26 +850,14 @@ export default function StudentDashboard() {
                 <>
                   {/* PENDING APPROVAL */}
                   {placement.status === "PENDING_ORG_APPROVAL" && (
-                    <div className="text-center py-10 bg-blue-50 rounded-lg border border-blue-100">
+                    <div className="text-center py-10 bg-blue-50 rounded-2xl border border-blue-100">
                       <div className="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-                        <svg
-                          className="w-8 h-8 text-blue-600"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                          />
-                        </svg>
+                        <span className="text-xl">⏱️</span>
                       </div>
-                      <h3 className="text-xl font-bold text-gray-900 mb-2">
+                      <h3 className="text-xl font-bold text-white mb-2">
                         Čeká se na schválení organizace
                       </h3>
-                      <p className="text-gray-600 max-w-md mx-auto">
+                      <p className="text-slate-300 max-w-md mx-auto">
                         Váš požadavek na praxi v{" "}
                         <strong>{placement.organization_name}</strong> čeká na
                         schválení koordinátorem. O výsledku budete informováni.
@@ -966,7 +876,7 @@ export default function StudentDashboard() {
                     placement.status === "CLOSED") && (
                     <div className="space-y-6">
                       {/* STATUS BAR */}
-                      <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg border border-gray-100">
+                      <div className="flex items-center gap-4 p-4 bg-slate-800/50 rounded-2xl border border-white/5">
                         <div
                           className={`p-3 rounded-full ${
                             placement.status === "ANALYZING"
@@ -975,79 +885,25 @@ export default function StudentDashboard() {
                                 ? "bg-green-100 text-green-600"
                                 : placement.status === "NEEDS_REVIEW"
                                   ? "bg-yellow-100 text-yellow-600"
-                                  : "bg-gray-100 text-gray-600"
+                                  : "bg-slate-700/50 text-slate-300"
                           }`}
                         >
                           {placement.status === "ANALYZING" && (
-                            <svg
-                              className="w-6 h-6 animate-spin"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                            >
-                              <circle
-                                className="opacity-25"
-                                cx="12"
-                                cy="12"
-                                r="10"
-                                stroke="currentColor"
-                                strokeWidth="4"
-                              ></circle>
-                              <path
-                                className="opacity-75"
-                                fill="currentColor"
-                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                              ></path>
-                            </svg>
+                            <span className="text-2xl">✨</span>
                           )}
                           {placement.status === "APPROVED" || placement.status === "ACTIVE" && (
-                            <svg
-                              className="w-6 h-6"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M5 13l4 4L19 7"
-                              />
-                            </svg>
+                            <span className="text-sm">✨</span>
                           )}
                           {(placement.status === "EVALUATION" ||
                             placement.status === "CLOSED") && (
-                            <svg
-                              className="w-6 h-6"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M5 13l4 4L19 7"
-                              />
-                            </svg>
+                            <span className="text-sm">✨</span>
                           )}
                           {placement.status === "NEEDS_REVIEW" && (
-                            <svg
-                              className="w-6 h-6"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                              />
-                            </svg>
+                            <span className="text-2xl">🚨</span>
                           )}
                         </div>
                         <div>
-                          <h3 className="font-bold text-lg text-gray-900">
+                          <h3 className="font-bold text-lg text-white">
                             {placement.status === "ANALYZING" &&
                               "AI zpracovává dokument..."}
                             {placement.status === "NEEDS_REVIEW" &&
@@ -1058,7 +914,7 @@ export default function StudentDashboard() {
                               "Čeká se na hodnocení"}
                             {placement.status === "CLOSED" && "Praxe uzavřena"}
                           </h3>
-                          <p className="text-sm text-gray-500">
+                          <p className="text-sm text-slate-400">
                             {placement.status === "ANALYZING" &&
                               "Čekejte prosím, čtu data ze smlouvy."}
                             {placement.status === "NEEDS_REVIEW" &&
@@ -1075,13 +931,13 @@ export default function StudentDashboard() {
 
                       {/* FORMULÁR NA KONTROLU (Iba ak NEEDS_REVIEW) */}
                       {placement.status === "NEEDS_REVIEW" && (
-                        <div className="bg-yellow-50 p-6 rounded-lg border border-yellow-200">
+                        <div className="bg-yellow-50 p-6 rounded-2xl border border-yellow-200">
                           <h4 className="font-bold text-yellow-800 mb-4">
                             Zkontrolujte údaje nalezené AI:
                           </h4>
                           <div className="grid md:grid-cols-2 gap-4">
                             <div>
-                              <label className="block text-xs font-medium text-gray-500 mb-1 uppercase">
+                              <label className="block text-xs font-medium text-slate-400 mb-1 uppercase">
                                 Název Firmy
                               </label>
                               <input
@@ -1097,7 +953,7 @@ export default function StudentDashboard() {
                               />
                             </div>
                             <div>
-                              <label className="block text-xs font-medium text-gray-500 mb-1 uppercase">
+                              <label className="block text-xs font-medium text-slate-400 mb-1 uppercase">
                                 IČO
                               </label>
                               <input
@@ -1113,7 +969,7 @@ export default function StudentDashboard() {
                               />
                             </div>
                             <div>
-                              <label className="block text-xs font-medium text-gray-500 mb-1 uppercase">
+                              <label className="block text-xs font-medium text-slate-400 mb-1 uppercase">
                                 Datum od
                               </label>
                               <input
@@ -1129,7 +985,7 @@ export default function StudentDashboard() {
                               />
                             </div>
                             <div>
-                              <label className="block text-xs font-medium text-gray-500 mb-1 uppercase">
+                              <label className="block text-xs font-medium text-slate-400 mb-1 uppercase">
                                 Datum do
                               </label>
                               <input
@@ -1147,7 +1003,7 @@ export default function StudentDashboard() {
                           </div>
                           <button
                             onClick={confirmData}
-                            className="w-full mt-4 bg-yellow-500 hover:bg-yellow-600 text-white py-3 rounded-lg font-bold shadow-sm transition"
+                            className="w-full mt-4 bg-yellow-500 hover:bg-yellow-600 text-white py-3 rounded-2xl font-bold shadow-sm transition"
                           >
                             Potvrdit správnost údajů
                           </button>
@@ -1159,30 +1015,30 @@ export default function StudentDashboard() {
                         placement.status === "EVALUATION" ||
                         placement.status === "CLOSED") && (
                         <div className="space-y-6">
-                          <div className="bg-white rounded-lg border border-gray-100 overflow-hidden">
+                          <div className="bg-slate-800/75 backdrop-blur-md border border-white/10 rounded-2xl border border-white/5 overflow-hidden">
                             <table className="min-w-full divide-y divide-gray-200 text-sm">
                               <tbody className="divide-y divide-gray-200">
                                 <tr>
-                                  <td className="px-4 py-3 bg-gray-50 font-medium text-gray-500 w-1/3">
+                                  <td className="px-4 py-3 bg-slate-800/50 font-medium text-slate-400 w-1/3">
                                     Firma
                                   </td>
-                                  <td className="px-4 py-3 text-gray-900 font-bold">
+                                  <td className="px-4 py-3 text-white font-bold">
                                     {placement.organization_name}
                                   </td>
                                 </tr>
                                 <tr>
-                                  <td className="px-4 py-3 bg-gray-50 font-medium text-gray-500">
+                                  <td className="px-4 py-3 bg-slate-800/50 font-medium text-slate-400">
                                     IČO
                                   </td>
-                                  <td className="px-4 py-3 text-gray-900 font-mono">
+                                  <td className="px-4 py-3 text-white font-mono">
                                     {placement.organization_ico}
                                   </td>
                                 </tr>
                                 <tr>
-                                  <td className="px-4 py-3 bg-gray-50 font-medium text-gray-500">
+                                  <td className="px-4 py-3 bg-slate-800/50 font-medium text-slate-400">
                                     Termín
                                   </td>
-                                  <td className="px-4 py-3 text-gray-900">
+                                  <td className="px-4 py-3 text-white">
                                     {placement.start_date} —{" "}
                                     {placement.end_date}
                                   </td>
@@ -1193,21 +1049,9 @@ export default function StudentDashboard() {
 
                           {/* AI HODNOCENÍ REFLEXE (EVALUATION STATE) */}
                           {placement.status === "EVALUATION" && (
-                            <div className="bg-indigo-50 p-6 rounded-lg border border-indigo-200 mt-6">
+                            <div className="bg-indigo-50 p-6 rounded-2xl border border-indigo-200 mt-6">
                               <h3 className="font-bold text-indigo-900 text-lg mb-2 flex items-center gap-2">
-                                <svg
-                                  className="w-5 h-5"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
-                                  />
-                                </svg>
+                                <span className="text-2xl">✨</span>
                                 Závěrečná reflexe
                               </h3>
                               <p className="text-sm text-indigo-800 mb-4">
@@ -1227,7 +1071,7 @@ export default function StudentDashboard() {
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
                                       {placement.evaluationResult
                                         .didacticCompetence && (
-                                        <div className="bg-white p-3 rounded border border-red-100">
+                                        <div className="bg-slate-800/75 backdrop-blur-md border border-white/10 p-3 rounded border border-red-100">
                                           <span className="font-bold text-red-800">
                                             Oborově-předmětová a didaktická kom.
                                             (
@@ -1247,7 +1091,7 @@ export default function StudentDashboard() {
                                       )}
                                       {placement.evaluationResult
                                         .pedagogicalCompetence && (
-                                        <div className="bg-white p-3 rounded border border-red-100">
+                                        <div className="bg-slate-800/75 backdrop-blur-md border border-white/10 p-3 rounded border border-red-100">
                                           <span className="font-bold text-red-800">
                                             Pedagogická a psychologická kom. (
                                             {
@@ -1266,7 +1110,7 @@ export default function StudentDashboard() {
                                       )}
                                       {placement.evaluationResult
                                         .socialCompetence && (
-                                        <div className="bg-white p-3 rounded border border-red-100">
+                                        <div className="bg-slate-800/75 backdrop-blur-md border border-white/10 p-3 rounded border border-red-100">
                                           <span className="font-bold text-red-800">
                                             Komunikativní a sociální kom. (
                                             {
@@ -1285,7 +1129,7 @@ export default function StudentDashboard() {
                                       )}
                                       {placement.evaluationResult
                                         .reflectiveCompetence && (
-                                        <div className="bg-white p-3 rounded border border-red-100">
+                                        <div className="bg-slate-800/75 backdrop-blur-md border border-white/10 p-3 rounded border border-red-100">
                                           <span className="font-bold text-red-800">
                                             Profesní a sebereflektivní kom. (
                                             {
@@ -1313,7 +1157,7 @@ export default function StudentDashboard() {
                                     setReflectionText(e.target.value)
                                   }
                                   rows={6}
-                                  className="w-full p-3 pr-12 border border-indigo-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
+                                  className="w-full p-3 pr-12 border border-indigo-200 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
                                   placeholder="Zde napište svou reflexi..."
                                 />
                                 <button
@@ -1335,47 +1179,16 @@ export default function StudentDashboard() {
                                     isCorrectingGrammar ||
                                     reflectionText.trim().length === 0
                                   }
-                                  className="w-full sm:w-auto px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg font-bold shadow-sm hover:bg-indigo-200 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center justify-center gap-2"
+                                  className="w-full sm:w-auto px-4 py-2 bg-indigo-100 text-indigo-700 rounded-2xl font-bold shadow-sm hover:bg-indigo-200 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center justify-center gap-2"
                                 >
                                   {isCorrectingGrammar ? (
                                     <>
-                                      <svg
-                                        className="animate-spin h-4 w-4 text-indigo-700"
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                      >
-                                        <circle
-                                          className="opacity-25"
-                                          cx="12"
-                                          cy="12"
-                                          r="10"
-                                          stroke="currentColor"
-                                          strokeWidth="4"
-                                        ></circle>
-                                        <path
-                                          className="opacity-75"
-                                          fill="currentColor"
-                                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                                        ></path>
-                                      </svg>
+                                      <span className="text-2xl">✨</span>
                                       Vylepšujem...
                                     </>
                                   ) : (
                                     <>
-                                      <svg
-                                        className="w-4 h-4"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                      >
-                                        <path
-                                          strokeLinecap="round"
-                                          strokeLinejoin="round"
-                                          strokeWidth={2}
-                                          d="M13 10V3L4 14h7v7l9-11h-7z"
-                                        />
-                                      </svg>
+                                      <span className="text-2xl">✨</span>
                                       Vylepšiť pomocou AI
                                     </>
                                   )}
@@ -1387,7 +1200,7 @@ export default function StudentDashboard() {
                                     isCorrectingGrammar ||
                                     reflectionText.trim().length === 0
                                   }
-                                  className="w-full sm:w-auto px-6 py-2 bg-indigo-600 text-white rounded-lg font-bold shadow-sm hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                                  className="w-full sm:w-auto px-6 py-2 bg-indigo-600 text-white rounded-2xl font-bold shadow-sm hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
                                 >
                                   {evaluating
                                     ? "Hodnocení..."
@@ -1399,21 +1212,9 @@ export default function StudentDashboard() {
 
                           {/* UZAVŘENÁ PRAXE (CLOSED STATE) */}
                           {placement.status === "CLOSED" && (
-                            <div className="bg-green-50 p-6 rounded-lg border border-green-200 mt-6">
+                            <div className="bg-green-50 p-6 rounded-2xl border border-green-200 mt-6">
                               <h3 className="font-bold text-green-900 text-lg mb-2 flex items-center gap-2">
-                                <svg
-                                  className="w-5 h-5"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                                  />
-                                </svg>
+                                <span className="text-2xl">✨</span>
                                 Praxe úspěšně uzavřena
                               </h3>
                               <p className="text-sm text-green-800 mb-4">
@@ -1421,7 +1222,7 @@ export default function StudentDashboard() {
                                 je oficiálně uzavřena.
                               </p>
                               {placement.evaluationResult && (
-                                <div className="bg-white p-4 rounded-lg border border-green-100 text-sm mt-4">
+                                <div className="bg-slate-800/75 backdrop-blur-md border border-white/10 p-4 rounded-2xl border border-green-100 text-sm mt-4">
                                   <p className="font-bold text-green-700 mb-3 text-base">
                                     Zpětná vazba od AI Sensei (dle MŠMT KRAU)
                                   </p>
@@ -1437,7 +1238,7 @@ export default function StudentDashboard() {
                                           }
                                           /100):
                                         </span>
-                                        <p className="text-gray-700 mt-1 italic">
+                                        <p className="text-slate-200 mt-1 italic">
                                           "
                                           {
                                             placement.evaluationResult
@@ -1458,7 +1259,7 @@ export default function StudentDashboard() {
                                           }
                                           /100):
                                         </span>
-                                        <p className="text-gray-700 mt-1 italic">
+                                        <p className="text-slate-200 mt-1 italic">
                                           "
                                           {
                                             placement.evaluationResult
@@ -1479,7 +1280,7 @@ export default function StudentDashboard() {
                                           }
                                           /100):
                                         </span>
-                                        <p className="text-gray-700 mt-1 italic">
+                                        <p className="text-slate-200 mt-1 italic">
                                           "
                                           {
                                             placement.evaluationResult
@@ -1500,7 +1301,7 @@ export default function StudentDashboard() {
                                           }
                                           /100):
                                         </span>
-                                        <p className="text-gray-700 mt-1 italic">
+                                        <p className="text-slate-200 mt-1 italic">
                                           "
                                           {
                                             placement.evaluationResult
@@ -1519,21 +1320,9 @@ export default function StudentDashboard() {
                                     href={placement.certificateUrl}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-lg font-bold shadow-md hover:bg-indigo-700 transition"
+                                    className="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-2xl font-bold shadow-md hover:bg-indigo-700 transition"
                                   >
-                                    <svg
-                                      className="w-5 h-5"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      viewBox="0 0 24 24"
-                                    >
-                                      <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-                                      />
-                                    </svg>
+                                    <span className="text-2xl">✨</span>
                                     Stáhnout certifikát
                                   </a>
                                 </div>
@@ -1545,27 +1334,15 @@ export default function StudentDashboard() {
                           {(placement.status === "APPROVED" || placement.status === "ACTIVE" ||
                             placement.status === "EVALUATION" ||
                             placement.status === "CLOSED") && (
-                            <div className="bg-blue-50 p-6 rounded-lg border border-blue-200 mb-6">
+                            <div className="bg-blue-50 p-6 rounded-2xl border border-blue-200 mb-6">
                               <h3 className="font-bold text-blue-900 text-lg mb-4 flex items-center gap-2">
-                                <svg
-                                  className="w-5 h-5"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                                  />
-                                </svg>
+                                <span className="text-xl">⏱️</span>
                                 Evidence hodin
                               </h3>
 
                               <form
                                 onSubmit={handleTimeLogSubmit}
-                                className="mb-6 bg-white p-4 rounded-lg border border-blue-100 shadow-sm"
+                                className="mb-6 bg-slate-800/75 backdrop-blur-md border border-white/10 p-4 rounded-2xl border border-blue-100 shadow-sm"
                               >
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                                   <div>
@@ -1579,7 +1356,7 @@ export default function StudentDashboard() {
                                       onChange={(e) =>
                                         setNewLogDate(e.target.value)
                                       }
-                                      className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-900"
+                                      className="w-full px-3 py-2 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-900"
                                     />
                                   </div>
                                   <div>
@@ -1595,7 +1372,7 @@ export default function StudentDashboard() {
                                       onChange={(e) =>
                                         setNewLogHours(e.target.value)
                                       }
-                                      className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-900"
+                                      className="w-full px-3 py-2 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-900"
                                     />
                                   </div>
                                   <div className="md:col-span-3">
@@ -1609,7 +1386,7 @@ export default function StudentDashboard() {
                                       onChange={(e) =>
                                         setNewLogDescription(e.target.value)
                                       }
-                                      className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-900"
+                                      className="w-full px-3 py-2 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-900"
                                       placeholder="Co jste dělali?"
                                     />
                                   </div>
@@ -1617,7 +1394,7 @@ export default function StudentDashboard() {
                                 <button
                                   type="submit"
                                   disabled={submittingLog}
-                                  className="px-4 py-2 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 disabled:opacity-50 transition"
+                                  className="px-4 py-2 bg-blue-600 text-white rounded-2xl font-bold hover:bg-blue-700 disabled:opacity-50 transition"
                                 >
                                   {submittingLog
                                     ? "Ukládám..."
@@ -1637,7 +1414,7 @@ export default function StudentDashboard() {
                                   timeLogs.map((log) => (
                                     <div
                                       key={log.id}
-                                      className="bg-white p-4 rounded-lg border border-blue-100 flex flex-col sm:flex-row justify-between sm:items-center gap-2 shadow-sm"
+                                      className="bg-slate-800/75 backdrop-blur-md border border-white/10 p-4 rounded-2xl border border-blue-100 flex flex-col sm:flex-row justify-between sm:items-center gap-2 shadow-sm"
                                     >
                                       <div>
                                         <p className="font-bold text-slate-900">
@@ -1677,21 +1454,9 @@ export default function StudentDashboard() {
                           )}
 
                           {/* HODNOCENÍ PRAXE (Dostupné pro APPROVED, EVALUATION, CLOSED) */}
-                          <div className="bg-purple-50 p-6 rounded-lg border border-purple-200">
+                          <div className="bg-purple-50 p-6 rounded-2xl border border-purple-200">
                             <h3 className="font-bold text-purple-900 text-lg mb-4 flex items-center gap-2">
-                              <svg
-                                className="w-5 h-5"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
-                                />
-                              </svg>
+                              <span className="text-2xl">✨</span>
                               Hodnocení praxe
                             </h3>
 
@@ -1710,7 +1475,7 @@ export default function StudentDashboard() {
                                   </span>
                                 </div>
                                 {placement.studentReview && (
-                                  <div className="bg-white p-3 rounded border border-purple-100 text-gray-700 text-sm italic">
+                                  <div className="bg-slate-800/75 backdrop-blur-md border border-white/10 p-3 rounded border border-purple-100 text-slate-200 text-sm italic">
                                     "{placement.studentReview}"
                                   </div>
                                 )}
@@ -1740,7 +1505,7 @@ export default function StudentDashboard() {
                                       onChange={(e) =>
                                         setStudentReview(e.target.value)
                                       }
-                                      className="w-full p-3 border border-purple-200 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none text-sm"
+                                      className="w-full p-3 border border-purple-200 rounded-2xl focus:ring-2 focus:ring-purple-500 outline-none text-sm"
                                       rows={3}
                                       placeholder="Popište svou zkušenost..."
                                     ></textarea>
@@ -1748,7 +1513,7 @@ export default function StudentDashboard() {
                                   <button
                                     onClick={handleRateCompany}
                                     disabled={studentRating === 0}
-                                    className="px-6 py-2 bg-purple-600 text-white rounded-lg font-bold shadow-sm hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                                    className="px-6 py-2 bg-purple-600 text-white rounded-2xl font-bold shadow-sm hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
                                   >
                                     Odeslat hodnocení
                                   </button>
@@ -1769,8 +1534,8 @@ export default function StudentDashboard() {
           <div className="space-y-6">
             {/* Circular Progress Component */}
             {placement && ["APPROVED", "ACTIVE", "EVALUATION", "CLOSED"].includes(placement.status) && (
-              <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 text-center">
-                <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">
+              <div className="bg-slate-800/75 backdrop-blur-md border border-white/10 p-6 rounded-3xl shadow-sm border border-white/5 text-center">
+                <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4">
                   Postup praxe
                 </h3>
                 {(() => {
@@ -1813,15 +1578,15 @@ export default function StudentDashboard() {
                           />
                         </svg>
                         <div className="absolute inset-0 flex flex-col items-center justify-center">
-                          <span className="text-2xl font-bold text-gray-900">{totalHours}</span>
-                          <span className="text-xs text-gray-500">/ {targetHours} hod</span>
+                          <span className="text-2xl font-bold text-white">{totalHours}</span>
+                          <span className="text-xs text-slate-400">/ {targetHours} hod</span>
                         </div>
                       </div>
-                      <p className="mt-4 text-sm text-gray-600 font-medium">
+                      <p className="mt-4 text-sm text-slate-300 font-medium">
                         Splněno <span className={progressPercent >= 100 ? "text-green-600 font-bold" : "text-blue-600 font-bold"}>{progressPercent}%</span>
                       </p>
                       {migratedHours > 0 && (
-                        <p className="text-xs text-gray-400 mt-2">
+                        <p className="text-xs text-slate-500 mt-2">
                           (Z toho {migratedHours} hod migrováno)
                         </p>
                       )}
@@ -1833,45 +1598,33 @@ export default function StudentDashboard() {
 
             {/* QR Kód pro mentora */}
             {placement && placement.status !== "PENDING_ORG_APPROVAL" && placement.status !== "REJECTED" && (
-              <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 text-center">
-                <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">
+              <div className="bg-slate-800/75 backdrop-blur-md border border-white/10 p-6 rounded-3xl shadow-sm border border-white/5 text-center">
+                <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4">
                   QR kód pro mentora
                 </h3>
-                <p className="text-xs text-gray-500 mb-4">
+                <p className="text-xs text-slate-400 mb-4">
                   Mentor může naskenovat tento kód ve svém rozhraní pro rychlý přístup k vaší praxi.
                 </p>
-                <div className="flex justify-center p-4 bg-white border-2 border-dashed border-gray-200 rounded-xl">
+                <div className="flex justify-center p-4 bg-slate-800/75 backdrop-blur-md border border-white/10 border-2 border-dashed border-white/10 rounded-3xl">
                   <QRCode value={placement.id} size={150} />
                 </div>
               </div>
             )}
 
             {/* Dokument Karta */}
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-              <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">
+            <div className="bg-slate-800/75 backdrop-blur-md border border-white/10 p-6 rounded-3xl shadow-sm border border-white/5">
+              <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4">
                 Dokumentace
               </h3>
               {placement && placement.contract_url ? (
                 <div>
-                  <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg mb-4">
-                    <svg
-                      className="w-8 h-8 text-blue-500"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                      />
-                    </svg>
+                  <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-2xl mb-4">
+                    <span className="text-2xl">📄</span>
                     <div className="overflow-hidden">
-                      <p className="text-sm font-medium text-gray-900 truncate">
+                      <p className="text-sm font-medium text-white truncate">
                         {placement.fileName}
                       </p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-slate-400">
                         Nahráno: {formatDateCZ(placement.createdAt)}
                       </p>
                     </div>
@@ -1880,7 +1633,7 @@ export default function StudentDashboard() {
                     href={placement.contract_url}
                     target="_blank"
                     rel="noreferrer"
-                    className="block w-full text-center py-2 border border-blue-200 text-blue-600 rounded-lg hover:bg-blue-50 text-sm font-medium transition mb-4"
+                    className="block w-full text-center py-2 border border-blue-200 text-blue-600 rounded-2xl hover:bg-blue-50 text-sm font-medium transition mb-4"
                   >
                     Stáhnout originál
                   </a>
@@ -1896,7 +1649,7 @@ export default function StudentDashboard() {
                   )}
                 </div>
               ) : (
-                <p className="text-sm text-gray-500 italic">
+                <p className="text-sm text-slate-400 italic">
                   {placement?.status === "PENDING_ORG_APPROVAL"
                     ? "Čeká se na schválení firmy."
                     : placement?.status === "ORG_APPROVED"
@@ -1908,7 +1661,7 @@ export default function StudentDashboard() {
 
             {/* Semaphore Stepper */}
             {placement && (
-              <div className="card">
+              <div className="card card-gradient">
                 <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-8">
                   Průběh zpracování
                 </h3>
@@ -1963,25 +1716,13 @@ export default function StudentDashboard() {
                       return (
                         <div
                           key={step.id}
-                          className="relative z-10 flex flex-col items-center gap-3 bg-white px-1"
+                          className="relative z-10 flex flex-col items-center gap-3 bg-slate-800/75 backdrop-blur-md border border-white/10 px-1"
                         >
                           <div
                             className={`w-8 h-8 rounded-full border-4 flex items-center justify-center ${bgColor} ${borderColor} shadow-sm transition-all duration-300`}
                           >
                             {isCompleted && (
-                              <svg
-                                className="w-4 h-4 text-white"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={3}
-                                  d="M5 13l4 4L19 7"
-                                />
-                              </svg>
+                              <span className="text-sm">✨</span>
                             )}
                           </div>
                           <span className={`text-xs font-bold ${textColor}`}>
@@ -1993,7 +1734,7 @@ export default function StudentDashboard() {
                   })()}
                 </div>
 
-                <div className="mt-8 p-4 bg-slate-50 rounded-xl border border-slate-100 text-center">
+                <div className="mt-8 p-4 bg-slate-50 rounded-3xl border border-slate-100 text-center">
                   <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
                     Na tahu:
                   </span>
