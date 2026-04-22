@@ -1,0 +1,16 @@
+npm warn exec The following package was not found and will be installed: serve@14.2.6
+ INFO  Accepting connections at http://localhost:3000
+ HTTP  4/22/2026 11:29:55 PM ::1 GET /student/dashboard
+ HTTP  4/22/2026 11:29:55 PM ::1 Returned 404 in 248 ms
+ HTTP  4/22/2026 11:30:07 PM ::1 GET /student/dashboard.html
+ HTTP  4/22/2026 11:30:07 PM ::1 Returned 301 in 1 ms
+ HTTP  4/22/2026 11:30:19 PM ::1 GET /student/dashboard/page.html
+ HTTP  4/22/2026 11:30:19 PM ::1 Returned 301 in 1 ms
+ HTTP  4/22/2026 11:31:21 PM ::1 GET /student/dashboard
+ HTTP  4/22/2026 11:31:21 PM ::1 Returned 404 in 4 ms
+ HTTP  4/22/2026 11:31:34 PM ::1 GET /student/dashboard.html
+ HTTP  4/22/2026 11:31:34 PM ::1 Returned 301 in 1 ms
+ HTTP  4/22/2026 11:31:34 PM ::1 GET /student/dashboard
+ HTTP  4/22/2026 11:31:34 PM ::1 Returned 404 in 2 ms
+ HTTP  4/22/2026 11:31:52 PM ::1 GET /student/dashboard
+ HTTP  4/22/2026 11:31:52 PM ::1 Returned 404 in 3 ms
