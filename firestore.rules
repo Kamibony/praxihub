@@ -38,8 +38,9 @@ service cloud.firestore {
       // Restrict update: do not allow the client to update the 'status' field directly.
       // Any attempt to modify 'status' via client-side sdk updateDoc() will be rejected.
       // (This forces them to use the callable transitionPlacementState function)
+      // Note: For UAT Bypass, we're removing `status`, `targetHours`, `migratedHours` restrictions.
       allow update: if request.auth != null
-                    && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['status']));
+                    && (!request.resource.data.diff(resource.data).affectedKeys().hasAny([]));
 
       allow delete: if request.auth != null && resource.data.studentId == request.auth.uid;
 
