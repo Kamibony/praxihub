@@ -188,7 +188,7 @@ export default function DocumentCenter() {
                 </div>
               </div>
               <textarea
-                className="flex-1 w-full p-4 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none font-mono text-sm"
+                className="flex-1 w-full p-4 bg-slate-900/50 border border-white/10 text-slate-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none font-mono text-sm"
                 value={activeRuleTab === 'UPV' ? rulesUpv : rulesKpv}
                 onChange={(e) => activeRuleTab === 'UPV' ? setRulesUpv(e.target.value) : setRulesKpv(e.target.value)}
               />
@@ -211,7 +211,7 @@ export default function DocumentCenter() {
               <p className="text-sm text-slate-500 mb-4">Vyzkoušejte, jak AI ohodnotí text podle aktuálních (neuložených) pravidel výše.</p>
 
               <textarea
-                className="w-full h-32 p-3 border border-slate-300 rounded-lg mb-4 resize-none text-sm"
+                className="w-full h-32 p-3 bg-slate-900/50 border border-white/10 text-slate-100 rounded-lg mb-4 resize-none text-sm"
                 placeholder="Zadejte testovací text studentské reflexe..."
                 value={testReflection}
                 onChange={(e) => setTestReflection(e.target.value)}
