@@ -6,7 +6,7 @@ import { doc, getDoc, serverTimestamp } from "firebase/firestore";
 import { ref, uploadBytes } from "firebase/storage";
 import { storage } from "../../../lib/firebase";
 import { httpsCallable } from "firebase/functions";
-import { Save, Play, AlertTriangle, FileText, Database, Archive } from 'lucide-react';
+
 import Navbar from "@/components/Navbar";
 import Link from 'next/link';
 import VisualMappingImport from '../../../components/VisualMappingImport';
@@ -120,50 +120,50 @@ export default function DocumentCenter() {
   if (loading) return <div className="p-8">Načítám...</div>;
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-transparent">
       <Navbar />
       <div className="pt-24 pb-12 px-6 max-w-7xl mx-auto">
         <div className="flex justify-between items-start mb-2">
-          <h1 className="text-3xl font-bold text-slate-900">Admin Document Center</h1>
+          <h1 className="text-3xl font-bold font-sans text-slate-100">Admin Document Center</h1>
           <Link
             href="/admin/dashboard"
-            className="text-sm font-medium text-slate-600 hover:text-blue-600 transition"
+            className="text-sm font-medium text-slate-300 hover:text-blue-400 transition"
           >
             &larr; Zpět na Dashboard
           </Link>
         </div>
-        <p className="text-slate-600 mb-8">Centrální správa dokumentů, šablon a AI metodiky.</p>
+        <p className="text-slate-300 mb-8">Centrální správa dokumentů, šablon a AI metodiky.</p>
 
-        <div className="flex gap-2 mb-6 border-b border-slate-200 overflow-x-auto">
+        <div className="flex gap-2 mb-6 border-b border-white/10 overflow-x-auto">
           <button
             onClick={() => setActiveTab('AI')}
-            className={`py-3 px-6 text-sm font-medium border-b-2 whitespace-nowrap flex items-center gap-2 ${activeTab === 'AI' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}>
-            <AlertTriangle size={16} /> AI Knowledge Base
+            className={`py-3 px-6 text-sm font-medium border-b-2 whitespace-nowrap flex items-center gap-2 ${activeTab === 'AI' ? 'border-indigo-400 text-indigo-300 bg-indigo-500/20 rounded-t-lg' : 'border-transparent text-slate-400 hover:text-slate-200'}`}>
+            ✨ AI Knowledge Base
           </button>
           <button
             onClick={() => setActiveTab('IMPORT')}
-            className={`py-3 px-6 text-sm font-medium border-b-2 whitespace-nowrap flex items-center gap-2 ${activeTab === 'IMPORT' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}>
-            <Database size={16} /> Data Import Engine
+            className={`py-3 px-6 text-sm font-medium border-b-2 whitespace-nowrap flex items-center gap-2 ${activeTab === 'IMPORT' ? 'border-indigo-400 text-indigo-300 bg-indigo-500/20 rounded-t-lg' : 'border-transparent text-slate-400 hover:text-slate-200'}`}>
+            📂 Data Import Engine
           </button>
           <button
             onClick={() => setActiveTab('TEMPLATES')}
-            className={`py-3 px-6 text-sm font-medium border-b-2 whitespace-nowrap flex items-center gap-2 ${activeTab === 'TEMPLATES' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}>
-            <FileText size={16} /> Template Manager
+            className={`py-3 px-6 text-sm font-medium border-b-2 whitespace-nowrap flex items-center gap-2 ${activeTab === 'TEMPLATES' ? 'border-indigo-400 text-indigo-300 bg-indigo-500/20 rounded-t-lg' : 'border-transparent text-slate-400 hover:text-slate-200'}`}>
+            📄 Template Manager
           </button>
           <button
             onClick={() => setActiveTab('COMPLIANCE')}
-            className={`py-3 px-6 text-sm font-medium border-b-2 whitespace-nowrap flex items-center gap-2 ${activeTab === 'COMPLIANCE' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}>
-            <Archive size={16} /> Compliance Archive
+            className={`py-3 px-6 text-sm font-medium border-b-2 whitespace-nowrap flex items-center gap-2 ${activeTab === 'COMPLIANCE' ? 'border-indigo-400 text-indigo-300 bg-indigo-500/20 rounded-t-lg' : 'border-transparent text-slate-400 hover:text-slate-200'}`}>
+            🏛️ Compliance Archive
           </button>
         </div>
 
         {activeTab === 'AI' && (
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-          <div className="bg-red-50 border-b border-red-100 p-4 flex items-start gap-3">
-            <AlertTriangle className="text-red-600 mt-0.5" size={20} />
+          <div className="card-glass overflow-hidden">
+          <div className="bg-red-900/20 border-b border-red-800/50 p-4 flex items-start gap-3">
+            <span className="text-xl">🚨</span>
             <div>
-              <h2 className="font-bold text-red-800">AI Knowledge Base (KRAU MŠMT)</h2>
-              <p className="text-red-600 text-sm">🔴 KRITICKÉ NASTAVENÍ SYSTÉMU. Změny zde přímo ovlivňují rozhodování AI.</p>
+              <h2 className="font-bold font-sans text-red-300">AI Knowledge Base (KRAU MŠMT)</h2>
+              <p className="text-red-400 text-sm">🔴 KRITICKÉ NASTAVENÍ SYSTÉMU. Změny zde přímo ovlivňují rozhodování AI.</p>
             </div>
           </div>
 
@@ -171,44 +171,44 @@ export default function DocumentCenter() {
             {/* Editor */}
             <div className="flex flex-col h-[600px]">
               <div className="flex justify-between items-center mb-2">
-                <label className="block text-sm font-medium text-slate-700">Pravidla a metodika (Markdown)</label>
-                <div className="flex bg-slate-100 rounded-lg p-1">
+                <label className="block text-sm font-medium text-slate-200">Pravidla a metodika (Markdown)</label>
+                <div className="flex bg-slate-900/50 rounded-lg p-1 border border-white/5">
                   <button
                     onClick={() => setActiveRuleTab('UPV')}
-                    className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${activeRuleTab === 'UPV' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                    className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${activeRuleTab === 'UPV' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
                   >
                     UPV (Učitelství)
                   </button>
                   <button
                     onClick={() => setActiveRuleTab('KPV')}
-                    className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${activeRuleTab === 'KPV' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                    className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${activeRuleTab === 'KPV' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
                   >
                     KPV (Poradenství)
                   </button>
                 </div>
               </div>
               <textarea
-                className="flex-1 w-full p-4 bg-slate-900/50 border border-white/10 text-slate-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none font-mono text-sm"
+                className="flex-1 w-full p-4 bg-slate-900/50 border border-white/10 text-slate-100 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none font-mono text-sm"
                 value={activeRuleTab === 'UPV' ? rulesUpv : rulesKpv}
                 onChange={(e) => activeRuleTab === 'UPV' ? setRulesUpv(e.target.value) : setRulesKpv(e.target.value)}
               />
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="mt-4 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+                className="mt-4 flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
               >
-                <Save size={18} />
+                💾
                 {saving ? 'Ukládám...' : 'Uložit metodiku'}
               </button>
             </div>
 
             {/* Test Playground */}
-            <div className="flex flex-col h-[600px] bg-slate-50 p-4 rounded-xl border border-slate-200">
-              <h3 className="font-bold text-slate-900 mb-2 flex items-center gap-2">
-                <Play size={18} className="text-blue-600" />
+            <div className="flex flex-col h-[600px] bg-slate-800/50 p-4 rounded-xl border border-white/10">
+              <h3 className="font-bold font-sans text-slate-100 mb-2 flex items-center gap-2">
+                ▶️
                 Otestovat nanečisto
               </h3>
-              <p className="text-sm text-slate-500 mb-4">Vyzkoušejte, jak AI ohodnotí text podle aktuálních (neuložených) pravidel výše.</p>
+              <p className="text-sm text-slate-400 mb-4">Vyzkoušejte, jak AI ohodnotí text podle aktuálních (neuložených) pravidel výše.</p>
 
               <textarea
                 className="w-full h-32 p-3 bg-slate-900/50 border border-white/10 text-slate-100 rounded-lg mb-4 resize-none text-sm"
@@ -224,13 +224,13 @@ export default function DocumentCenter() {
                 {testing ? 'Analyzuji...' : 'Spustit test'}
               </button>
 
-              <div className="flex-1 overflow-auto bg-white border border-slate-200 rounded-lg p-4">
+              <div className="flex-1 overflow-auto bg-slate-800/50 border border-white/10 rounded-lg p-4">
                 {testResult ? (
                   <div>
-                    <div className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-sm font-bold mb-4 ${testResult.evaluation?.isPass ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                    <div className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-sm font-bold mb-4 ${testResult.evaluation?.isPass ? 'bg-green-900/40 text-green-300 border border-green-800' : 'bg-red-900/40 text-red-300 border border-red-800'}`}>
                       Výsledek: {testResult.evaluation?.isPass ? 'SPLNĚNO' : 'NESPLNĚNO'}
                     </div>
-                    <pre className="text-xs font-mono text-slate-800 whitespace-pre-wrap">
+                    <pre className="text-xs font-mono text-slate-300 whitespace-pre-wrap">
                       {JSON.stringify(testResult, null, 2)}
                     </pre>
                   </div>
@@ -246,17 +246,17 @@ export default function DocumentCenter() {
         )}
 
                 {activeTab === 'IMPORT' && (
-          <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-200">
-            <div className="flex items-center gap-3 mb-6 border-b border-slate-100 pb-4">
-              <Database size={24} className="text-blue-600" />
-              <h2 className="text-xl font-bold text-slate-800">Data Import Engine (Vizuální mapování)</h2>
+          <div className="card-glass p-8">
+            <div className="flex items-center gap-3 mb-6 border-b border-white/10 pb-4">
+              <span className="text-2xl">📂</span>
+              <h2 className="text-xl font-bold font-sans text-slate-100">Data Import Engine (Vizuální mapování)</h2>
             </div>
 
             {!importStats ? (
                 <VisualMappingImport onSuccess={setImportStats} />
             ) : (
-              <div className="mt-8 bg-green-50 border border-green-200 rounded-lg p-4 text-green-800">
-                <h3 className="font-bold mb-2">Import úspěšně dokončen</h3>
+              <div className="mt-8 bg-green-900/20 border border-green-800/50 rounded-lg p-4 text-green-300">
+                <h3 className="font-bold font-sans mb-2">Import úspěšně dokončen</h3>
                 <ul className="list-disc pl-5 text-sm space-y-1 mb-4">
                   <li>Přidáno studentů: {importStats.added}</li>
                   <li>Aktualizováno studentů: {importStats.updated}</li>
@@ -265,13 +265,13 @@ export default function DocumentCenter() {
                 <div className="flex gap-4">
                   <Link
                     href="/admin/users"
-                    className="inline-flex items-center gap-2 text-sm font-semibold bg-white px-4 py-2 border border-green-300 rounded-lg text-green-700 hover:bg-green-100 transition"
+                    className="inline-flex items-center gap-2 text-sm font-semibold bg-green-900/40 px-4 py-2 border border-green-700/50 rounded-lg text-green-300 hover:bg-green-800/50 transition"
                   >
                     Přejít na Správu uživatelů
                   </Link>
                   <button
                     onClick={() => setImportStats(null)}
-                    className="inline-flex items-center gap-2 text-sm font-semibold bg-white px-4 py-2 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-100 transition"
+                    className="inline-flex items-center gap-2 text-sm font-semibold bg-slate-800/50 px-4 py-2 border border-slate-700 rounded-lg text-slate-200 hover:bg-slate-700 transition"
                   >
                     Nahrát další soubor
                   </button>
@@ -282,32 +282,32 @@ export default function DocumentCenter() {
         )}
 
                 {activeTab === 'TEMPLATES' && (
-          <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-200 flex flex-col items-center justify-center text-center h-64 relative hover:bg-slate-50 transition">
+          <div className="card-glass p-8 flex flex-col items-center justify-center text-center h-64 relative hover:bg-slate-800/70 hover:border-slate-600 transition">
              <input
                 type="file"
                 onChange={(e) => handleFileUpload(e, 'templates', setUploadingTemplate)}
                 disabled={uploadingTemplate}
                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
               />
-             <FileText size={48} className="text-slate-300 mb-4 pointer-events-none" />
-             <h2 className="text-xl font-bold text-slate-700 pointer-events-none">Template Manager</h2>
-             <p className="text-slate-500 mt-2 pointer-events-none">
+             <div className="text-5xl mb-4 pointer-events-none opacity-50">📄</div>
+             <h2 className="text-xl font-bold font-sans text-slate-200 pointer-events-none">Template Manager</h2>
+             <p className="text-slate-400 mt-2 pointer-events-none">
                {uploadingTemplate ? 'Nahrávám...' : 'Klikněte pro nahrání šablony (PDF, DOCX) do Firebase Storage.'}
              </p>
           </div>
         )}
 
                 {activeTab === 'COMPLIANCE' && (
-          <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-200 flex flex-col items-center justify-center text-center h-64 relative hover:bg-slate-50 transition">
+          <div className="card-glass p-8 flex flex-col items-center justify-center text-center h-64 relative hover:bg-slate-800/70 hover:border-slate-600 transition">
              <input
                 type="file"
                 onChange={(e) => handleFileUpload(e, 'compliance', setUploadingCompliance)}
                 disabled={uploadingCompliance}
                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
               />
-             <Archive size={48} className="text-slate-300 mb-4 pointer-events-none" />
-             <h2 className="text-xl font-bold text-slate-700 pointer-events-none">Compliance Archive</h2>
-             <p className="text-slate-500 mt-2 pointer-events-none">
+             <div className="text-5xl mb-4 pointer-events-none opacity-50">🏛️</div>
+             <h2 className="text-xl font-bold font-sans text-slate-200 pointer-events-none">Compliance Archive</h2>
+             <p className="text-slate-400 mt-2 pointer-events-none">
                {uploadingCompliance ? 'Nahrávám...' : 'Klikněte pro nahrání rámcové smlouvy do Firebase Storage.'}
              </p>
           </div>
