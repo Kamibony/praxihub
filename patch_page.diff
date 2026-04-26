@@ -1,0 +1,98 @@
+<<<<<<< SEARCH
+  const [rulesUpv, setRulesUpv] = useState('');
+  const [rulesKpv, setRulesKpv] = useState('');
+  const [activeRuleTab, setActiveRuleTab] = useState<'UPV' | 'KPV'>('UPV');
+  const [loading, setLoading] = useState(true);
+=======
+  const [rulesUpv, setRulesUpv] = useState('');
+  const [rulesKpv, setRulesKpv] = useState('');
+  const [activeDept, setActiveDept] = useState<'UPV' | 'KPV'>('UPV');
+  const [loading, setLoading] = useState(true);
+>>>>>>> REPLACE
+<<<<<<< SEARCH
+      const docId = activeRuleTab === 'UPV' ? 'ai_rules_upv' : 'ai_rules_kpv';
+      const content = activeRuleTab === 'UPV' ? rulesUpv : rulesKpv;
+      const title = activeRuleTab === 'UPV' ? 'Metodika UPV (Učitelství)' : 'Metodika KPV (Poradenství)';
+=======
+      const docId = activeDept === 'UPV' ? 'ai_rules_upv' : 'ai_rules_kpv';
+      const content = activeDept === 'UPV' ? rulesUpv : rulesKpv;
+      const title = activeDept === 'UPV' ? 'Metodika UPV (Učitelství)' : 'Metodika KPV (Poradenství)';
+>>>>>>> REPLACE
+<<<<<<< SEARCH
+      const currentRules = activeRuleTab === 'UPV' ? rulesUpv : rulesKpv;
+=======
+      const currentRules = activeDept === 'UPV' ? rulesUpv : rulesKpv;
+>>>>>>> REPLACE
+<<<<<<< SEARCH
+        <p className="text-slate-300 mb-8">Centrální správa dokumentů, šablon a AI metodiky.</p>
+
+        <div className="flex gap-2 mb-6 border-b border-white/10 overflow-x-auto">
+=======
+        <p className="text-slate-300 mb-8">Centrální správa dokumentů, šablon a AI metodiky.</p>
+
+        {/* Global Department Scope Toggle */}
+        <div className="mb-8 flex justify-center">
+          <div className="inline-flex bg-slate-900/50 rounded-xl p-1 border border-white/10 shadow-lg backdrop-blur-md">
+            <button
+              onClick={() => setActiveDept('UPV')}
+              className={`px-6 py-2.5 text-sm font-bold rounded-lg transition-all duration-200 flex items-center gap-2 ${activeDept === 'UPV' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'}`}
+            >
+              <span className="text-lg">👩‍🏫</span>
+              UPV (Učitelství)
+            </button>
+            <button
+              onClick={() => setActiveDept('KPV')}
+              className={`px-6 py-2.5 text-sm font-bold rounded-lg transition-all duration-200 flex items-center gap-2 ${activeDept === 'KPV' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'}`}
+            >
+              <span className="text-lg">🤝</span>
+              KPV (Poradenství)
+            </button>
+          </div>
+        </div>
+
+        <div className="flex gap-2 mb-6 border-b border-white/10 overflow-x-auto">
+>>>>>>> REPLACE
+<<<<<<< SEARCH
+              <div className="flex justify-between items-center mb-2">
+                <label className="block text-sm font-medium text-slate-200">Pravidla a metodika (Markdown)</label>
+                <div className="flex bg-slate-900/50 rounded-lg p-1 border border-white/5">
+                  <button
+                    onClick={() => setActiveRuleTab('UPV')}
+                    className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${activeRuleTab === 'UPV' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
+                  >
+                    UPV (Učitelství)
+                  </button>
+                  <button
+                    onClick={() => setActiveRuleTab('KPV')}
+                    className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${activeRuleTab === 'KPV' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
+                  >
+                    KPV (Poradenství)
+                  </button>
+                </div>
+              </div>
+              <textarea
+                className="flex-1 w-full p-4 bg-slate-900/50 border border-white/10 text-slate-100 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none font-mono text-sm"
+                value={activeRuleTab === 'UPV' ? rulesUpv : rulesKpv}
+                onChange={(e) => activeRuleTab === 'UPV' ? setRulesUpv(e.target.value) : setRulesKpv(e.target.value)}
+              />
+=======
+              <div className="flex justify-between items-center mb-2">
+                <label className="block text-sm font-medium text-slate-200">
+                  Pravidla a metodika (Markdown) pro {activeDept}
+                </label>
+              </div>
+              <textarea
+                className="flex-1 w-full p-4 bg-slate-900/50 border border-white/10 text-slate-100 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none font-mono text-sm"
+                value={activeDept === 'UPV' ? rulesUpv : rulesKpv}
+                onChange={(e) => activeDept === 'UPV' ? setRulesUpv(e.target.value) : setRulesKpv(e.target.value)}
+              />
+>>>>>>> REPLACE
+<<<<<<< SEARCH
+            {!importStats ? (
+                <VisualMappingImport onSuccess={setImportStats} />
+            ) : (
+=======
+            {!importStats ? (
+                <VisualMappingImport onSuccess={setImportStats} department={activeDept} />
+            ) : (
+>>>>>>> REPLACE
