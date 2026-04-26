@@ -14,7 +14,7 @@ import VisualMappingImport from '../../../components/VisualMappingImport';
 export default function DocumentCenter() {
   const [rulesUpv, setRulesUpv] = useState('');
   const [rulesKpv, setRulesKpv] = useState('');
-  const [activeRuleTab, setActiveRuleTab] = useState<'UPV' | 'KPV'>('UPV');
+  const [activeDept, setActiveDept] = useState<'UPV' | 'KPV'>('UPV');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
@@ -64,9 +64,9 @@ export default function DocumentCenter() {
     setSaving(true);
     try {
       const updateFn = httpsCallable(functions, 'updateSystemConfig');
-      const docId = activeRuleTab === 'UPV' ? 'ai_rules_upv' : 'ai_rules_kpv';
-      const content = activeRuleTab === 'UPV' ? rulesUpv : rulesKpv;
-      const title = activeRuleTab === 'UPV' ? 'Metodika UPV (Učitelství)' : 'Metodika KPV (Poradenství)';
+      const docId = activeDept === 'UPV' ? 'ai_rules_upv' : 'ai_rules_kpv';
+      const content = activeDept === 'UPV' ? rulesUpv : rulesKpv;
+      const title = activeDept === 'UPV' ? 'Metodika UPV (Učitelství)' : 'Metodika KPV (Poradenství)';
 
       await updateFn({
         docId: docId,
@@ -88,7 +88,7 @@ export default function DocumentCenter() {
     setTestResult(null);
     try {
       const evaluateFn = httpsCallable(functions, 'testEvaluateReflection');
-      const currentRules = activeRuleTab === 'UPV' ? rulesUpv : rulesKpv;
+      const currentRules = activeDept === 'UPV' ? rulesUpv : rulesKpv;
       const res = await evaluateFn({ reflectionText: testReflection, rulesText: currentRules });
       setTestResult(res.data);
     } catch (e) {
@@ -106,15 +106,53 @@ export default function DocumentCenter() {
 
     setUploading(true);
     try {
-      const storageRef = ref(storage, `global_documents/${pathPrefix}/${file.name}`);
+      const storageRef = ref(storage, `global_documents/${pathPrefix}/${activeDept}/${file.name}`);
       await uploadBytes(storageRef, file);
       alert('Soubor úspěšně nahrán.');
+      // Refresh documents list
+      fetchDocs(pathPrefix);
     } catch (err) {
       console.error(err);
       alert('Chyba při nahrávání souboru.');
     }
     setUploading(false);
   };
+
+  const [docsList, setDocsList] = useState<{name: string, url: string}[]>([]);
+  const [loadingDocs, setLoadingDocs] = useState(false);
+
+  const fetchDocs = async (pathPrefix: string) => {
+    setLoadingDocs(true);
+    try {
+      // Must dynamically import listAll, getDownloadURL since they are used
+      const { listAll, getDownloadURL } = await import("firebase/storage");
+      const listRef = ref(storage, `global_documents/${pathPrefix}/${activeDept}`);
+      const res = await listAll(listRef);
+      const docs = await Promise.all(
+        res.items.map(async (itemRef) => {
+          const url = await getDownloadURL(itemRef);
+          return {
+            name: itemRef.name,
+            url,
+          };
+        }),
+      );
+      setDocsList(docs);
+    } catch (error) {
+      console.error("Error fetching docs:", error);
+      setDocsList([]);
+    } finally {
+      setLoadingDocs(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'TEMPLATES') {
+      fetchDocs('templates');
+    } else if (activeTab === 'COMPLIANCE') {
+      fetchDocs('compliance');
+    }
+  }, [activeTab, activeDept]);
 
 
   if (loading) return <div className="p-8">Načítám...</div>;
@@ -133,6 +171,26 @@ export default function DocumentCenter() {
           </Link>
         </div>
         <p className="text-slate-300 mb-8">Centrální správa dokumentů, šablon a AI metodiky.</p>
+
+        {/* Global Department Scope Toggle */}
+        <div className="mb-8 flex justify-center">
+          <div className="inline-flex bg-slate-900/50 rounded-xl p-1 border border-white/10 shadow-lg backdrop-blur-md">
+            <button
+              onClick={() => setActiveDept('UPV')}
+              className={`px-6 py-2.5 text-sm font-bold rounded-lg transition-all duration-200 flex items-center gap-2 ${activeDept === 'UPV' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'}`}
+            >
+              <span className="text-lg">👩‍🏫</span>
+              UPV (Učitelství)
+            </button>
+            <button
+              onClick={() => setActiveDept('KPV')}
+              className={`px-6 py-2.5 text-sm font-bold rounded-lg transition-all duration-200 flex items-center gap-2 ${activeDept === 'KPV' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'}`}
+            >
+              <span className="text-lg">🤝</span>
+              KPV (Poradenství)
+            </button>
+          </div>
+        </div>
 
         <div className="flex gap-2 mb-6 border-b border-white/10 overflow-x-auto">
           <button
@@ -171,26 +229,12 @@ export default function DocumentCenter() {
             {/* Editor */}
             <div className="flex flex-col h-[600px]">
               <div className="flex justify-between items-center mb-2">
-                <label className="block text-sm font-medium text-slate-200">Pravidla a metodika (Markdown)</label>
-                <div className="flex bg-slate-900/50 rounded-lg p-1 border border-white/5">
-                  <button
-                    onClick={() => setActiveRuleTab('UPV')}
-                    className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${activeRuleTab === 'UPV' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
-                  >
-                    UPV (Učitelství)
-                  </button>
-                  <button
-                    onClick={() => setActiveRuleTab('KPV')}
-                    className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${activeRuleTab === 'KPV' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
-                  >
-                    KPV (Poradenství)
-                  </button>
-                </div>
+                <label className="block text-sm font-medium text-slate-200">Pravidla a metodika (Markdown) pro {activeDept}</label>
               </div>
               <textarea
                 className="flex-1 w-full p-4 bg-slate-900/50 border border-white/10 text-slate-100 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none font-mono text-sm"
-                value={activeRuleTab === 'UPV' ? rulesUpv : rulesKpv}
-                onChange={(e) => activeRuleTab === 'UPV' ? setRulesUpv(e.target.value) : setRulesKpv(e.target.value)}
+                value={activeDept === 'UPV' ? rulesUpv : rulesKpv}
+                onChange={(e) => activeDept === 'UPV' ? setRulesUpv(e.target.value) : setRulesKpv(e.target.value)}
               />
               <button
                 onClick={handleSave}
@@ -253,7 +297,7 @@ export default function DocumentCenter() {
             </div>
 
             {!importStats ? (
-                <VisualMappingImport onSuccess={setImportStats} />
+                <VisualMappingImport onSuccess={setImportStats} department={activeDept} />
             ) : (
               <div className="mt-8 bg-green-900/20 border border-green-800/50 rounded-lg p-4 text-green-300">
                 <h3 className="font-bold font-sans mb-2">Import úspěšně dokončen</h3>
@@ -282,34 +326,84 @@ export default function DocumentCenter() {
         )}
 
                 {activeTab === 'TEMPLATES' && (
-          <div className="card-glass p-8 flex flex-col items-center justify-center text-center h-64 relative hover:bg-slate-800/70 hover:border-slate-600 transition">
-             <input
-                type="file"
-                onChange={(e) => handleFileUpload(e, 'templates', setUploadingTemplate)}
-                disabled={uploadingTemplate}
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
-              />
-             <div className="text-5xl mb-4 pointer-events-none opacity-50">📄</div>
-             <h2 className="text-xl font-bold font-sans text-slate-200 pointer-events-none">Template Manager</h2>
-             <p className="text-slate-400 mt-2 pointer-events-none">
-               {uploadingTemplate ? 'Nahrávám...' : 'Klikněte pro nahrání šablony (PDF, DOCX) do Firebase Storage.'}
-             </p>
+          <div className="card-glass p-8">
+            <div className="flex items-center gap-3 mb-6 border-b border-white/10 pb-4">
+              <span className="text-2xl">📄</span>
+              <h2 className="text-xl font-bold font-sans text-slate-100">Template Manager ({activeDept})</h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="flex flex-col items-center justify-center text-center h-64 bg-slate-800/50 rounded-xl border border-dashed border-slate-600 relative hover:bg-slate-800/70 hover:border-slate-500 transition">
+                 <input
+                    type="file"
+                    onChange={(e) => handleFileUpload(e, 'templates', setUploadingTemplate)}
+                    disabled={uploadingTemplate}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
+                  />
+                 <div className="text-5xl mb-4 pointer-events-none opacity-50">📤</div>
+                 <h2 className="text-xl font-bold font-sans text-slate-200 pointer-events-none">Nahrát šablonu</h2>
+                 <p className="text-slate-400 mt-2 pointer-events-none">
+                   {uploadingTemplate ? 'Nahrávám...' : 'Klikněte pro nahrání šablony (PDF, DOCX) do Firebase Storage.'}
+                 </p>
+              </div>
+              <div className="bg-slate-800/50 p-6 rounded-xl border border-white/10 overflow-y-auto h-64">
+                <h3 className="text-sm font-semibold text-slate-300 mb-4 uppercase tracking-wider">Nahrané šablony</h3>
+                {loadingDocs ? (
+                  <p className="text-sm text-slate-400">Načítám soubory...</p>
+                ) : docsList.length === 0 ? (
+                  <p className="text-sm text-slate-400 italic">Zatím nebyly nahrány žádné šablony pro {activeDept}.</p>
+                ) : (
+                  <ul className="space-y-3">
+                    {docsList.map((doc) => (
+                      <li key={doc.name} className="flex items-center justify-between p-3 bg-slate-900/50 rounded-lg border border-white/5">
+                        <span className="text-sm text-slate-200 truncate pr-4" title={doc.name}>{doc.name}</span>
+                        <a href={doc.url} target="_blank" rel="noopener noreferrer" className="text-indigo-400 hover:text-indigo-300 text-sm font-medium whitespace-nowrap">Stáhnout &rarr;</a>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
           </div>
         )}
 
                 {activeTab === 'COMPLIANCE' && (
-          <div className="card-glass p-8 flex flex-col items-center justify-center text-center h-64 relative hover:bg-slate-800/70 hover:border-slate-600 transition">
-             <input
-                type="file"
-                onChange={(e) => handleFileUpload(e, 'compliance', setUploadingCompliance)}
-                disabled={uploadingCompliance}
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
-              />
-             <div className="text-5xl mb-4 pointer-events-none opacity-50">🏛️</div>
-             <h2 className="text-xl font-bold font-sans text-slate-200 pointer-events-none">Compliance Archive</h2>
-             <p className="text-slate-400 mt-2 pointer-events-none">
-               {uploadingCompliance ? 'Nahrávám...' : 'Klikněte pro nahrání rámcové smlouvy do Firebase Storage.'}
-             </p>
+          <div className="card-glass p-8">
+            <div className="flex items-center gap-3 mb-6 border-b border-white/10 pb-4">
+              <span className="text-2xl">🏛️</span>
+              <h2 className="text-xl font-bold font-sans text-slate-100">Compliance Archive ({activeDept})</h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="flex flex-col items-center justify-center text-center h-64 bg-slate-800/50 rounded-xl border border-dashed border-slate-600 relative hover:bg-slate-800/70 hover:border-slate-500 transition">
+                 <input
+                    type="file"
+                    onChange={(e) => handleFileUpload(e, 'compliance', setUploadingCompliance)}
+                    disabled={uploadingCompliance}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
+                  />
+                 <div className="text-5xl mb-4 pointer-events-none opacity-50">📤</div>
+                 <h2 className="text-xl font-bold font-sans text-slate-200 pointer-events-none">Nahrát rámcovou smlouvu</h2>
+                 <p className="text-slate-400 mt-2 pointer-events-none">
+                   {uploadingCompliance ? 'Nahrávám...' : 'Klikněte pro nahrání rámcové smlouvy do Firebase Storage.'}
+                 </p>
+              </div>
+              <div className="bg-slate-800/50 p-6 rounded-xl border border-white/10 overflow-y-auto h-64">
+                <h3 className="text-sm font-semibold text-slate-300 mb-4 uppercase tracking-wider">Nahrané smlouvy</h3>
+                {loadingDocs ? (
+                  <p className="text-sm text-slate-400">Načítám soubory...</p>
+                ) : docsList.length === 0 ? (
+                  <p className="text-sm text-slate-400 italic">Zatím nebyly nahrány žádné smlouvy pro {activeDept}.</p>
+                ) : (
+                  <ul className="space-y-3">
+                    {docsList.map((doc) => (
+                      <li key={doc.name} className="flex items-center justify-between p-3 bg-slate-900/50 rounded-lg border border-white/5">
+                        <span className="text-sm text-slate-200 truncate pr-4" title={doc.name}>{doc.name}</span>
+                        <a href={doc.url} target="_blank" rel="noopener noreferrer" className="text-indigo-400 hover:text-indigo-300 text-sm font-medium whitespace-nowrap">Stáhnout &rarr;</a>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
           </div>
         )}
 

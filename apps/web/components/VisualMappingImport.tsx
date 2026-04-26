@@ -8,9 +8,10 @@ import { functions } from '../lib/firebase';
 
 interface VisualMappingImportProps {
   onSuccess: (stats: any) => void;
+  department?: 'UPV' | 'KPV';
 }
 
-export default function VisualMappingImport({ onSuccess }: VisualMappingImportProps) {
+export default function VisualMappingImport({ onSuccess, department }: VisualMappingImportProps) {
   const [fileData, setFileData] = useState<any[][] | null>(null);
   const [headers, setHeaders] = useState<string[]>([]);
   const [importing, setImporting] = useState(false);
@@ -107,7 +108,11 @@ export default function VisualMappingImport({ onSuccess }: VisualMappingImportPr
         if (mapping.lastName !== -1) mappedRow.lastName = row[mapping.lastName];
         if (mapping.email !== -1) mappedRow.email = row[mapping.email];
         if (mapping.year !== -1) mappedRow.year = row[mapping.year];
-        if (mapping.major !== -1) mappedRow.major = row[mapping.major];
+        if (department) {
+            mappedRow.major = department;
+        } else if (mapping.major !== -1) {
+            mappedRow.major = row[mapping.major];
+        }
         if (mapping.migratedHours !== -1) mappedRow.migratedHours = Number(row[mapping.migratedHours]) || 0;
         if (mapping.targetHours !== -1) mappedRow.targetHours = Number(row[mapping.targetHours]) || 15;
 
@@ -243,10 +248,16 @@ export default function VisualMappingImport({ onSuccess }: VisualMappingImportPr
                   </div>
                   <div className="flex items-center justify-between">
                       <label className="text-sm font-medium text-slate-200">Zaměření (Major)</label>
-                      <select value={mapping.major} onChange={(e) => handleMappingChange('major', e.target.value)} className="border border-white/10 p-1.5 rounded text-sm w-48 bg-slate-950/50 text-slate-100">
-                          <option value={-1}>-- Ignorovat --</option>
-                          {headers.map((h, i) => <option key={i} value={i}>{h}</option>)}
-                      </select>
+                      {department ? (
+                        <div className="w-48 text-right text-sm font-medium text-indigo-300">
+                           {department} (Vynuceno filtrem)
+                        </div>
+                      ) : (
+                        <select value={mapping.major} onChange={(e) => handleMappingChange('major', e.target.value)} className="border border-white/10 p-1.5 rounded text-sm w-48 bg-slate-950/50 text-slate-100">
+                            <option value={-1}>-- Ignorovat --</option>
+                            {headers.map((h, i) => <option key={i} value={i}>{h}</option>)}
+                        </select>
+                      )}
                   </div>
                   <div className="flex items-center justify-between">
                       <label className="text-sm font-medium text-slate-200">Odpracované hodiny</label>
