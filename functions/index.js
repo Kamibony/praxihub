@@ -760,15 +760,44 @@ exports.importRoster = functions
             }
           }
 
-          const orgsRef = db.collection("organizations");
-          let existingOrgDoc = null;
+          let existingInstDoc = null;
           let orgName = null;
+          let orgIco = null;
+
           if (userObj.organizationId) {
             orgName = String(userObj.organizationId).trim();
-            const orgQ = orgsRef.where("name", "==", orgName).limit(1);
-            const orgSnapshot = await transaction.get(orgQ);
-            if (!orgSnapshot.empty) {
-              existingOrgDoc = orgSnapshot.docs[0];
+          }
+          if (userObj.ico) {
+            orgIco = String(userObj.ico).trim();
+          }
+
+          if (orgIco || orgName) {
+            let instQ;
+            if (orgIco) {
+              instQ = usersRef.where("role", "==", "institution").where("ico", "==", orgIco).limit(1);
+            } else {
+              instQ = usersRef.where("role", "==", "institution").where("displayName", "==", orgName).limit(1);
+            }
+            const instSnapshot = await transaction.get(instQ);
+            if (!instSnapshot.empty) {
+              existingInstDoc = instSnapshot.docs[0];
+            }
+          }
+
+          let instId = null;
+          if (orgName || orgIco) {
+            if (existingInstDoc) {
+              instId = existingInstDoc.id;
+            } else {
+              const newInstRef = usersRef.doc();
+              instId = newInstRef.id;
+              transaction.set(newInstRef, {
+                role: "institution",
+                displayName: orgName || "Neznámá instituce",
+                ico: orgIco || null,
+                status: "uninvited",
+                createdAt: admin.firestore.FieldValue.serverTimestamp(),
+              });
             }
           }
 
@@ -792,8 +821,8 @@ exports.importRoster = functions
 
           if (existingUserDoc) {
             transaction.update(existingUserDoc.ref, {
-              organizationId:
-                userObj.organizationId || existingUserDoc.data().organizationId,
+              institutionId:
+                instId || existingUserDoc.data().institutionId || null,
               year: userObj.year || existingUserDoc.data().year,
               major: userObj.major || existingUserDoc.data().major || null,
               email:
@@ -809,7 +838,7 @@ exports.importRoster = functions
               name: fullName,
               normalizedName: normalizedName,
               role: "student",
-              organizationId: userObj.organizationId || null,
+              institutionId: instId || null,
               year: userObj.year || null,
               major: userObj.major || null,
               email:
@@ -820,25 +849,10 @@ exports.importRoster = functions
             added++;
           }
 
-          let orgId = null;
-          if (orgName) {
-            if (existingOrgDoc) {
-              orgId = existingOrgDoc.id;
-            } else {
-              const newOrgRef = orgsRef.doc();
-              orgId = newOrgRef.id;
-              transaction.set(newOrgRef, {
-                name: orgName,
-                role: "institution",
-                createdAt: admin.firestore.FieldValue.serverTimestamp(),
-              });
-            }
-          }
-
           if (existingPlacementDoc) {
             transaction.update(existingPlacementDoc.ref, {
-              organizationId:
-                orgId || existingPlacementDoc.data().organizationId,
+              institutionId:
+                instId || existingPlacementDoc.data().institutionId || null,
               migratedHours:
                 Number(userObj.migratedHours) ||
                 existingPlacementDoc.data().migratedHours ||
@@ -857,7 +871,7 @@ exports.importRoster = functions
             const newPlacementRef = placementsRef.doc();
             transaction.set(newPlacementRef, {
               studentId: userId,
-              organizationId: orgId,
+              institutionId: instId || null,
               status: "DRAFT",
               migratedHours: Number(userObj.migratedHours) || 0,
               targetHours: Number(userObj.targetHours) || 15,

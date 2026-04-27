@@ -44,11 +44,6 @@ export default function CoordinatorDashboard() {
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState<FilterStatus>("ALL");
   const [selectedPlacement, setSelectedPlacement] = useState<any>(null);
-  const [uploading, setUploading] = useState(false);
-  const [uploadResult, setUploadResult] = useState<{
-    success?: boolean;
-    message?: string;
-  } | null>(null);
 
   // View mode state
   const [viewMode, setViewMode] = useState<
@@ -242,53 +237,6 @@ export default function CoordinatorDashboard() {
     return `${day}. ${month}. ${year}`;
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setUploading(true);
-    setUploadResult(null);
-
-    try {
-      const reader = new FileReader();
-      reader.onload = async (event) => {
-        try {
-          const base64Data = (event.target?.result as string).split(",")[1];
-          const importRoster = httpsCallable(functions, "importRoster");
-
-          const response = await importRoster({ fileData: base64Data });
-          const data = response.data as {
-            added: number;
-            updated: number;
-            ignored: number;
-          };
-
-          setUploadResult({
-            success: true,
-            message: `Úspěšně importováno. Přidáno/Aktualizováno: ${data.added + data.updated}, Ignorováno (chyby): ${data.ignored}.`,
-          });
-        } catch (err: any) {
-          console.error("Import error:", err);
-          setUploadResult({
-            success: false,
-            message: `Chyba při importu: ${err.message}`,
-          });
-        } finally {
-          setUploading(false);
-          // Reset file input
-          e.target.value = "";
-        }
-      };
-      reader.readAsDataURL(file);
-    } catch (err: any) {
-      console.error("File reading error:", err);
-      setUploadResult({
-        success: false,
-        message: `Chyba při čtení souboru: ${err.message}`,
-      });
-      setUploading(false);
-    }
-  };
 
   const handleExport = () => {
     const headers = [
@@ -571,20 +519,6 @@ export default function CoordinatorDashboard() {
             <span className="text-sm text-gray-500 hidden md:inline">
               Přihlášen jako: Koordinátor
             </span>
-
-            <label
-              className={`flex items-center gap-2 text-sm px-4 py-2 border rounded transition-colors cursor-pointer ${uploading ? "bg-gray-100 text-gray-400 border-gray-200" : "bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"}`}
-            >
-              <Upload size={16} />
-              {uploading ? "Nahrávám..." : "Importovat Roster"}
-              <input
-                type="file"
-                accept=".xlsx, .xls"
-                className="hidden"
-                onChange={handleFileUpload}
-                disabled={uploading}
-              />
-            </label>
 
             <button
               onClick={handleExport}
@@ -1029,21 +963,8 @@ export default function CoordinatorDashboard() {
           </div>
         ) : (
           <>
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+            <div className="flex flex-col md:flex-row justify-end items-start md:items-center mb-6 gap-4">
               <div className="flex items-center gap-2 w-full md:w-auto">
-                <label
-                  className={`flex-1 md:flex-none flex items-center justify-center gap-2 text-sm px-4 py-3 md:py-2 border rounded-lg md:rounded transition-colors cursor-pointer ${uploading ? "bg-gray-100 text-gray-400 border-gray-200" : "bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"}`}
-                >
-                  <Upload size={16} />
-                  {uploading ? "Nahrávám..." : "Import Roster"}
-                  <input
-                    type="file"
-                    accept=".xlsx, .xls"
-                    className="hidden"
-                    onChange={handleFileUpload}
-                    disabled={uploading}
-                  />
-                </label>
                 <button
                   onClick={handleExport}
                   className="flex-1 md:flex-none flex items-center justify-center gap-2 text-sm px-4 py-3 md:py-2 bg-white border border-gray-300 rounded-lg md:rounded hover:bg-gray-50 text-gray-700 transition-colors"
@@ -1053,20 +974,6 @@ export default function CoordinatorDashboard() {
                 </button>
               </div>
             </div>
-
-            {uploadResult && (
-              <div
-                className={`mb-6 p-4 rounded-lg border ${uploadResult.success ? "bg-green-50 border-green-200 text-green-800" : "bg-red-50 border-red-200 text-red-800"} flex justify-between items-center`}
-              >
-                <span>{uploadResult.message}</span>
-                <button
-                  onClick={() => setUploadResult(null)}
-                  className="text-sm opacity-70 hover:opacity-100 text-current underline"
-                >
-                  Zavřít
-                </button>
-              </div>
-            )}
 
             {/* OVERVIEW SECTION */}
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-8">
