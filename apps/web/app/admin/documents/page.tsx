@@ -23,6 +23,7 @@ export default function DocumentCenter() {
   const [testResult, setTestResult] = useState<any>(null);
   const [testReflection, setTestReflection] = useState('');
   const [activeTab, setActiveTab] = useState<'AI' | 'IMPORT' | 'TEMPLATES' | 'COMPLIANCE'>('AI');
+  const [runningMigration, setRunningMigration] = useState(false);
   const [importFormat, setImportFormat] = useState('UPV');
   const [importing, setImporting] = useState(false);
   const [importStats, setImportStats] = useState<any>(null);
@@ -156,6 +157,21 @@ ${currentRulesObj.kompetencni_ramec}
   const [docsList, setDocsList] = useState<{name: string, url: string}[]>([]);
   const [loadingDocs, setLoadingDocs] = useState(false);
 
+  const handleMigration = async () => {
+    if (!confirm("Are you sure you want to run the institutions migration? This will create users and update placements.")) return;
+    setRunningMigration(true);
+    try {
+      const migrateFn = httpsCallable(functions, 'migrateInstitutions');
+      const res = await migrateFn();
+      const data = res.data as { success: boolean; createdCount: number; updatedCount: number };
+      alert(`Migrace úspěšná! Vytvořeno institucí: ${data.createdCount}, Aktualizováno smluv: ${data.updatedCount}`);
+    } catch (e: any) {
+      console.error(e);
+      alert(`Chyba při migraci: ${e.message}`);
+    }
+    setRunningMigration(false);
+  };
+
   const fetchDocs = async (pathPrefix: string) => {
     setLoadingDocs(true);
     try {
@@ -205,7 +221,16 @@ ${currentRulesObj.kompetencni_ramec}
             &larr; Zpět na Dashboard
           </Link>
         </div>
-        <p className="text-slate-300 mb-8">Centrální správa dokumentů, šablon a AI metodiky.</p>
+        <div className="flex justify-between items-center mb-8">
+          <p className="text-slate-300">Centrální správa dokumentů, šablon a AI metodiky.</p>
+          <button
+            onClick={handleMigration}
+            disabled={runningMigration}
+            className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition disabled:opacity-50"
+          >
+            {runningMigration ? "Probíhá migrace..." : "🚨 RUN MIGRATION"}
+          </button>
+        </div>
 
         {/* Global Department Scope Toggle */}
         <div className="mb-8 flex justify-center">
