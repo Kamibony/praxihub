@@ -12,8 +12,10 @@ import Link from 'next/link';
 import VisualMappingImport from '../../../components/VisualMappingImport';
 
 export default function DocumentCenter() {
-  const [rulesUpv, setRulesUpv] = useState('');
-  const [rulesKpv, setRulesKpv] = useState('');
+  type Snippets = { metodika: string; uznatelnost: string; kompetencni_ramec: string };
+  const initialSnippets: Snippets = { metodika: '', uznatelnost: '', kompetencni_ramec: '' };
+  const [rulesUpv, setRulesUpv] = useState<Snippets>(initialSnippets);
+  const [rulesKpv, setRulesKpv] = useState<Snippets>(initialSnippets);
   const [activeDept, setActiveDept] = useState<'UPV' | 'KPV'>('UPV');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -31,23 +33,40 @@ export default function DocumentCenter() {
   useEffect(() => {
     const fetchRules = async () => {
       try {
+        const parseSnippets = (content: string): Snippets => {
+          try {
+            const parsed = JSON.parse(content);
+            if (parsed && typeof parsed === 'object') {
+              return {
+                metodika: parsed.metodika || '',
+                uznatelnost: parsed.uznatelnost || '',
+                kompetencni_ramec: parsed.kompetencni_ramec || ''
+              };
+            }
+          } catch (e) {
+            // If it's not JSON, it's legacy text, assign to metodika
+            return { ...initialSnippets, metodika: content };
+          }
+          return initialSnippets;
+        };
+
         const docRefUpv = doc(db, 'system_configs', 'ai_rules_upv');
         const docSnapUpv = await getDoc(docRefUpv);
         if (docSnapUpv.exists()) {
-          setRulesUpv(docSnapUpv.data().content);
+          setRulesUpv(parseSnippets(docSnapUpv.data().content));
         } else {
             // Fallback for legacy data
             const docRefLegacy = doc(db, 'system_configs', 'ai_krau_rules');
             const docSnapLegacy = await getDoc(docRefLegacy);
             if (docSnapLegacy.exists()) {
-                setRulesUpv(docSnapLegacy.data().content);
+                setRulesUpv(parseSnippets(docSnapLegacy.data().content));
             }
         }
 
         const docRefKpv = doc(db, 'system_configs', 'ai_rules_kpv');
         const docSnapKpv = await getDoc(docRefKpv);
         if (docSnapKpv.exists()) {
-          setRulesKpv(docSnapKpv.data().content);
+          setRulesKpv(parseSnippets(docSnapKpv.data().content));
         }
       } catch (e) {
         console.error('Error fetching rules', e);
@@ -65,7 +84,11 @@ export default function DocumentCenter() {
     try {
       const updateFn = httpsCallable(functions, 'updateSystemConfig');
       const docId = activeDept === 'UPV' ? 'ai_rules_upv' : 'ai_rules_kpv';
-      const content = activeDept === 'UPV' ? rulesUpv : rulesKpv;
+      const contentObj = activeDept === 'UPV' ? rulesUpv : rulesKpv;
+
+      // Store as JSON string, backend functions will receive it,
+      // but evaluateReflection needs to handle JSON string properly
+      const content = JSON.stringify(contentObj);
       const title = activeDept === 'UPV' ? 'Metodika UPV (Učitelství)' : 'Metodika KPV (Poradenství)';
 
       await updateFn({
@@ -88,7 +111,19 @@ export default function DocumentCenter() {
     setTestResult(null);
     try {
       const evaluateFn = httpsCallable(functions, 'testEvaluateReflection');
-      const currentRules = activeDept === 'UPV' ? rulesUpv : rulesKpv;
+      const currentRulesObj = activeDept === 'UPV' ? rulesUpv : rulesKpv;
+      // Convert current rules to a formatted markdown string for testing,
+      // identical to what `evaluateReflection` will do
+      const currentRules = `
+## Metodika
+${currentRulesObj.metodika}
+
+## Uznatelnost
+${currentRulesObj.uznatelnost}
+
+## Kompetenční rámec
+${currentRulesObj.kompetencni_ramec}
+`;
       const res = await evaluateFn({ reflectionText: testReflection, rulesText: currentRules });
       setTestResult(res.data);
     } catch (e) {
@@ -201,7 +236,7 @@ export default function DocumentCenter() {
           <button
             onClick={() => setActiveTab('IMPORT')}
             className={`py-3 px-6 text-sm font-medium border-b-2 whitespace-nowrap flex items-center gap-2 ${activeTab === 'IMPORT' ? 'border-indigo-400 text-indigo-300 bg-indigo-500/20 rounded-t-lg' : 'border-transparent text-slate-400 hover:text-slate-200'}`}>
-            📂 Data Import Engine
+            📂 Roster Import
           </button>
           <button
             onClick={() => setActiveTab('TEMPLATES')}
@@ -228,14 +263,32 @@ export default function DocumentCenter() {
           <div className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Editor */}
             <div className="flex flex-col h-[600px]">
-              <div className="flex justify-between items-center mb-2">
-                <label className="block text-sm font-medium text-slate-200">Pravidla a metodika (Markdown) pro {activeDept}</label>
+              <div className="flex-1 overflow-y-auto space-y-4 pr-2">
+                <div>
+                  <label className="block text-sm font-medium text-slate-200 mb-2">Metodika pro {activeDept}</label>
+                  <textarea
+                    className="w-full h-32 p-4 bg-slate-900/50 border border-white/10 text-slate-100 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none font-mono text-sm"
+                    value={activeDept === 'UPV' ? rulesUpv.metodika : rulesKpv.metodika}
+                    onChange={(e) => activeDept === 'UPV' ? setRulesUpv({...rulesUpv, metodika: e.target.value}) : setRulesKpv({...rulesKpv, metodika: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-200 mb-2">Uznatelnost</label>
+                  <textarea
+                    className="w-full h-32 p-4 bg-slate-900/50 border border-white/10 text-slate-100 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none font-mono text-sm"
+                    value={activeDept === 'UPV' ? rulesUpv.uznatelnost : rulesKpv.uznatelnost}
+                    onChange={(e) => activeDept === 'UPV' ? setRulesUpv({...rulesUpv, uznatelnost: e.target.value}) : setRulesKpv({...rulesKpv, uznatelnost: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-200 mb-2">Kompetenční rámec</label>
+                  <textarea
+                    className="w-full h-32 p-4 bg-slate-900/50 border border-white/10 text-slate-100 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none font-mono text-sm"
+                    value={activeDept === 'UPV' ? rulesUpv.kompetencni_ramec : rulesKpv.kompetencni_ramec}
+                    onChange={(e) => activeDept === 'UPV' ? setRulesUpv({...rulesUpv, kompetencni_ramec: e.target.value}) : setRulesKpv({...rulesKpv, kompetencni_ramec: e.target.value})}
+                  />
+                </div>
               </div>
-              <textarea
-                className="flex-1 w-full p-4 bg-slate-900/50 border border-white/10 text-slate-100 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none font-mono text-sm"
-                value={activeDept === 'UPV' ? rulesUpv : rulesKpv}
-                onChange={(e) => activeDept === 'UPV' ? setRulesUpv(e.target.value) : setRulesKpv(e.target.value)}
-              />
               <button
                 onClick={handleSave}
                 disabled={saving}
@@ -291,10 +344,11 @@ export default function DocumentCenter() {
 
                 {activeTab === 'IMPORT' && (
           <div className="card-glass p-8">
-            <div className="flex items-center gap-3 mb-6 border-b border-white/10 pb-4">
+            <div className="flex items-center gap-3 mb-2 border-b border-white/10 pb-4">
               <span className="text-2xl">📂</span>
-              <h2 className="text-xl font-bold font-sans text-slate-100">Data Import Engine (Vizuální mapování)</h2>
+              <h2 className="text-xl font-bold font-sans text-slate-100">Roster Import (Excel/CSV student lists)</h2>
             </div>
+            <p className="text-slate-400 text-sm mb-6">Nahrávejte a mapujte seznamy studentů z Excelu (.xlsx) nebo CSV pro automatické vytvoření uživatelů.</p>
 
             {!importStats ? (
                 <VisualMappingImport onSuccess={setImportStats} department={activeDept} />
@@ -335,6 +389,7 @@ export default function DocumentCenter() {
               <div className="flex flex-col items-center justify-center text-center h-64 bg-slate-800/50 rounded-xl border border-dashed border-slate-600 relative hover:bg-slate-800/70 hover:border-slate-500 transition">
                  <input
                     type="file"
+                    accept=".pdf,.docx,.pptx"
                     onChange={(e) => handleFileUpload(e, 'templates', setUploadingTemplate)}
                     disabled={uploadingTemplate}
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
@@ -342,7 +397,7 @@ export default function DocumentCenter() {
                  <div className="text-5xl mb-4 pointer-events-none opacity-50">📤</div>
                  <h2 className="text-xl font-bold font-sans text-slate-200 pointer-events-none">Nahrát šablonu</h2>
                  <p className="text-slate-400 mt-2 pointer-events-none">
-                   {uploadingTemplate ? 'Nahrávám...' : 'Klikněte pro nahrání šablony (PDF, DOCX) do Firebase Storage.'}
+                   {uploadingTemplate ? 'Nahrávám...' : 'Klikněte pro nahrání šablony (.pdf, .docx, .pptx) do Firebase Storage.'}
                  </p>
               </div>
               <div className="bg-slate-800/50 p-6 rounded-xl border border-white/10 overflow-y-auto h-64">
@@ -376,6 +431,7 @@ export default function DocumentCenter() {
               <div className="flex flex-col items-center justify-center text-center h-64 bg-slate-800/50 rounded-xl border border-dashed border-slate-600 relative hover:bg-slate-800/70 hover:border-slate-500 transition">
                  <input
                     type="file"
+                    accept=".pdf,.docx,.pptx"
                     onChange={(e) => handleFileUpload(e, 'compliance', setUploadingCompliance)}
                     disabled={uploadingCompliance}
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
@@ -383,7 +439,7 @@ export default function DocumentCenter() {
                  <div className="text-5xl mb-4 pointer-events-none opacity-50">📤</div>
                  <h2 className="text-xl font-bold font-sans text-slate-200 pointer-events-none">Nahrát rámcovou smlouvu</h2>
                  <p className="text-slate-400 mt-2 pointer-events-none">
-                   {uploadingCompliance ? 'Nahrávám...' : 'Klikněte pro nahrání rámcové smlouvy do Firebase Storage.'}
+                   {uploadingCompliance ? 'Nahrávám...' : 'Klikněte pro nahrání rámcové smlouvy (.pdf, .docx, .pptx) do Firebase Storage.'}
                  </p>
               </div>
               <div className="bg-slate-800/50 p-6 rounded-xl border border-white/10 overflow-y-auto h-64">
