@@ -24,6 +24,7 @@ export default function VisualMappingImport({ onSuccess, department }: VisualMap
     lastName: -1,
     email: -1,
     organizationId: -1,
+    ico: -1,
     year: -1,
     major: -1,
     migratedHours: -1,
@@ -68,6 +69,7 @@ export default function VisualMappingImport({ onSuccess, department }: VisualMap
           if (lower.includes('jméno') && lower.includes('příjmení')) newMapping.name = i;
           if (lower.includes('email') || lower.includes('e-mail')) newMapping.email = i;
           if (lower.includes('škola') || lower.includes('organizace') || lower.includes('lokace')) newMapping.organizationId = i;
+          if (lower.includes('ičo') || lower.includes('ico') || lower.includes('ič')) newMapping.ico = i;
           if (lower.includes('ročník') || lower.includes('rok')) newMapping.year = i;
           if (lower.includes('major') || lower.includes('zaměření') || lower.includes('obor')) newMapping.major = i;
           if (lower.includes('hodiny') || lower.includes('hours') || lower.includes('odpracováno')) newMapping.migratedHours = i;
@@ -101,6 +103,8 @@ export default function VisualMappingImport({ onSuccess, department }: VisualMap
         }
 
         const mappedRow: any = {};
+
+        if (mapping.ico !== -1) mappedRow.ico = row[mapping.ico];
 
         if (mapping.uid !== -1) mappedRow.uid = row[mapping.uid];
         if (mapping.name !== -1) mappedRow.name = row[mapping.name];
@@ -204,6 +208,13 @@ export default function VisualMappingImport({ onSuccess, department }: VisualMap
                   <div className="flex items-center justify-between">
                       <label className="text-sm font-medium text-slate-200">Křestní jméno</label>
                       <select value={mapping.firstName} onChange={(e) => handleMappingChange('firstName', e.target.value)} className="border border-white/10 p-1.5 rounded text-sm w-48 bg-slate-950/50 text-slate-100">
+                          <option value={-1}>-- Ignorovat --</option>
+                          {headers.map((h, i) => <option key={i} value={i}>{h}</option>)}
+                      </select>
+                  </div>
+                  <div className="flex items-center justify-between">
+                      <label className="text-sm font-medium text-slate-200">IČO Instituce</label>
+                      <select value={mapping.ico} onChange={(e) => handleMappingChange('ico', e.target.value)} className="border border-white/10 p-1.5 rounded text-sm w-48 bg-slate-950/50 text-slate-100">
                           <option value={-1}>-- Ignorovat --</option>
                           {headers.map((h, i) => <option key={i} value={i}>{h}</option>)}
                       </select>
