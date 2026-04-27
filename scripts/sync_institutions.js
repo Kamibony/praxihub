@@ -7,8 +7,10 @@ if (!admin.apps.length) {
 }
 const db = admin.firestore();
 
+const isDryRun = process.argv.includes("--dry-run");
+
 async function syncInstitutions() {
-    console.log("Starting institutions sync...");
+    console.log(`Starting institutions sync...${isDryRun ? " (DRY RUN)" : ""}`);
     const placementsSnapshot = await db.collection("placements").get();
 
     const uniqueOrgs = {}; // orgId -> { orgData, placementRefs }
@@ -44,22 +46,30 @@ async function syncInstitutions() {
         } else {
             const newUserRef = db.collection("users").doc();
             instId = newUserRef.id;
-            await newUserRef.set({
-                role: "institution",
-                displayName: orgData.name || "Neznámá instituce",
-                ico: orgData.ico || null,
-                status: "uninvited",
-                createdAt: admin.firestore.FieldValue.serverTimestamp()
-            });
-            console.log(`Created institution user ${instId} for organization ${orgId}`);
+            if (isDryRun) {
+                console.log(`[DRY RUN] Would create institution user ${instId} for organization ${orgId}: ${orgData.name}`);
+            } else {
+                await newUserRef.set({
+                    role: "institution",
+                    displayName: orgData.name || "Neznámá instituce",
+                    ico: orgData.ico || null,
+                    status: "uninvited",
+                    createdAt: admin.firestore.FieldValue.serverTimestamp()
+                });
+                console.log(`Created institution user ${instId} for organization ${orgId}`);
+            }
         }
 
         // Update placements
         for (const placementRef of uniqueOrgs[orgId]) {
-            await placementRef.update({
-                institutionId: instId
-            });
-            console.log(`Updated placement ${placementRef.id} with institutionId ${instId}`);
+            if (isDryRun) {
+                console.log(`[DRY RUN] Would update placement ${placementRef.id} with institutionId ${instId}`);
+            } else {
+                await placementRef.update({
+                    institutionId: instId
+                });
+                console.log(`Updated placement ${placementRef.id} with institutionId ${instId}`);
+            }
         }
     }
 
