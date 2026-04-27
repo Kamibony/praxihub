@@ -1767,6 +1767,81 @@ exports.sanitizeProductionDatabase = sanitizeDb.sanitizeProductionDatabase;
 const usersModule = require("./users");
 exports.createUserManually = usersModule.createUserManually;
 
+exports.migrateInstitutions = functions.https.onCall(async (data, context) => {
+  // Check authorization - only admins
+  if (!context.auth) {
+    throw new functions.https.HttpsError("unauthenticated", "Must be logged in.");
+  }
+  const userDoc = await admin.firestore().collection("users").doc(context.auth.uid).get();
+  if (!userDoc.exists || userDoc.data().role !== "admin") {
+    throw new functions.https.HttpsError("permission-denied", "Nemáte oprávnění.");
+  }
+
+  const db = admin.firestore();
+  console.log("Starting institutions migration via Cloud Function...");
+
+  const placementsSnapshot = await db.collection("placements").get();
+  const uniqueOrgs = {}; // orgId -> array of placement refs
+  console.log(`Found ${placementsSnapshot.docs.length} placements.`);
+
+  for (const doc of placementsSnapshot.docs) {
+      const placementData = doc.data();
+      if (placementData.organizationId) {
+          if (!uniqueOrgs[placementData.organizationId]) {
+              uniqueOrgs[placementData.organizationId] = [];
+          }
+          uniqueOrgs[placementData.organizationId].push(doc.ref);
+      }
+  }
+
+  const orgIds = Object.keys(uniqueOrgs);
+  console.log(`Found ${orgIds.length} unique organizations linked in placements.`);
+
+  let createdCount = 0;
+  let updatedCount = 0;
+
+  for (const orgId of orgIds) {
+      const orgDoc = await db.collection("organizations").doc(orgId).get();
+      if (!orgDoc.exists) continue;
+
+      const orgData = orgDoc.data();
+
+      // Find if user already exists
+      let instQ = db.collection("users").where("role", "==", "institution").where("displayName", "==", orgData.name).limit(1);
+      let instSnapshot = await instQ.get();
+
+      let instId;
+      if (!instSnapshot.empty) {
+          instId = instSnapshot.docs[0].id;
+      } else {
+          const newUserRef = db.collection("users").doc();
+          instId = newUserRef.id;
+
+          await newUserRef.set({
+              role: "institution",
+              displayName: orgData.name || "Neznámá instituce",
+              ico: orgData.ico || null,
+              status: "uninvited",
+              createdAt: admin.firestore.FieldValue.serverTimestamp()
+          });
+          createdCount++;
+          console.log(`Created institution user ${instId} for organization ${orgId}`);
+      }
+
+      // Update placements
+      for (const placementRef of uniqueOrgs[orgId]) {
+          await placementRef.update({
+              institutionId: instId
+          });
+          updatedCount++;
+          console.log(`Updated placement ${placementRef.id} with institutionId ${instId}`);
+      }
+  }
+
+  console.log(`Migration complete. Created: ${createdCount}, Updated Placements: ${updatedCount}`);
+  return { success: true, createdCount, updatedCount };
+});
+
 // ARES Backend Function
 exports.fetchAresAndLink = functions.https.onCall(async (data, context) => {
   if (!context.auth) {
