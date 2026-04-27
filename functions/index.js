@@ -527,7 +527,7 @@ exports.transitionPlacementState = functions.https.onCall(
       ACTIVE: ["EVALUATION", "CLOSED"],
       EVALUATION: ["CLOSED"],
       CLOSED: ["FINAL_EXAM"],
-      REJECTED: ["DRAFT"]
+      REJECTED: ["DRAFT"],
     };
 
     const { placementId, newState } = data;
@@ -559,9 +559,9 @@ exports.transitionPlacementState = functions.https.onCall(
         const allowedNextStates = validTransitions[currentState];
 
         if (!allowedNextStates || !allowedNextStates.includes(newState)) {
-           throw new functions.https.HttpsError(
+          throw new functions.https.HttpsError(
             "failed-precondition",
-            `Neplatný přechod stavu. Ze stavu '${currentState}' nelze přejít do '${newState}'.`
+            `Neplatný přechod stavu. Ze stavu '${currentState}' nelze přejít do '${newState}'.`,
           );
         }
 
@@ -587,7 +587,7 @@ exports.transitionPlacementState = functions.https.onCall(
                 db.collection("users").doc(currentData.organizationId),
               );
               if (!userOrgDoc.exists) {
-                 throw new functions.https.HttpsError(
+                throw new functions.https.HttpsError(
                   "failed-precondition",
                   "Organizace nenalezena.",
                 );
@@ -611,23 +611,23 @@ exports.transitionPlacementState = functions.https.onCall(
                 }
               }
             } else {
-               const orgData = orgDoc.data();
-                const expirationStr = orgData.frameworkAgreementExpiration;
+              const orgData = orgDoc.data();
+              const expirationStr = orgData.frameworkAgreementExpiration;
 
-                if (!expirationStr) {
-                  throw new functions.https.HttpsError(
-                    "failed-precondition",
-                    "Organizace nemá platnou rámcovou smlouvu (chybí datum).",
-                  );
-                }
+              if (!expirationStr) {
+                throw new functions.https.HttpsError(
+                  "failed-precondition",
+                  "Organizace nemá platnou rámcovou smlouvu (chybí datum).",
+                );
+              }
 
-                const expDate = new Date(expirationStr);
-                if (isNaN(expDate.getTime()) || expDate <= new Date()) {
-                  throw new functions.https.HttpsError(
-                    "failed-precondition",
-                    "Organizace nemá platnou rámcovou smlouvu (vypršela).",
-                  );
-                }
+              const expDate = new Date(expirationStr);
+              if (isNaN(expDate.getTime()) || expDate <= new Date()) {
+                throw new functions.https.HttpsError(
+                  "failed-precondition",
+                  "Organizace nemá platnou rámcovou smlouvu (vypršela).",
+                );
+              }
             }
           }
         }
@@ -689,66 +689,66 @@ const xlsx = require("xlsx");
 exports.importRoster = functions
   .runWith({ timeoutSeconds: 300, memory: "1GB" })
   .https.onCall(async (data, context) => {
-  if (!context.auth) {
-    throw new functions.https.HttpsError(
-      "unauthenticated",
-      "Must be logged in.",
-    );
-  }
-
-  const { mappedData } = data;
-  if (!mappedData || !Array.isArray(mappedData)) {
-    throw new functions.https.HttpsError(
-      "invalid-argument",
-      "Missing mapped data array.",
-    );
-  }
-
-  const db = admin.firestore();
-
-  let added = 0;
-  let updated = 0;
-  let ignored = 0;
-
-  // Helper to normalize names
-  const normalizeName = (name) => {
-    if (!name) return "";
-    return name
-      .replace(/Bc\.|Mgr\.|Ing\.|Ph\.D\.|prof\.|doc\./gi, "")
-      .replace(/,/g, "")
-      .trim()
-      .replace(/\s+/g, " ");
-  };
-
-  const processUser = async (userObj) => {
-    let fullName =
-      userObj.name ||
-      [userObj.firstName, userObj.lastName].filter(Boolean).join(" ");
-    if (!fullName) {
-      ignored++;
-      return;
+    if (!context.auth) {
+      throw new functions.https.HttpsError(
+        "unauthenticated",
+        "Must be logged in.",
+      );
     }
 
-    const normalizedName = normalizeName(fullName);
+    const { mappedData } = data;
+    if (!mappedData || !Array.isArray(mappedData)) {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        "Missing mapped data array.",
+      );
+    }
 
-    try {
-      await db.runTransaction(async (transaction) => {
-        const usersRef = db.collection("users");
+    const db = admin.firestore();
 
-        let existingUserDoc = null;
+    let added = 0;
+    let updated = 0;
+    let ignored = 0;
 
-        // 1. ALL READS FIRST
+    // Helper to normalize names
+    const normalizeName = (name) => {
+      if (!name) return "";
+      return name
+        .replace(/Bc\.|Mgr\.|Ing\.|Ph\.D\.|prof\.|doc\./gi, "")
+        .replace(/,/g, "")
+        .trim()
+        .replace(/\s+/g, " ");
+    };
 
-        if (userObj.uid) {
+    const processUser = async (userObj) => {
+      let fullName =
+        userObj.name ||
+        [userObj.firstName, userObj.lastName].filter(Boolean).join(" ");
+      if (!fullName) {
+        ignored++;
+        return;
+      }
+
+      const normalizedName = normalizeName(fullName);
+
+      try {
+        await db.runTransaction(async (transaction) => {
+          const usersRef = db.collection("users");
+
+          let existingUserDoc = null;
+
+          // 1. ALL READS FIRST
+
+          if (userObj.uid) {
             // Priority 1: Match by explicit UID
             const docRef = usersRef.doc(String(userObj.uid));
             const docSnapshot = await transaction.get(docRef);
             if (docSnapshot.exists) {
-                existingUserDoc = docSnapshot;
+              existingUserDoc = docSnapshot;
             }
-        }
+          }
 
-        if (!existingUserDoc) {
+          if (!existingUserDoc) {
             // Priority 2: Fallback to normalized name search
             const q = usersRef
               .where("normalizedName", "==", normalizedName)
@@ -758,109 +758,125 @@ exports.importRoster = functions
             if (!snapshot.empty) {
               existingUserDoc = snapshot.docs[0];
             }
-        }
-
-        const orgsRef = db.collection("organizations");
-        let existingOrgDoc = null;
-        let orgName = null;
-        if (userObj.organizationId) {
-          orgName = String(userObj.organizationId).trim();
-          const orgQ = orgsRef.where("name", "==", orgName).limit(1);
-          const orgSnapshot = await transaction.get(orgQ);
-          if (!orgSnapshot.empty) {
-            existingOrgDoc = orgSnapshot.docs[0];
           }
-        }
 
-        let userId = existingUserDoc ? existingUserDoc.id : (userObj.uid ? String(userObj.uid) : usersRef.doc().id);
+          const orgsRef = db.collection("organizations");
+          let existingOrgDoc = null;
+          let orgName = null;
+          if (userObj.organizationId) {
+            orgName = String(userObj.organizationId).trim();
+            const orgQ = orgsRef.where("name", "==", orgName).limit(1);
+            const orgSnapshot = await transaction.get(orgQ);
+            if (!orgSnapshot.empty) {
+              existingOrgDoc = orgSnapshot.docs[0];
+            }
+          }
 
-        const placementsRef = db.collection("placements");
-        const placementQ = placementsRef
-          .where("studentId", "==", userId)
-          .limit(1);
-        const placementSnapshot = await transaction.get(placementQ);
-        let existingPlacementDoc = null;
-        if (!placementSnapshot.empty) {
-          existingPlacementDoc = placementSnapshot.docs[0];
-        }
+          let userId = existingUserDoc
+            ? existingUserDoc.id
+            : userObj.uid
+              ? String(userObj.uid)
+              : usersRef.doc().id;
 
-        // 2. ALL WRITES SECOND
+          const placementsRef = db.collection("placements");
+          const placementQ = placementsRef
+            .where("studentId", "==", userId)
+            .limit(1);
+          const placementSnapshot = await transaction.get(placementQ);
+          let existingPlacementDoc = null;
+          if (!placementSnapshot.empty) {
+            existingPlacementDoc = placementSnapshot.docs[0];
+          }
 
-        if (existingUserDoc) {
-          transaction.update(existingUserDoc.ref, {
-            organizationId:
-              userObj.organizationId || existingUserDoc.data().organizationId,
-            year: userObj.year || existingUserDoc.data().year,
-            major: userObj.major || existingUserDoc.data().major || null,
-            email:
-              userObj.email ||
-              existingUserDoc.data().email ||
-              `${normalizedName.replace(/\s+/g, ".").toLowerCase()}@placeholder.com`,
-            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-          });
-          updated++;
-        } else {
-          const newUserRef = usersRef.doc(userId);
-          transaction.set(newUserRef, {
-            name: fullName,
-            normalizedName: normalizedName,
-            role: "student",
-            organizationId: userObj.organizationId || null,
-            year: userObj.year || null,
-            major: userObj.major || null,
-            email: userObj.email || `${normalizedName.replace(/\s+/g, ".").toLowerCase()}@placeholder.com`, // Mock email
-            createdAt: admin.firestore.FieldValue.serverTimestamp(),
-          });
-          added++;
-        }
+          // 2. ALL WRITES SECOND
 
-        let orgId = null;
-        if (orgName) {
-          if (existingOrgDoc) {
-            orgId = existingOrgDoc.id;
+          if (existingUserDoc) {
+            transaction.update(existingUserDoc.ref, {
+              organizationId:
+                userObj.organizationId || existingUserDoc.data().organizationId,
+              year: userObj.year || existingUserDoc.data().year,
+              major: userObj.major || existingUserDoc.data().major || null,
+              email:
+                userObj.email ||
+                existingUserDoc.data().email ||
+                `${normalizedName.replace(/\s+/g, ".").toLowerCase()}@placeholder.com`,
+              updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            });
+            updated++;
           } else {
-            const newOrgRef = orgsRef.doc();
-            orgId = newOrgRef.id;
-            transaction.set(newOrgRef, {
-              name: orgName,
-              role: "institution",
+            const newUserRef = usersRef.doc(userId);
+            transaction.set(newUserRef, {
+              name: fullName,
+              normalizedName: normalizedName,
+              role: "student",
+              organizationId: userObj.organizationId || null,
+              year: userObj.year || null,
+              major: userObj.major || null,
+              email:
+                userObj.email ||
+                `${normalizedName.replace(/\s+/g, ".").toLowerCase()}@placeholder.com`, // Mock email
+              createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            });
+            added++;
+          }
+
+          let orgId = null;
+          if (orgName) {
+            if (existingOrgDoc) {
+              orgId = existingOrgDoc.id;
+            } else {
+              const newOrgRef = orgsRef.doc();
+              orgId = newOrgRef.id;
+              transaction.set(newOrgRef, {
+                name: orgName,
+                role: "institution",
+                createdAt: admin.firestore.FieldValue.serverTimestamp(),
+              });
+            }
+          }
+
+          if (existingPlacementDoc) {
+            transaction.update(existingPlacementDoc.ref, {
+              organizationId:
+                orgId || existingPlacementDoc.data().organizationId,
+              migratedHours:
+                Number(userObj.migratedHours) ||
+                existingPlacementDoc.data().migratedHours ||
+                0,
+              targetHours:
+                Number(userObj.targetHours) ||
+                existingPlacementDoc.data().targetHours ||
+                15,
+              studentMajor:
+                userObj.major ||
+                existingPlacementDoc.data().studentMajor ||
+                null,
+              updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            });
+          } else {
+            const newPlacementRef = placementsRef.doc();
+            transaction.set(newPlacementRef, {
+              studentId: userId,
+              organizationId: orgId,
+              status: "DRAFT",
+              migratedHours: Number(userObj.migratedHours) || 0,
+              targetHours: Number(userObj.targetHours) || 15,
+              studentMajor: userObj.major || null,
               createdAt: admin.firestore.FieldValue.serverTimestamp(),
             });
           }
-        }
+        });
+      } catch (e) {
+        console.error("Transaction failed for user", fullName, e);
+        ignored++;
+      }
+    };
 
-        if (existingPlacementDoc) {
-          transaction.update(existingPlacementDoc.ref, {
-            organizationId: orgId || existingPlacementDoc.data().organizationId,
-            migratedHours: Number(userObj.migratedHours) || existingPlacementDoc.data().migratedHours || 0,
-            targetHours: Number(userObj.targetHours) || existingPlacementDoc.data().targetHours || 15,
-            studentMajor: userObj.major || existingPlacementDoc.data().studentMajor || null,
-            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-          });
-        } else {
-          const newPlacementRef = placementsRef.doc();
-          transaction.set(newPlacementRef, {
-            studentId: userId,
-            organizationId: orgId,
-            status: "DRAFT",
-            migratedHours: Number(userObj.migratedHours) || 0,
-            targetHours: Number(userObj.targetHours) || 15,
-            studentMajor: userObj.major || null,
-            createdAt: admin.firestore.FieldValue.serverTimestamp(),
-          });
-        }
-      });
-    } catch (e) {
-      console.error("Transaction failed for user", fullName, e);
-      ignored++;
-    }
-  };
+    // Execute processUser in parallel using Promise.all to improve batch import performance
+    await Promise.all(mappedData.map((row) => processUser(row)));
 
-  // Execute processUser in parallel using Promise.all to improve batch import performance
-  await Promise.all(mappedData.map(row => processUser(row)));
-
-  return { added, updated, ignored };
-});
+    return { added, updated, ignored };
+  });
 
 exports.evaluateReflection = functions.https.onCall(async (data, context) => {
   if (!context.auth) {
@@ -999,11 +1015,14 @@ exports.evaluateReflection = functions.https.onCall(async (data, context) => {
     const major = placementData.studentMajor || "UPV";
     const configDocId = major === "KPV" ? "ai_rules_kpv" : "ai_rules_upv";
 
-    let krauDoc = await db.collection("system_rules").doc(configDocId).get();
+    let krauDoc = await db.collection("system_configs").doc(configDocId).get();
 
     // Fallback to legacy rules if UPV rules not set yet
     if (!krauDoc.exists && major === "UPV") {
-      krauDoc = await db.collection("system_rules").doc("ai_krau_rules").get();
+      krauDoc = await db
+        .collection("system_configs")
+        .doc("ai_krau_rules")
+        .get();
     }
 
     let rulesContent = `Jste expertní hodnotitel studentských reflexí odborné praxe.
@@ -1017,9 +1036,34 @@ Váš výstup musí být výhradně validní JSON objekt.
 Veškeré texty pro zpětnou vazbu (reasoning) musí být napsány v profesionální a gramaticky bezchybné češtině.`;
 
     if (krauDoc.exists) {
-      rulesContent =
-        krauDoc.data().content +
-        "\n\nVáš výstup musí být výhradně validní JSON objekt.\nVeškeré texty pro zpětnou vazbu (reasoning) musí být napsány v profesionální a gramaticky bezchybné češtině.";
+      const contentRaw = krauDoc.data().content;
+      try {
+        const parsed = JSON.parse(contentRaw);
+        if (parsed && typeof parsed === "object") {
+          rulesContent = `
+Jste expertní hodnotitel studentských reflexí odborné praxe.
+## Metodika
+${parsed.metodika || ""}
+
+## Uznatelnost
+${parsed.uznatelnost || ""}
+
+## Kompetenční rámec
+${parsed.kompetencni_ramec || ""}
+
+Váš výstup musí být výhradně validní JSON objekt.
+Veškeré texty pro zpětnou vazbu (reasoning) musí být napsány v profesionální a gramaticky bezchybné češtině.`;
+        } else {
+          rulesContent =
+            contentRaw +
+            "\n\nVáš výstup musí být výhradně validní JSON objekt.\nVeškeré texty pro zpětnou vazbu (reasoning) musí být napsány v profesionální a gramaticky bezchybné češtině.";
+        }
+      } catch (e) {
+        // Fallback for legacy plain text content
+        rulesContent =
+          contentRaw +
+          "\n\nVáš výstup musí být výhradně validní JSON objekt.\nVeškeré texty pro zpětnou vazbu (reasoning) musí být napsány v profesionální a gramaticky bezchybné češtině.";
+      }
     }
 
     const systemPrompt = rulesContent;
@@ -1643,83 +1687,87 @@ exports.updateSystemConfig = functions.https.onCall(async (data, context) => {
   }
 });
 
-
 // 14. CORRECT REFLECTION GRAMMAR (AI Sensei)
-exports.correctReflectionGrammar = functions.https.onCall(async (data, context) => {
-  if (!context.auth) {
-    throw new functions.https.HttpsError(
-      "unauthenticated",
-      "Musíte být přihlášeni pro použití AI korektora."
-    );
-  }
+exports.correctReflectionGrammar = functions.https.onCall(
+  async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError(
+        "unauthenticated",
+        "Musíte být přihlášeni pro použití AI korektora.",
+      );
+    }
 
-  const { text } = data;
+    const { text } = data;
 
-  if (!text || text.trim() === "") {
-    throw new functions.https.HttpsError(
-      "invalid-argument",
-      "Chybí text k opravě."
-    );
-  }
+    if (!text || text.trim() === "") {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        "Chybí text k opravě.",
+      );
+    }
 
-  try {
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    try {
+      const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+      const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
-    const systemPrompt = `Jsi profesionální jazykový korektor pro češtinu a slovenštinu.
+      const systemPrompt = `Jsi profesionální jazykový korektor pro češtinu a slovenštinu.
 Tvým jediným úkolem je opravit gramatické, pravopisné a stylistické chyby v zadaném textu.
 ZÁSADNÍ PRAVIDLO: Nesmíš měnit sémantický význam, přidávat nové myšlenky ani odstraňovat existující informace.
 Zachovej původní tón a záměr autora. Vrať POUZE opravený text bez jakýchkoliv komentářů nebo vysvětlivek.`;
 
-    const result = await model.generateContent([
-      { text: systemPrompt },
-      { text: "Text k opravě:\n" + text }
-    ]);
+      const result = await model.generateContent([
+        { text: systemPrompt },
+        { text: "Text k opravě:\n" + text },
+      ]);
 
-    const correctedText = result.response.text();
+      const correctedText = result.response.text();
 
-    return { correctedText: correctedText.trim() };
-  } catch (error) {
-    console.error("Error correcting grammar:", error);
-    throw new functions.https.HttpsError(
-      "internal",
-      "Nepodařilo se opravit gramatiku.",
-      error.message
-    );
-  }
-});
+      return { correctedText: correctedText.trim() };
+    } catch (error) {
+      console.error("Error correcting grammar:", error);
+      throw new functions.https.HttpsError(
+        "internal",
+        "Nepodařilo se opravit gramatiku.",
+        error.message,
+      );
+    }
+  },
+);
 
 // Import public portfolio module
-const publicPortfolio = require('./public_portfolio');
+const publicPortfolio = require("./public_portfolio");
 exports.updatePublicPortfolio = publicPortfolio.updatePublicPortfolio;
 
-
 // Import Ping System
-const pingSystem = require('./ping_system');
+const pingSystem = require("./ping_system");
 exports.pingMentorsScheduled = pingSystem.pingMentorsScheduled;
-const impersonation = require('./impersonation');
+const impersonation = require("./impersonation");
 exports.getImpersonationToken = impersonation.getImpersonationToken;
 exports.stopImpersonating = impersonation.stopImpersonating;
 
 // Import Sanitize DB Module
-const sanitizeDb = require('./sanitize');
+const sanitizeDb = require("./sanitize");
 exports.sanitizeProductionDatabase = sanitizeDb.sanitizeProductionDatabase;
 
-
 // Import Users Management Module
-const usersModule = require('./users');
+const usersModule = require("./users");
 exports.createUserManually = usersModule.createUserManually;
-
 
 // ARES Backend Function
 exports.fetchAresAndLink = functions.https.onCall(async (data, context) => {
   if (!context.auth) {
-    throw new functions.https.HttpsError("unauthenticated", "Must be logged in.");
+    throw new functions.https.HttpsError(
+      "unauthenticated",
+      "Must be logged in.",
+    );
   }
 
   const { ico, placementId } = data;
   if (!ico || !placementId) {
-    throw new functions.https.HttpsError("invalid-argument", "Missing ICO or placementId.");
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "Missing ICO or placementId.",
+    );
   }
 
   const db = admin.firestore();
@@ -1732,7 +1780,10 @@ exports.fetchAresAndLink = functions.https.onCall(async (data, context) => {
     }
 
     // Look up the organization by ICO in the Firestore
-    const orgQuery = await db.collection("organizations").where("ico", "==", ico).get();
+    const orgQuery = await db
+      .collection("organizations")
+      .where("ico", "==", ico)
+      .get();
     let orgId;
     let orgData;
 
@@ -1747,7 +1798,7 @@ exports.fetchAresAndLink = functions.https.onCall(async (data, context) => {
         ico: ico,
         web: pData.organization_web || "",
         status: "ACTIVE",
-        createdAt: admin.firestore.FieldValue.serverTimestamp()
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
       };
 
       const newOrgRef = await db.collection("organizations").add(orgData);
@@ -1765,13 +1816,20 @@ exports.fetchAresAndLink = functions.https.onCall(async (data, context) => {
       systemLogs: admin.firestore.FieldValue.arrayUnion({
         timestamp: new Date().toISOString(),
         message: "Automatické ARES ověření dokončeno. Organizace propojena.",
-        actorId: "system"
-      })
+        actorId: "system",
+      }),
     });
 
-    return { success: true, organizationId: orgId, organizationName: orgData.name };
+    return {
+      success: true,
+      organizationId: orgId,
+      organizationName: orgData.name,
+    };
   } catch (error) {
     console.error("fetchAresAndLink Error:", error);
-    throw new functions.https.HttpsError("internal", `Error linking ARES data: ${error.message}`);
+    throw new functions.https.HttpsError(
+      "internal",
+      `Error linking ARES data: ${error.message}`,
+    );
   }
 });
