@@ -1767,7 +1767,9 @@ exports.sanitizeProductionDatabase = sanitizeDb.sanitizeProductionDatabase;
 const usersModule = require("./users");
 exports.createUserManually = usersModule.createUserManually;
 
-exports.migrateInstitutions = functions.https.onCall(async (data, context) => {
+exports.migrateInstitutions = functions
+  .runWith({ timeoutSeconds: 540, memory: "1GB" })
+  .https.onCall(async (data, context) => {
   // Check authorization - only admins
   if (!context.auth) {
     throw new functions.https.HttpsError("unauthenticated", "Must be logged in.");
@@ -1800,9 +1802,9 @@ exports.migrateInstitutions = functions.https.onCall(async (data, context) => {
   let createdCount = 0;
   let updatedCount = 0;
 
-  for (const orgId of orgIds) {
+  const promises = orgIds.map(async (orgId) => {
       const orgDoc = await db.collection("organizations").doc(orgId).get();
-      if (!orgDoc.exists) continue;
+      if (!orgDoc.exists) return;
 
       const orgData = orgDoc.data();
 
@@ -1828,15 +1830,18 @@ exports.migrateInstitutions = functions.https.onCall(async (data, context) => {
           console.log(`Created institution user ${instId} for organization ${orgId}`);
       }
 
-      // Update placements
-      for (const placementRef of uniqueOrgs[orgId]) {
+      // Update placements concurrently
+      const updatePromises = uniqueOrgs[orgId].map(async (placementRef) => {
           await placementRef.update({
               institutionId: instId
           });
           updatedCount++;
           console.log(`Updated placement ${placementRef.id} with institutionId ${instId}`);
-      }
-  }
+      });
+      await Promise.all(updatePromises);
+  });
+
+  await Promise.all(promises);
 
   console.log(`Migration complete. Created: ${createdCount}, Updated Placements: ${updatedCount}`);
   return { success: true, createdCount, updatedCount };
