@@ -1773,7 +1773,7 @@ exports.migrateInstitutions = functions.https.onCall(async (data, context) => {
     throw new functions.https.HttpsError("unauthenticated", "Must be logged in.");
   }
   const userDoc = await admin.firestore().collection("users").doc(context.auth.uid).get();
-  if (!userDoc.exists || userDoc.data().role !== "admin") {
+  if (!userDoc.exists || (userDoc.data().role !== "admin" && userDoc.data().role !== "coordinator")) {
     throw new functions.https.HttpsError("permission-denied", "Nemáte oprávnění.");
   }
 
