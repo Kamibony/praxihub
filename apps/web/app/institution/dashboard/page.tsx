@@ -9,6 +9,22 @@ import { CheckCircle, XCircle, Star, LogOut, Clock, User, Building } from 'lucid
 import Chatbot from "@/components/Chatbot";
 import QrScanner from "@/components/QrScanner";
 
+const STATUS_LABELS: Record<string, string> = {
+  DRAFT: 'Koncept',
+  PENDING_MATCH: 'Čeká na spárování',
+  PENDING_INSTITUTION: 'Čeká na instituci',
+  PENDING_ORG_APPROVAL: 'Čeká na schválení organizací',
+  ORG_APPROVED: 'Schváleno organizací',
+  ANALYZING: 'Analyzuje se',
+  NEEDS_REVIEW: 'Vyžaduje kontrolu',
+  APPROVED: 'Smlouva schválena',
+  PENDING_COORDINATOR: 'Čeká na koordinátora',
+  ACTIVE: 'Aktivní',
+  EVALUATION: 'Hodnocení',
+  CLOSED: 'Uzavřeno',
+  FINAL_EXAM: 'Závěrečná zkouška'
+};
+
 export default function InstitutionDashboard() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -36,6 +52,7 @@ export default function InstitutionDashboard() {
         }
         return {
           ...placement,
+          studentName: studentData.name || studentData.displayName || studentData.email || placement.studentName || 'Student neuveden',
           studentEmail: studentData.email || 'Email neuveden',
           studentMajor: studentData.major || placement.major || 'Zaměření neuvedeno'
         };
@@ -191,7 +208,14 @@ export default function InstitutionDashboard() {
     }
   };
 
+
+  const getStudentNameForLog = (logId: string, placementId: string, defaultName: string) => {
+    const hp = hydratedPlacements.find(p => p.id === placementId);
+    return hp?.studentName && hp.studentName !== 'Student neuveden' ? hp.studentName : defaultName;
+  };
+
   const pendingLogs = timeLogs.filter(log => log.status === 'pending');
+
   const reviewedLogs = timeLogs.filter(log => log.status !== 'pending');
   const approvedHours = timeLogs.filter(log => log.status === 'approved').reduce((acc, log) => acc + (Number(log.hours) || 0), 0);
 
@@ -242,17 +266,17 @@ export default function InstitutionDashboard() {
                 <div key={placement.id} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col gap-2">
                   <div className="flex justify-between items-start">
                     <div>
-                      <div className="font-medium text-slate-900">{placement.studentName}</div>
+                      <div className="font-medium text-slate-900">{placement.studentName || 'Načítám...'}</div>
                       <div className="text-xs text-slate-500 font-normal">
                         {hydratedPlacements.length > 0 ? placement.studentEmail : 'Načítám...'}
                       </div>
                     </div>
                     <span className="text-xs font-bold bg-slate-100 text-slate-600 px-2 py-1 rounded-full">
-                      {placement.status}
+                      {STATUS_LABELS[placement.status] || placement.status}
                     </span>
                   </div>
                   <div className="text-xs text-slate-500">
-                    <div>{hydratedPlacements.length > 0 ? placement.studentMajor : (placement.major || 'Načítám...')} &bull; {placement.organization_name || placement.companyData?.name || 'Organizace neuvedena'}</div>
+                    <div><span className="font-semibold">Zaměření:</span> {hydratedPlacements.length > 0 ? placement.studentMajor : (placement.major || 'Načítám...')} &bull; <span className="font-semibold">Organizace:</span> {placement.organization_name || placement.companyData?.name || 'Organizace neuvedena'}</div>
                   </div>
                 </div>
               ))}
@@ -279,7 +303,7 @@ export default function InstitutionDashboard() {
                   <div className="p-4 border-b border-slate-100">
                     <div className="flex justify-between items-start mb-2">
                       <div className="flex items-center gap-2 text-sm text-slate-600">
-                        <User className="w-4 h-4" /> <span className="font-medium text-slate-900">{log.studentName}</span>
+                        <User className="w-4 h-4" /> <span className="font-medium text-slate-900">{getStudentNameForLog(log.id, log.placementId, log.studentName)}</span>
                       </div>
                       <span className="text-xs font-bold bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
                         {log.hours} hod
@@ -338,7 +362,7 @@ export default function InstitutionDashboard() {
               {reviewedLogs.slice(0, 10).map(log => (
                 <div key={log.id} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center opacity-80 hover:opacity-100 transition">
                   <div>
-                    <p className="text-sm font-bold text-slate-900">{log.studentName} <span className="text-slate-500 font-normal">({log.hours} hod)</span></p>
+                    <p className="text-sm font-bold text-slate-900">{getStudentNameForLog(log.id, log.placementId, log.studentName)} <span className="text-slate-500 font-normal">({log.hours} hod)</span></p>
                     <p className="text-xs text-slate-500 truncate max-w-xs">{log.description}</p>
                   </div>
 
