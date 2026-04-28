@@ -711,29 +711,39 @@ export default function UserManagementPage() {
                       <span className="font-medium font-mono text-xs text-slate-700">{selectedUser.id}</span>
                     </div>
                     <div>
-                      <span className="block text-slate-500 mb-1">Student ID (UID)</span>
-                      <span className="font-medium font-mono text-xs text-slate-700">{selectedUser.uid || '-'}</span>
-                    </div>
-                    <div>
                       <span className="block text-slate-500 mb-1">Založeno</span>
                       <span className="font-medium text-slate-900">{selectedUser.createdAt ? new Date(selectedUser.createdAt).toLocaleDateString('cs-CZ') : '-'}</span>
                     </div>
-                    <div>
-                      <span className="block text-slate-500 mb-1">Cílové hodiny</span>
-                      <span className="font-medium text-slate-900">{selectedUser.targetHours !== undefined ? selectedUser.targetHours : 15}</span>
-                    </div>
-                    <div>
-                      <span className="block text-slate-500 mb-1">Zaměření (Major)</span>
-                      <span className="font-medium text-slate-900">{selectedUser.major || '-'}</span>
-                    </div>
-                    <div>
-                      <span className="block text-slate-500 mb-1">Ročník</span>
-                      <span className="font-medium text-slate-900">{selectedUser.year || '-'}</span>
-                    </div>
-                    <div className="col-span-2">
-                      <span className="block text-slate-500 mb-1">Organizace / Škola</span>
-                      <span className="font-medium text-slate-900">{selectedUser.organizationId || selectedUser.companyName || selectedUser.organizationName || '-'}</span>
-                    </div>
+
+                    {/* Conditional rendering for student fields */}
+                    {selectedUser.role === 'student' && (
+                      <>
+                        <div>
+                          <span className="block text-slate-500 mb-1">Student ID (UID)</span>
+                          <span className="font-medium font-mono text-xs text-slate-700">{selectedUser.uid || '-'}</span>
+                        </div>
+                        <div>
+                          <span className="block text-slate-500 mb-1">Cílové hodiny</span>
+                          <span className="font-medium text-slate-900">{selectedUser.targetHours !== undefined ? selectedUser.targetHours : 15}</span>
+                        </div>
+                        <div>
+                          <span className="block text-slate-500 mb-1">Zaměření (Major)</span>
+                          <span className="font-medium text-slate-900">{selectedUser.major || '-'}</span>
+                        </div>
+                        <div>
+                          <span className="block text-slate-500 mb-1">Ročník</span>
+                          <span className="font-medium text-slate-900">{selectedUser.year || '-'}</span>
+                        </div>
+                      </>
+                    )}
+
+                    {/* Conditional rendering for organization / school, show for students and institutions */}
+                    {['student', 'institution', 'company', 'mentor', 'coordinator', 'admin'].includes(selectedUser.role) && (
+                      <div className="col-span-2">
+                        <span className="block text-slate-500 mb-1">Organizace / Škola</span>
+                        <span className="font-medium text-slate-900">{selectedUser.organizationId || selectedUser.companyName || selectedUser.organizationName || '-'}</span>
+                      </div>
+                    )}
                   </div>
                </div>
             </div>
