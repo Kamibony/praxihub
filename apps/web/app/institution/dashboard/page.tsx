@@ -44,12 +44,11 @@ export default function InstitutionDashboard() {
             router.push('/consent');
             return;
           }
-          // Fetch placements specifically assigned to this mentor
+          // Fetch placements specifically assigned to this institution
           const placementsRef = collection(db, "placements");
           const q = query(
             placementsRef,
-            where("mentorId", "==", currentUser.uid),
-            where("status", "in", ["APPROVED", "EVALUATION"])
+            where("institutionId", "==", currentUser.uid)
           );
 
           unsubscribeFirestore = onSnapshot(q, (snapshot) => {
@@ -143,9 +142,9 @@ export default function InstitutionDashboard() {
       const placementDoc = await getDoc(placementRef);
       if (placementDoc.exists()) {
         const data = placementDoc.data();
-        if (data.mentorId === user.uid) {
+        if (data.institutionId === user.uid || data.mentorId === user.uid) {
            alert("Praxe úspěšně načtena pomocí QR kódu.");
-           // Since the snapshot already fetches based on mentorId, it might already be loaded.
+           // Since the snapshot already fetches based on institutionId/mentorId, it might already be loaded.
            // This provides a manual check for immediate sync if needed, or visual feedback.
         } else {
            alert("Nemáte oprávnění spravovat tuto praxi.");
@@ -197,6 +196,31 @@ export default function InstitutionDashboard() {
             <p className="text-indigo-200 mt-2 text-sm">Celkový počet schválených hodin</p>
           </div>
         </section>
+
+        {/* Assigned Students List */}
+        {placements.length > 0 && (
+          <section className="mb-8">
+            <h2 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4 flex items-center gap-2">
+              <User className="w-4 h-4" />
+              Přiřazení studenti ({placements.length})
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {placements.map(placement => (
+                <div key={placement.id} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col gap-2">
+                  <div className="flex justify-between items-start">
+                    <div className="font-medium text-slate-900">{placement.studentName}</div>
+                    <span className="text-xs font-bold bg-slate-100 text-slate-600 px-2 py-1 rounded-full">
+                      {placement.status}
+                    </span>
+                  </div>
+                  <div className="text-xs text-slate-500">
+                    <div>{placement.major} &bull; {placement.organization_name || placement.companyData?.name || 'Organizace neuvedena'}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* Pending Approvals */}
         <section>
