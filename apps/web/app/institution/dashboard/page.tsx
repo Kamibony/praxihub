@@ -13,9 +13,42 @@ export default function InstitutionDashboard() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [placements, setPlacements] = useState<any[]>([]);
+  const [hydratedPlacements, setHydratedPlacements] = useState<any[]>([]);
   const [timeLogs, setTimeLogs] = useState<any[]>([]);
 
   const router = useRouter();
+
+  useEffect(() => {
+    let isMounted = true;
+    const hydratePlacements = async () => {
+      if (!placements || placements.length === 0) {
+        if (isMounted) setHydratedPlacements([]);
+        return;
+      }
+
+      const newHydrated = await Promise.all(placements.map(async (placement) => {
+        let studentData: any = {};
+        if (placement.studentId) {
+          const studentDoc = await getDoc(doc(db, "users", placement.studentId));
+          if (studentDoc.exists()) {
+            studentData = studentDoc.data();
+          }
+        }
+        return {
+          ...placement,
+          studentEmail: studentData.email || 'Email neuveden',
+          studentMajor: studentData.major || placement.major || 'Zaměření neuvedeno'
+        };
+      }));
+
+      if (isMounted) {
+        setHydratedPlacements(newHydrated);
+      }
+    };
+
+    hydratePlacements();
+    return () => { isMounted = false; };
+  }, [placements]);
 
   useEffect(() => {
     let unsubscribeFirestore: (() => void) | null = null;
@@ -52,8 +85,8 @@ export default function InstitutionDashboard() {
           );
 
           unsubscribeFirestore = onSnapshot(q, (snapshot) => {
-            const placementsData = snapshot.docs.map(d => ({ id: d.id, ...d.data() })) as any[];
-            setPlacements(placementsData);
+            const rawPlacements = snapshot.docs.map(d => ({ id: d.id, ...d.data() })) as any[];
+            setPlacements(rawPlacements);
 
             // Clean up old listeners
             timeLogsUnsubscribes.forEach(unsub => unsub());
@@ -61,7 +94,7 @@ export default function InstitutionDashboard() {
 
             let allLogs: any[] = [];
 
-            placementsData.forEach(placement => {
+            rawPlacements.forEach(placement => {
               const logsRef = collection(db, "placements", placement.id, "time_logs");
               const logsQ = query(logsRef, orderBy("date", "desc"));
 
@@ -205,16 +238,21 @@ export default function InstitutionDashboard() {
               Přiřazení studenti ({placements.length})
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {placements.map(placement => (
+              {(hydratedPlacements.length > 0 ? hydratedPlacements : placements).map((placement: any) => (
                 <div key={placement.id} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col gap-2">
                   <div className="flex justify-between items-start">
-                    <div className="font-medium text-slate-900">{placement.studentName}</div>
+                    <div>
+                      <div className="font-medium text-slate-900">{placement.studentName}</div>
+                      <div className="text-xs text-slate-500 font-normal">
+                        {hydratedPlacements.length > 0 ? placement.studentEmail : 'Načítám...'}
+                      </div>
+                    </div>
                     <span className="text-xs font-bold bg-slate-100 text-slate-600 px-2 py-1 rounded-full">
                       {placement.status}
                     </span>
                   </div>
                   <div className="text-xs text-slate-500">
-                    <div>{placement.major} &bull; {placement.organization_name || placement.companyData?.name || 'Organizace neuvedena'}</div>
+                    <div>{hydratedPlacements.length > 0 ? placement.studentMajor : (placement.major || 'Načítám...')} &bull; {placement.organization_name || placement.companyData?.name || 'Organizace neuvedena'}</div>
                   </div>
                 </div>
               ))}
