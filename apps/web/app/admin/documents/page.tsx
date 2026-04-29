@@ -24,6 +24,7 @@ export default function DocumentCenter() {
   const [testReflection, setTestReflection] = useState('');
   const [activeTab, setActiveTab] = useState<'AI' | 'IMPORT' | 'TEMPLATES' | 'COMPLIANCE'>('AI');
   const [runningMigration, setRunningMigration] = useState(false);
+  const [parsingPdf, setParsingPdf] = useState(false);
   const [importFormat, setImportFormat] = useState('UPV');
   const [importing, setImporting] = useState(false);
   const [importStats, setImportStats] = useState<any>(null);
@@ -172,6 +173,63 @@ ${currentRulesObj.kompetencni_ramec}
     setRunningMigration(false);
   };
 
+  const handlePdfAIImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const validTypes = ["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
+    if (!validTypes.includes(file.type)) {
+      alert("Prosím nahrajte soubor ve formátu PDF nebo DOCX.");
+      return;
+    }
+
+    setParsingPdf(true);
+    try {
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+        const base64String = (event.target?.result as string).split(',')[1];
+
+        const parseFn = httpsCallable(functions, 'parseDocumentForAI');
+        const res = await parseFn({
+          fileDataBase64: base64String,
+          mimeType: file.type
+        });
+
+        const parsedData = res.data as Snippets;
+
+        // Append parsed data intelligently to existing text
+        const updateRules = (prev: Snippets) => {
+           return {
+             metodika: prev.metodika ? prev.metodika + "\n\n---\n" + parsedData.metodika : parsedData.metodika,
+             uznatelnost: prev.uznatelnost ? prev.uznatelnost + "\n\n---\n" + parsedData.uznatelnost : parsedData.uznatelnost,
+             kompetencni_ramec: prev.kompetencni_ramec ? prev.kompetencni_ramec + "\n\n---\n" + parsedData.kompetencni_ramec : parsedData.kompetencni_ramec
+           };
+        };
+
+        if (activeDept === 'UPV') {
+          setRulesUpv(updateRules(rulesUpv));
+        } else {
+          setRulesKpv(updateRules(rulesKpv));
+        }
+
+        alert("Text úspěšně extrahován z PDF a přidán k existujícím pravidlům. Nezapomeňte změny ULOŽIT.");
+        setParsingPdf(false);
+      };
+      reader.onerror = (err) => {
+        console.error("FileReader error:", err);
+        alert("Chyba při čtení souboru.");
+        setParsingPdf(false);
+      };
+
+      reader.readAsDataURL(file);
+
+    } catch (e: any) {
+      console.error(e);
+      alert(`Chyba při analýze PDF: ${e.message}`);
+      setParsingPdf(false);
+    }
+  };
+
   const fetchDocs = async (pathPrefix: string) => {
     setLoadingDocs(true);
     try {
@@ -288,9 +346,30 @@ ${currentRulesObj.kompetencni_ramec}
           <div className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Editor */}
             <div className="flex flex-col h-[600px]">
+              <div className="flex items-center justify-between mb-4">
+                 <h3 className="font-bold font-sans text-slate-100 flex items-center gap-2">
+                    🧠 Upravit pravidla pro {activeDept}
+                 </h3>
+                 <div className="relative">
+                   <input
+                      type="file"
+                      accept=".pdf,.docx"
+                      onChange={handlePdfAIImport}
+                      disabled={parsingPdf}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
+                      title="Nahrát dokument (PDF/DOCX) pro extrakci textu"
+                    />
+                   <button
+                     disabled={parsingPdf}
+                     className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-200 px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50">
+                     {parsingPdf ? "🧠 Analyzuji dokument..." : "📥 Importovat z PDF/DOCX"}
+                   </button>
+                 </div>
+              </div>
+
               <div className="flex-1 overflow-y-auto space-y-4 pr-2">
                 <div>
-                  <label className="block text-sm font-medium text-slate-200 mb-2">Metodika pro {activeDept}</label>
+                  <label className="block text-sm font-medium text-slate-200 mb-2">Metodika</label>
                   <textarea
                     className="w-full h-32 p-4 bg-slate-900/50 border border-white/10 text-slate-100 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none font-mono text-sm"
                     value={activeDept === 'UPV' ? rulesUpv.metodika : rulesKpv.metodika}
@@ -406,10 +485,22 @@ ${currentRulesObj.kompetencni_ramec}
 
                 {activeTab === 'TEMPLATES' && (
           <div className="card-glass p-8">
-            <div className="flex items-center gap-3 mb-6 border-b border-white/10 pb-4">
+            <div className="flex items-center gap-3 mb-4 border-b border-white/10 pb-4">
               <span className="text-2xl">📄</span>
               <h2 className="text-xl font-bold font-sans text-slate-100">Template Manager ({activeDept})</h2>
             </div>
+
+            <div className="bg-amber-900/20 border-l-4 border-amber-500 p-4 mb-6 rounded-r-lg flex items-start gap-3">
+              <span className="text-xl">⚠️</span>
+              <div>
+                <h3 className="font-bold text-amber-300 text-sm">Důležité upozornění pro AI</h3>
+                <p className="text-amber-400/80 text-sm mt-1">
+                  Soubory nahrané do této sekce slouží <strong>pouze ke stažení</strong> pro studenty a mentory.
+                  Tyto dokumenty <strong>NEJSOU</strong> čteny ani analyzovány umělou inteligencí. Pro úpravu pravidel hodnocení přejděte na záložku &quot;AI Knowledge Base&quot;.
+                </p>
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="flex flex-col items-center justify-center text-center h-64 bg-slate-800/50 rounded-xl border border-dashed border-slate-600 relative hover:bg-slate-800/70 hover:border-slate-500 transition">
                  <input
@@ -448,10 +539,22 @@ ${currentRulesObj.kompetencni_ramec}
 
                 {activeTab === 'COMPLIANCE' && (
           <div className="card-glass p-8">
-            <div className="flex items-center gap-3 mb-6 border-b border-white/10 pb-4">
+            <div className="flex items-center gap-3 mb-4 border-b border-white/10 pb-4">
               <span className="text-2xl">🏛️</span>
               <h2 className="text-xl font-bold font-sans text-slate-100">Compliance Archive ({activeDept})</h2>
             </div>
+
+            <div className="bg-amber-900/20 border-l-4 border-amber-500 p-4 mb-6 rounded-r-lg flex items-start gap-3">
+              <span className="text-xl">⚠️</span>
+              <div>
+                <h3 className="font-bold text-amber-300 text-sm">Důležité upozornění pro AI</h3>
+                <p className="text-amber-400/80 text-sm mt-1">
+                  Smlouvy nahrané do této sekce slouží <strong>pouze jako archiv a ke stažení</strong>.
+                  Tyto dokumenty <strong>NEJSOU</strong> čteny ani analyzovány umělou inteligencí. Pro úpravu pravidel hodnocení přejděte na záložku &quot;AI Knowledge Base&quot;.
+                </p>
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="flex flex-col items-center justify-center text-center h-64 bg-slate-800/50 rounded-xl border border-dashed border-slate-600 relative hover:bg-slate-800/70 hover:border-slate-500 transition">
                  <input
