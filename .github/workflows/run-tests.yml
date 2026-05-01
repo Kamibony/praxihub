@@ -2,10 +2,9 @@ name: Integration Tests
 
 on:
   workflow_dispatch:
-  # Temporarily disabled as Phase 1A State Machine changes will break legacy tests
-  # push:
-  #   branches:
-  #     - main
+  push:
+    branches:
+      - main
 
 jobs:
   run-tests:
@@ -20,9 +19,23 @@ jobs:
           node-version: 20
 
       - name: Install dependencies
-        working-directory: ./tests
         run: npm install
 
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Start Emulators
+        run: npx firebase emulators:start --project demo-project --only firestore,auth,functions,storage &
+
+      - name: Start Web App
+        # Remove npx/workspaces issues by executing next dev directly from node_modules
+        run: cd apps/web && NEXT_PUBLIC_FIREBASE_PROJECT_ID=demo-project NEXT_PUBLIC_FIREBASE_API_KEY=demo-api-key NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=demo-project.firebaseapp.com NEXT_PUBLIC_USE_FIREBASE_EMULATOR=true NEXT_PUBLIC_FIREBASE_EMULATOR_HOST=localhost:8080 ../../node_modules/.bin/next dev -p 3000 &
+
+      - name: Wait for services
+        run: npx wait-on http://127.0.0.1:4000 http://127.0.0.1:3000
+
+      - name: Seed Database
+        run: npx tsx tests/e2e/seed.ts
+
       - name: Run tests
-        working-directory: ./tests
-        run: npm test
+        run: npx playwright test --config playwright.config.ts

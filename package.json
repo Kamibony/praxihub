@@ -7,7 +7,7 @@
     "functions"
   ],
   "scripts": {
-    "test": "echo 'Playwright tests temporarily disabled for UI redesign'"
+    "test": "playwright test"
   },
   "description": "",
   "main": "verify_font.js",
@@ -29,7 +29,8 @@
   "devDependencies": {
     "@playwright/test": "^1.59.1",
     "firebase-admin": "^13.8.0",
-    "firebase-tools": "^15.14.0"
+    "firebase-tools": "^15.14.0",
+    "wait-on": "^9.0.5"
   },
   "dependencies": {
     "html5-qrcode": "^2.3.8"
