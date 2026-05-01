@@ -1882,18 +1882,37 @@ exports.fetchAresAndLink = functions.https.onCall(async (data, context) => {
     let orgData;
 
     if (orgQuery.empty) {
-      // Mock ARES API fetch - typically would do fetch(ARES_URL)
-      console.log(`Mocking ARES fetch for ICO: ${ico}`);
-
-      // Attempting to use the data from the placement if available, otherwise mock data
       const pData = placementDoc.data();
-      orgData = {
-        name: pData.organization_name || "ARES Fetched Organization",
-        ico: ico,
-        web: pData.organization_web || "",
-        status: "ACTIVE",
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      };
+
+      try {
+        console.log(`Fetching real ARES data for ICO: ${ico}`);
+        const aresResponse = await axios.get(`https://ares.gov.cz/ekonomicke-subjekty-v-be/rest/ekonomicke-subjekty/${ico}`);
+
+        if (aresResponse.data && aresResponse.data.obchodniJmeno) {
+          console.log(`Successfully fetched ARES data for ICO: ${ico}`);
+          orgData = {
+            name: aresResponse.data.obchodniJmeno,
+            ico: aresResponse.data.ico || ico,
+            address: aresResponse.data.sidlo?.textovaAdresa || "",
+            web: pData.organization_web || "",
+            status: "ACTIVE",
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+          };
+        } else {
+          throw new Error("ARES response missing obchodniJmeno");
+        }
+      } catch (aresError) {
+        console.error(`Failed to fetch from ARES for ICO: ${ico}`, aresError.message);
+        console.log("Falling back to placement data...");
+        // Graceful fallback to placement data if ARES fails or is unavailable
+        orgData = {
+          name: pData.organization_name || "Organizace (ARES nedostupný)",
+          ico: ico,
+          web: pData.organization_web || "",
+          status: "ACTIVE",
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        };
+      }
 
       const newOrgRef = await db.collection("organizations").add(orgData);
       orgId = newOrgRef.id;
