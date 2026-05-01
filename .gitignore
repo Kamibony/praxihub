@@ -5,3 +5,7 @@ tests/node_modules/
 .next
 .expo
 tests/service-account.json
+
+# Playwright
+playwright-report/
+test-results/
