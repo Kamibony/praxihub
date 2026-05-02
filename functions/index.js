@@ -126,6 +126,17 @@ exports.chatWithAI = functions.https.onCall(async (data, context) => {
   const userRole = data.role || "visitor";
 
   try {
+    const db = admin.firestore();
+    let knowledgeBase = "No extra knowledge base found.";
+    try {
+      const kbDoc = await db.collection('system_configs').doc('chatbot_knowledge').get();
+      if (kbDoc.exists && kbDoc.data().content) {
+        knowledgeBase = kbDoc.data().content;
+      }
+    } catch (err) {
+      console.warn("Could not fetch chatbot_knowledge from system_configs, using fallback.", err);
+    }
+
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-pro" });
 
@@ -133,33 +144,14 @@ exports.chatWithAI = functions.https.onCall(async (data, context) => {
     const systemPrompt = `
    You are the intelligent assistant for PraxiHub, a university placement management platform.
    Your goal is to guide Students, Coordinators, and Companies through the app.
-   You must answer in the user's language (mostly Czech/Slovak).
+   You must answer in strict professional Czech language.
 
-   KEY KNOWLEDGE BASE (SYSTEM FEATURES):
-
-   1. GENERAL:
-      - There is a "Manuál" page at \`/manual\` with detailed guides.
-      - The app uses AI (Gemini) to validate contracts automatically.
-
-   2. FOR STUDENTS:
-      - Process: Request Company Approval -> Wait -> Generate Contract (PDF) -> Sign -> Upload -> Wait for Final Approval.
-      - **New Feature:** If you made a mistake or need a new contract, use the "+ Nová smlouva / Opravit" button in the Header (always visible).
-      - **Dashboard:** Shows a timeline. Green banner means success.
-
-   3. FOR COORDINATORS (ADMINS):
-      - **New Analytics:** The Dashboard now shows "Semester Progress" (Progress bar) and "Top Partners" at the top.
-      - **Export:** There is an "Exportovat CSV" button in the header to download all data for reporting.
-      - **Action:** You approve Companies first, then Contracts. Use the filter cards to see what needs attention ("Žádosti o schválení", "Čeká na kontrolu").
-
-   4. FOR COMPANIES:
-      - **Unified Detail:** Clicking a student row opens a Modal.
-      - **Contracts:** In this Modal, you can download the student's contract (Blue button "Stáhnout smlouvu").
-      - **Rating:** In the same Modal, you can rate the student (Stars + Review) at the end of the placement.
+   KEY KNOWLEDGE BASE:
+   ${knowledgeBase}
 
    BEHAVIOR:
    - Be concise and helpful.
-   - If a user is stuck, suggest the specific button or page mentioned above.
-   - If asked about reports, mention the "Exportovat CSV" feature.
+   - Answer strictly in professional Czech.
    `;
 
     // Spustenie chatu
@@ -1959,26 +1951,37 @@ exports.generateShowcaseNarration = functions.https.onCall(async (data, context)
   }
 
   try {
+    const db = admin.firestore();
+    let rulesData = {};
+    try {
+      const upvDoc = await db.collection('system_configs').doc('ai_rules_upv').get();
+      const kpvDoc = await db.collection('system_configs').doc('ai_rules_kpv').get();
+      if (upvDoc.exists) rulesData.upv = upvDoc.data().content;
+      if (kpvDoc.exists) rulesData.kpv = kpvDoc.data().content;
+    } catch (e) {
+      console.warn("Failed to fetch ai_rules from system_configs", e);
+    }
+
+    if (Object.keys(rulesData).length === 0) {
+      rulesData = {
+        fallback: "System rules not found. Please ensure the knowledge base is populated."
+      };
+    }
+
+    const systemState = {
+      rules: rulesData,
+      currentView: viewContext
+    };
+
     const { GoogleGenerativeAI } = require("@google/generative-ai");
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-
-    // In a real scenario, this could query system_configs, but for PoC we'll mock the state transition rules
-    const systemState = {
-      transitions: {
-        DRAFT: "Student vyplňuje údaje",
-        PENDING_INSTITUTION: "Čeká na schválení institucí",
-        PENDING_COORDINATOR: "Čeká na finální schválení koordinátorem",
-        ACTIVE: "Praxe probíhá"
-      },
-      currentView: viewContext
-    };
 
     const prompt = `
 You are presenting the NEW IVP PRAXE system. Here is the raw JSON data defining the current rules/state:
 ${JSON.stringify(systemState)}
 
-Translate this EXACT data into a 2-sentence spoken explanation in Slovak. Do NOT hallucinate or add any outside information.
+Explain this data into a 2-sentence spoken explanation. You must answer in strict professional Czech language. Do NOT hallucinate or add any outside information.
 `;
 
     const result = await model.generateContent(prompt);
