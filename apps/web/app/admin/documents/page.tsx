@@ -22,6 +22,7 @@ export default function DocumentCenter() {
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<any>(null);
   const [testReflection, setTestReflection] = useState('');
+
   const [activeTab, setActiveTab] = useState<'AI' | 'IMPORT' | 'TEMPLATES' | 'COMPLIANCE'>('AI');
   const [runningMigration, setRunningMigration] = useState(false);
   const [parsingPdf, setParsingPdf] = useState(false);
@@ -31,6 +32,16 @@ export default function DocumentCenter() {
 
   const [uploadingTemplate, setUploadingTemplate] = useState(false);
   const [uploadingCompliance, setUploadingCompliance] = useState(false);
+
+  // --- Smart Router State ---
+  const [routingFile, setRoutingFile] = useState(false);
+  const [routingResult, setRoutingResult] = useState<any>(null);
+  const [droppedFile, setDroppedFile] = useState<File | null>(null);
+  const [manualOverride, setManualOverride] = useState(false);
+  const [overrideCategory, setOverrideCategory] = useState<'AI_RULE' | 'ROSTER' | 'TEMPLATE' | 'COMPLIANCE'>('AI_RULE');
+  const [overrideDept, setOverrideDept] = useState<'UPV' | 'KPV'>('UPV');
+  const [importFileToPass, setImportFileToPass] = useState<File | null>(null);
+
 
   useEffect(() => {
     const fetchRules = async () => {
@@ -135,6 +146,149 @@ ${currentRulesObj.kompetencni_ramec}
     setTesting(false);
   };
 
+
+
+
+  const handleSmartDrop = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setDroppedFile(file);
+    setRoutingFile(true);
+    setRoutingResult(null);
+    setManualOverride(false);
+    setImportFileToPass(null);
+
+    try {
+      let fileDataBase64 = "";
+      let textSample = "";
+      let mimeType = file.type;
+
+      if (mimeType === "application/pdf" || mimeType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
+        const base64String = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve((reader.result as string).split(',')[1]);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+        fileDataBase64 = base64String;
+      } else if (file.name.endsWith('.xlsx') || file.name.endsWith('.csv') || file.name.endsWith('.xls')) {
+        // Read sample for CSV/Excel
+        const xlsx = await import('xlsx');
+        const bstr = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result as string);
+            reader.onerror = reject;
+            reader.readAsBinaryString(file);
+        });
+        const wb = xlsx.read(bstr, { type: 'binary' });
+        const wsname = wb.SheetNames[0];
+        const ws = wb.Sheets[wsname];
+        const data = xlsx.utils.sheet_to_json(ws, { header: 1 }) as any[][];
+        // Take first 10 rows
+        textSample = data.slice(0, 10).map(row => row.join(', ')).join('\n');
+        mimeType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+      } else {
+        // Unknown, pass base64
+        const base64String = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve((reader.result as string).split(',')[1]);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+        fileDataBase64 = base64String;
+      }
+
+      const routeFn = httpsCallable(functions, 'routeDocument');
+      const res = await routeFn({ fileDataBase64, mimeType, textSample });
+      const data = res.data as any;
+
+      if (data.confidence < 80 || data.category === 'UNKNOWN' || data.department === 'UNKNOWN') {
+         setManualOverride(true);
+         setOverrideCategory(data.category === 'UNKNOWN' ? 'AI_RULE' : data.category);
+         setOverrideDept(data.department === 'UNKNOWN' ? 'UPV' : data.department);
+      }
+
+      setRoutingResult(data);
+
+    } catch (err: any) {
+      console.error(err);
+      alert("Chyba při analýze dokumentu: " + err.message);
+      setManualOverride(true);
+    }
+    setRoutingFile(false);
+  };
+
+  const executeRouting = async (category: string, dept: string) => {
+    if (!droppedFile) return;
+
+    // Set dept globally
+    if (dept === 'UPV' || dept === 'KPV') setActiveDept(dept as 'UPV' | 'KPV');
+
+    if (category === 'AI_RULE') {
+      setActiveTab('AI');
+      if (routingResult?.extractedRules) {
+        const parsedData = routingResult.extractedRules;
+        const updateRules = (prev: Snippets) => {
+           return {
+             metodika: prev.metodika ? prev.metodika + "\n\n---\n" + parsedData.metodika : parsedData.metodika,
+             uznatelnost: prev.uznatelnost ? prev.uznatelnost + "\n\n---\n" + parsedData.uznatelnost : parsedData.uznatelnost,
+             kompetencni_ramec: prev.kompetencni_ramec ? prev.kompetencni_ramec + "\n\n---\n" + parsedData.kompetencni_ramec : parsedData.kompetencni_ramec
+           };
+        };
+        if (dept === 'UPV') {
+          setRulesUpv(updateRules(rulesUpv));
+        } else {
+          setRulesKpv(updateRules(rulesKpv));
+        }
+        alert("Text úspěšně extrahován a přidán. Nezapomeňte změny ULOŽIT.");
+      } else {
+          alert("Vyberte dokument znovu v záložce AI pro manuální extrakci.");
+      }
+    } else if (category === 'ROSTER') {
+      setActiveTab('IMPORT');
+      setImportFileToPass(droppedFile);
+    } else if (category === 'TEMPLATE') {
+      setActiveTab('TEMPLATES');
+      setUploadingTemplate(true);
+      try {
+        const storageRef = ref(storage, `global_documents/templates/${dept}/${droppedFile.name}`);
+        await uploadBytes(storageRef, droppedFile);
+        alert('Šablona úspěšně nahrána.');
+        fetchDocs('templates');
+      } catch (err) {
+        alert('Chyba při nahrávání.');
+      }
+      setUploadingTemplate(false);
+    } else if (category === 'COMPLIANCE') {
+      setActiveTab('COMPLIANCE');
+      setUploadingCompliance(true);
+      try {
+        const storageRef = ref(storage, `global_documents/compliance/${dept}/${droppedFile.name}`);
+        await uploadBytes(storageRef, droppedFile);
+        alert('Smlouva úspěšně nahrána.');
+        fetchDocs('compliance');
+      } catch (err) {
+        alert('Chyba při nahrávání.');
+      }
+      setUploadingCompliance(false);
+    }
+
+    // Reset
+    setDroppedFile(null);
+    setRoutingResult(null);
+    setManualOverride(false);
+  };
+
+  const getCategoryName = (cat: string) => {
+    switch (cat) {
+      case 'AI_RULE': return 'AI Knowledge Base (Metodika)';
+      case 'ROSTER': return 'Seznam studentů (Import)';
+      case 'TEMPLATE': return 'Šablona dokumentu';
+      case 'COMPLIANCE': return 'Smlouva (Compliance)';
+      default: return 'Neznámá kategorie';
+    }
+  };
 
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, pathPrefix: string, setUploading: (v: boolean) => void) => {
@@ -289,6 +443,99 @@ ${currentRulesObj.kompetencni_ramec}
             {runningMigration ? "Probíhá migrace..." : "🚨 RUN MIGRATION"}
           </button>
         </div>
+
+
+        {/* Smart Router Dropzone */}
+        <div className="mb-8">
+          <div className="relative border-2 border-dashed border-indigo-500/50 bg-indigo-900/10 hover:bg-indigo-900/20 transition-all rounded-2xl p-10 flex flex-col items-center justify-center text-center cursor-pointer shadow-lg shadow-indigo-500/10 backdrop-blur-md">
+             <input
+                type="file"
+                onChange={handleSmartDrop}
+                disabled={routingFile}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
+                title="Přetáhněte soubor sem"
+              />
+              {routingFile ? (
+                <>
+                   <div className="text-4xl mb-4 animate-bounce">🤖</div>
+                   <h2 className="text-2xl font-bold font-sans text-indigo-300 pointer-events-none">AI analyzuje dokument...</h2>
+                   <p className="text-indigo-400/80 mt-2 pointer-events-none max-w-lg">
+                     Prosím čekejte. AI čte obsah souboru a zjišťuje, kam jej nejlépe zařadit.
+                   </p>
+                </>
+              ) : (
+                <>
+                   <div className="text-4xl mb-4 opacity-80">🧠</div>
+                   <h2 className="text-2xl font-bold font-sans text-indigo-300 pointer-events-none">Smart Uploader (AI Router)</h2>
+                   <p className="text-indigo-400/80 mt-2 pointer-events-none max-w-lg">
+                     Přetáhněte sem <strong>jakýkoliv soubor</strong> (PDF, DOCX, Excel). AI jej automaticky analyzuje, rozpozná jeho účel a navrhne správné zařazení (Metodika, Import studentů, Šablona či Smlouva).
+                   </p>
+                </>
+              )}
+          </div>
+
+          {/* AI Confirmation Modal */}
+          {routingResult && droppedFile && !routingFile && (
+            <div className="mt-4 p-6 bg-slate-800 border border-indigo-500/30 rounded-xl shadow-xl">
+               <div className="flex items-start gap-4">
+                 <span className="text-3xl mt-1">✨</span>
+                 <div className="flex-1">
+                   {!manualOverride ? (
+                     <>
+                       <h3 className="text-xl font-bold text-slate-100">Zjistili jsme, že jde o <span className="text-indigo-400">{getCategoryName(routingResult.category)}</span> pro obor <span className="text-indigo-400">{routingResult.department}</span>.</h3>
+                       <p className="text-slate-400 mt-2">{routingResult.reasoning} (Jistota: {routingResult.confidence}%)</p>
+                       <div className="mt-6 flex gap-3">
+                         <button onClick={() => executeRouting(routingResult.category, routingResult.department)} className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-lg font-bold shadow-md transition">
+                           Ano, pokračovat
+                         </button>
+                         <button onClick={() => setManualOverride(true)} className="bg-slate-700 hover:bg-slate-600 text-white px-5 py-2.5 rounded-lg font-medium transition">
+                           Ne, vybrat ručně
+                         </button>
+                         <button onClick={() => { setRoutingResult(null); setDroppedFile(null); }} className="text-slate-400 hover:text-slate-200 px-4 py-2.5 rounded-lg font-medium transition ml-auto">
+                           Zrušit nahrávání
+                         </button>
+                       </div>
+                     </>
+                   ) : (
+                     <>
+                        <div className="bg-amber-900/20 border border-amber-500/30 rounded-lg p-3 mb-4">
+                           <p className="text-amber-400 text-sm">AI si není jisté, nebo jste zvolili ruční zařazení. Kam chcete soubor umístit?</p>
+                           {routingResult.confidence < 80 && <p className="text-amber-400/80 text-xs mt-1">Důvod nízké jistoty: {routingResult.reasoning}</p>}
+                        </div>
+                        <div className="flex flex-col sm:flex-row gap-4 mb-6">
+                           <div className="flex-1">
+                             <label className="block text-sm font-medium text-slate-300 mb-2">Kategorie dokumentu</label>
+                             <select value={overrideCategory} onChange={e => setOverrideCategory(e.target.value as any)} className="w-full bg-slate-900 border border-slate-600 text-white rounded-lg p-2.5 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none">
+                               <option value="AI_RULE">AI Knowledge Base (Metodika/Pravidla)</option>
+                               <option value="ROSTER">Seznam studentů (Roster Import)</option>
+                               <option value="TEMPLATE">Šablona pro studenty/mentory</option>
+                               <option value="COMPLIANCE">Archiv smluv (Compliance)</option>
+                             </select>
+                           </div>
+                           <div className="flex-1">
+                             <label className="block text-sm font-medium text-slate-300 mb-2">Příslušný obor</label>
+                             <select value={overrideDept} onChange={e => setOverrideDept(e.target.value as any)} className="w-full bg-slate-900 border border-slate-600 text-white rounded-lg p-2.5 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none">
+                               <option value="UPV">UPV (Učitelství)</option>
+                               <option value="KPV">KPV (Poradenství)</option>
+                             </select>
+                           </div>
+                        </div>
+                        <div className="flex gap-3">
+                           <button onClick={() => executeRouting(overrideCategory, overrideDept)} className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-lg font-bold shadow-md transition">
+                             Provést ruční zařazení
+                           </button>
+                           <button onClick={() => { setRoutingResult(null); setDroppedFile(null); setManualOverride(false); }} className="text-slate-400 hover:text-slate-200 px-4 py-2.5 rounded-lg font-medium transition">
+                             Zrušit
+                           </button>
+                        </div>
+                     </>
+                   )}
+                 </div>
+               </div>
+            </div>
+          )}
+        </div>
+
 
         {/* Global Department Scope Toggle */}
         <div className="mb-8 flex justify-center">
@@ -455,7 +702,7 @@ ${currentRulesObj.kompetencni_ramec}
             <p className="text-slate-400 text-sm mb-6">Nahrávejte a mapujte seznamy studentů z Excelu (.xlsx) nebo CSV pro automatické vytvoření uživatelů.</p>
 
             {!importStats ? (
-                <VisualMappingImport onSuccess={setImportStats} department={activeDept} />
+                <VisualMappingImport onSuccess={setImportStats} department={activeDept} initialFile={importFileToPass} />
             ) : (
               <div className="mt-8 bg-green-900/20 border border-green-800/50 rounded-lg p-4 text-green-300">
                 <h3 className="font-bold font-sans mb-2">Import úspěšně dokončen</h3>

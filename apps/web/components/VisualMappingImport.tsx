@@ -9,9 +9,10 @@ import { functions } from '../lib/firebase';
 interface VisualMappingImportProps {
   onSuccess: (stats: any) => void;
   department?: 'UPV' | 'KPV';
+  initialFile?: File | null;
 }
 
-export default function VisualMappingImport({ onSuccess, department }: VisualMappingImportProps) {
+export default function VisualMappingImport({ onSuccess, department, initialFile }: VisualMappingImportProps) {
   const [fileData, setFileData] = useState<any[][] | null>(null);
   const [headers, setHeaders] = useState<string[]>([]);
   const [importing, setImporting] = useState(false);
@@ -31,6 +32,14 @@ export default function VisualMappingImport({ onSuccess, department }: VisualMap
     targetHours: -1,
     name: -1 // Optional: combined name
   });
+
+
+  React.useEffect(() => {
+    if (initialFile) {
+       handleFileUpload({ target: { files: [initialFile] } } as any);
+    }
+  }, [initialFile]);
+
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
