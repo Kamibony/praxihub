@@ -1993,6 +1993,166 @@ Explain this data into a 2-sentence spoken explanation. You must answer in stric
 });
 
 // 16. PARSE DOCUMENT FOR AI KNOWLEDGE BASE
+
+exports.routeDocument = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError(
+      "unauthenticated",
+      "Musíte být přihlášeni.",
+    );
+  }
+
+  const userDoc = await admin.firestore().collection("users").doc(context.auth.uid).get();
+  if (!userDoc.exists || (userDoc.data().role !== "admin" && userDoc.data().role !== "coordinator")) {
+     throw new functions.https.HttpsError(
+      "permission-denied",
+      "Nemáte oprávnění."
+    );
+  }
+
+  const { fileDataBase64, mimeType, textSample } = data;
+  let textToParse = textSample || "";
+
+  // If no text sample was provided (e.g. not CSV/Excel), extract from PDF/DOCX
+  if (!textToParse && fileDataBase64) {
+      if (mimeType === "application/pdf") {
+          const pdfParse = require('pdf-parse');
+          const buffer = Buffer.from(fileDataBase64, 'base64');
+          try {
+              const parsedData = await pdfParse(buffer);
+              textToParse = parsedData.text;
+          } catch (err) {
+               throw new functions.https.HttpsError("internal", "Chyba při parsování PDF: " + err.message);
+          }
+      } else if (mimeType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
+          const mammoth = require("mammoth");
+          const buffer = Buffer.from(fileDataBase64, 'base64');
+          try {
+              const result = await mammoth.extractRawText({ buffer: buffer });
+              textToParse = result.value;
+          } catch (err) {
+               throw new functions.https.HttpsError("internal", "Chyba při parsování DOCX: " + err.message);
+          }
+      } else {
+         // Could be other template formats
+         textToParse = "Neznámý obsah, pouze metadata souboru.";
+      }
+  }
+
+  if (!textToParse) {
+      textToParse = "Prázdný dokument.";
+  }
+
+  try {
+    const { GoogleGenerativeAI, SchemaType } = require("@google/generative-ai");
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    const model = genAI.getGenerativeModel({
+      model: "gemini-2.5-flash",
+      generationConfig: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: SchemaType.OBJECT,
+          properties: {
+             category: {
+                 type: SchemaType.STRING,
+                 description: "Kategorie dokumentu: AI_RULE, ROSTER, TEMPLATE, COMPLIANCE nebo UNKNOWN."
+             },
+             department: {
+                 type: SchemaType.STRING,
+                 description: "Obor dokumentu: UPV, KPV nebo UNKNOWN."
+             },
+             confidence: {
+                 type: SchemaType.INTEGER,
+                 description: "Spolehlivost klasifikace 0-100."
+             },
+             reasoning: {
+                 type: SchemaType.STRING,
+                 description: "Krátké vysvětlení klasifikace česky."
+             }
+          },
+          required: ["category", "department", "confidence", "reasoning"]
+        }
+      }
+    });
+
+    const prompt = `
+You are an expert Document Classification AI for a university placement system.
+Classify the following document extract into exactly one of the endpoints.
+
+Categories:
+1. AI_RULE: Contains methodologies, competency frameworks, or recognition rules (Metodika, Kompetenční rámec, Uznatelnost).
+2. ROSTER: Contains lists of students, IDs, emails, hours, or organization details (typically from Excel/CSV).
+3. TEMPLATE: Contains blank forms, placeholders (e.g., "[Jméno]", "Zde doplňte"), or generic templates for student/mentor use.
+4. COMPLIANCE: Contains signed framework agreements, contracts, or legal compliance documents between the university and institutions.
+5. UNKNOWN: If not explicitly clear.
+
+Department Scope:
+1. UPV: Učitelství (Teaching). Keywords: učitel, škola, pedagogika, didaktika, asistent pedagoga.
+2. KPV: Poradenství (Counseling). Keywords: poradenství, poradce, psychologie, psycholog.
+3. UNKNOWN: If not explicitly clear.
+
+Text dokumentu k analýze (prvních pár tisíc znaků):
+${textToParse.substring(0, 5000)}
+`;
+
+    const result = await model.generateContent(prompt);
+    const responseText = result.response.text();
+    const parsedJson = JSON.parse(responseText);
+
+    // If it's an AI_RULE and confidence is high, we can pre-parse it here
+    // to save a second round-trip from the frontend.
+    if (parsedJson.category === 'AI_RULE' && parsedJson.confidence >= 80) {
+        const proModel = genAI.getGenerativeModel({
+          model: "gemini-2.5-pro",
+          generationConfig: {
+            responseMimeType: "application/json",
+            responseSchema: {
+              type: SchemaType.OBJECT,
+              properties: {
+                 metodika: {
+                     type: SchemaType.STRING,
+                     description: "Extrahovaná metodika (obecná pravidla a průběh praxe)."
+                 },
+                 uznatelnost: {
+                     type: SchemaType.STRING,
+                     description: "Extrahovaná pravidla uznatelnosti praxe."
+                 },
+                 kompetencni_ramec: {
+                     type: SchemaType.STRING,
+                     description: "Extrahovaný kompetenční rámec (pedagogické, didaktické a další kompetence)."
+                 }
+              },
+              required: ["metodika", "uznatelnost", "kompetencni_ramec"]
+            }
+          }
+        });
+
+        const proPrompt = `
+Analyzuj následující text dokumentu a extrahuj klíčové informace pro hodnocení studentských praxí.
+Rozděl zjištěné informace do tří kategorií:
+1. Metodika (obecná pravidla, jak má praxe probíhat)
+2. Uznatelnost (pravidla pro uznání předchozí praxe nebo zaměstnání)
+3. Kompetenční rámec (požadavky na kompetence studenta - oborové, pedagogické, atd.)
+
+Ponech informace v profesionální češtině a stručném bodovém formátu. Pokud některá kategorie v dokumentu zcela chybí, vrať pro ni prázdný řetězec.
+
+Text dokumentu k analýze:
+${textToParse.substring(0, 30000)}
+`;
+        const proResult = await proModel.generateContent(proPrompt);
+        const proParsed = JSON.parse(proResult.response.text());
+        parsedJson.extractedRules = proParsed;
+    }
+
+    return parsedJson;
+
+  } catch (error) {
+    console.error("routeDocument Error:", error);
+    throw new functions.https.HttpsError("internal", "Chyba při komunikaci s AI: " + error.message);
+  }
+});
+
+
 exports.parseDocumentForAI = functions.https.onCall(async (data, context) => {
   if (!context.auth) {
     throw new functions.https.HttpsError(
