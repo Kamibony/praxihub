@@ -5,11 +5,11 @@ import { httpsCallable } from 'firebase/functions';
 import { functions } from '../../lib/firebase';
 import { Play, Square, Volume2, Mic } from 'lucide-react';
 
-type SlideState = 'Welcome' | 'Student View' | 'Institution View' | 'Coordinator View';
+type SlideState = 'Vítejte' | 'Pohled studenta' | 'Pohled instituce' | 'Pohled koordinátora';
 type AvatarState = 'idle' | 'loading' | 'speaking';
 
 export default function ShowcasePage() {
-  const [currentSlide, setCurrentSlide] = useState<SlideState>('Welcome');
+  const [currentSlide, setCurrentSlide] = useState<SlideState>('Vítejte');
   const [avatarState, setAvatarState] = useState<AvatarState>('idle');
   const [narration, setNarration] = useState('');
   const [isPlaying, setIsPlaying] = useState(false);
@@ -51,9 +51,9 @@ export default function ShowcasePage() {
 
     const utterance = new SpeechSynthesisUtterance(narration);
 
-    // Attempt to set a Slovak or Czech voice
+    // Attempt to set a Czech voice
     const voices = synthRef.current.getVoices();
-    const preferredVoice = voices.find(v => v.lang.includes('sk') || v.lang.includes('cs'));
+    const preferredVoice = voices.find(v => v.lang.includes('cs'));
     if (preferredVoice) {
       utterance.voice = preferredVoice;
     }
@@ -104,7 +104,7 @@ export default function ShowcasePage() {
           {avatarState === 'idle' && <div className="w-4 h-4 bg-white/20 rounded-full" />}
         </div>
         <div className="text-xs font-mono text-indigo-300 bg-indigo-900/30 px-3 py-1 rounded-full border border-indigo-500/30">
-          AI: {avatarState.toUpperCase()}
+          AI: {avatarState === 'loading' ? 'NAČÍTÁM' : avatarState === 'speaking' ? 'MLUVÍM' : 'PŘIPRAVEN'}
         </div>
       </div>
 
@@ -112,7 +112,7 @@ export default function ShowcasePage() {
 
         {/* Navigation */}
         <div className="flex justify-center gap-4 border-b border-white/10 pb-6">
-          {(['Welcome', 'Student View', 'Institution View', 'Coordinator View'] as SlideState[]).map(slide => (
+          {(['Vítejte', 'Pohled studenta', 'Pohled instituce', 'Pohled koordinátora'] as SlideState[]).map(slide => (
             <button
               key={slide}
               onClick={() => setCurrentSlide(slide)}
@@ -137,7 +137,7 @@ export default function ShowcasePage() {
               {currentSlide}
             </h2>
             <div className="w-3/4 h-64 bg-slate-800/50 rounded-xl border border-white/10 border-dashed flex items-center justify-center z-10">
-               <span className="text-slate-500 font-mono">[UI Screenshot Placeholder]</span>
+               <span className="text-slate-500 font-mono">[Zástupný obrázek UI]</span>
             </div>
           </div>
 
@@ -146,7 +146,7 @@ export default function ShowcasePage() {
             <div className="bg-slate-800/80 rounded-2xl p-6 border border-indigo-500/20 flex-1 flex flex-col">
               <h3 className="text-indigo-400 font-semibold mb-4 flex items-center gap-2">
                 <BotIcon />
-                Data-Grounded Narration
+                Daty podložený výklad
               </h3>
 
               <div className="flex-1 text-slate-300 leading-relaxed font-medium min-h-[150px]">
@@ -170,14 +170,14 @@ export default function ShowcasePage() {
                     disabled={!narration || avatarState === 'loading'}
                     className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition disabled:opacity-50"
                   >
-                    <Play size={18} /> Play Audio
+                    <Play size={18} /> Přehrát
                   </button>
                 ) : (
                   <button
                     onClick={handleStopAudio}
                     className="flex items-center gap-2 px-4 py-2 bg-red-500/20 text-red-400 hover:bg-red-500/30 rounded-lg transition border border-red-500/20"
                   >
-                    <Square size={18} /> Stop
+                    <Square size={18} /> Zastavit
                   </button>
                 )}
               </div>

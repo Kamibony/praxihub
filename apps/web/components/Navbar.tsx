@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import { auth, db } from '../lib/firebase';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
-import { Menu, X, User as UserIcon, LogIn, BookOpen } from 'lucide-react';
+import { Menu, X, User as UserIcon, LogIn, BookOpen, MonitorPlay } from 'lucide-react';
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -68,6 +68,9 @@ export default function Navbar() {
            <Link href="/manual" className="text-sm font-medium text-slate-600 hover:text-blue-600 transition flex items-center gap-2">
              <BookOpen size={16} /> Manuál
            </Link>
+           <Link href="/showcase" className="text-sm font-medium text-indigo-600 hover:text-indigo-800 transition flex items-center gap-2">
+             <MonitorPlay size={16} /> Prezentační mód
+           </Link>
            {!loading && (
              <>
                {user ? (
@@ -94,6 +97,9 @@ export default function Navbar() {
         <div className="md:hidden absolute top-full left-0 w-full bg-white border-b border-slate-100 p-4 flex flex-col gap-4 shadow-xl">
            <Link href="/manual" className="flex items-center gap-2 text-slate-600 font-medium p-2 hover:bg-slate-50 rounded-lg" onClick={() => setMobileMenuOpen(false)}>
              <BookOpen size={18} /> Manuál
+           </Link>
+           <Link href="/showcase" className="flex items-center gap-2 text-indigo-600 font-medium p-2 hover:bg-indigo-50 rounded-lg" onClick={() => setMobileMenuOpen(false)}>
+             <MonitorPlay size={18} /> Prezentační mód
            </Link>
            {user ? (
               <Link href={getDashboardLink()} className="flex items-center gap-2 text-blue-600 font-bold p-2 hover:bg-blue-50 rounded-lg" onClick={() => setMobileMenuOpen(false)}>
