@@ -1948,7 +1948,48 @@ exports.fetchAresAndLink = functions.https.onCall(async (data, context) => {
 });
 
 
-// 15. PARSE DOCUMENT FOR AI KNOWLEDGE BASE
+// 15. SHOWCASE MODE: DATA-GROUNDED NARRATION
+exports.generateShowcaseNarration = functions.https.onCall(async (data, context) => {
+  const { viewContext } = data;
+  if (!viewContext) {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "Chýba kontext pohľadu (viewContext).",
+    );
+  }
+
+  try {
+    const { GoogleGenerativeAI } = require("@google/generative-ai");
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+
+    // In a real scenario, this could query system_configs, but for PoC we'll mock the state transition rules
+    const systemState = {
+      transitions: {
+        DRAFT: "Student vyplňuje údaje",
+        PENDING_INSTITUTION: "Čeká na schválení institucí",
+        PENDING_COORDINATOR: "Čeká na finální schválení koordinátorem",
+        ACTIVE: "Praxe probíhá"
+      },
+      currentView: viewContext
+    };
+
+    const prompt = `
+You are presenting the NEW IVP PRAXE system. Here is the raw JSON data defining the current rules/state:
+${JSON.stringify(systemState)}
+
+Translate this EXACT data into a 2-sentence spoken explanation in Slovak. Do NOT hallucinate or add any outside information.
+`;
+
+    const result = await model.generateContent(prompt);
+    return { narration: result.response.text() };
+  } catch (error) {
+    console.error("generateShowcaseNarration Error:", error);
+    throw new functions.https.HttpsError("internal", "Nepodařilo se vygenerovat naraci: " + error.message);
+  }
+});
+
+// 16. PARSE DOCUMENT FOR AI KNOWLEDGE BASE
 exports.parseDocumentForAI = functions.https.onCall(async (data, context) => {
   if (!context.auth) {
     throw new functions.https.HttpsError(
