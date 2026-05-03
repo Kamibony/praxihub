@@ -2,21 +2,17 @@ import { execSync } from 'child_process';
 import { clearFirestore, clearAuth, seedAdminUser, seedStudentUser, seedMentorAndLog, seedClosedPlacementForCommission, seedPublicPortfolio } from './e2e/seed';
 
 async function globalSetup() {
-  console.log('Killing potential orphaned processes...');
+  console.log('Waiting for emulators and web app to be fully ready...');
   try {
-    execSync('kill $(lsof -t -i :3000) 2>/dev/null || true');
-    execSync('kill $(lsof -t -i :4000) 2>/dev/null || true');
-    execSync('kill $(lsof -t -i :5001) 2>/dev/null || true');
-    execSync('kill $(lsof -t -i :8080) 2>/dev/null || true');
-    execSync('kill $(lsof -t -i :9099) 2>/dev/null || true');
-    execSync('kill $(lsof -t -i :9199) 2>/dev/null || true');
+    // Wait for all essential ports to be reachable. Playwright starts the webServer for us,
+    // but the inner services like Auth (9099) might take an extra second to boot after 8080.
+    execSync('npx wait-on tcp:127.0.0.1:3000 tcp:127.0.0.1:8080 tcp:127.0.0.1:9099 -t 60000');
   } catch (error) {
-    // Ignore errors from kill commands
+    console.error('Timeout waiting for required ports to open:', error);
+    throw error;
   }
 
   // Seeding requires emulators to be fully up.
-  // Playwright's webServer ensures this if we use wait-on, or we can just run seed here
-  // Note: Playwright's webServer ensures the port is reachable before running globalSetup!
   console.log('Seeding database...');
   try {
       await clearFirestore();
