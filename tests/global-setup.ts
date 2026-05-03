@@ -1,5 +1,5 @@
 import { execSync } from 'child_process';
-import { clearFirestore, clearAuth, seedAdminUser, seedStudentUser, seedMentorAndLog, seedClosedPlacementForCommission } from './e2e/seed';
+import { clearFirestore, clearAuth, seedAdminUser, seedStudentUser, seedMentorAndLog, seedClosedPlacementForCommission, seedPublicPortfolio } from './e2e/seed';
 
 async function globalSetup() {
   console.log('Killing potential orphaned processes...');
@@ -25,6 +25,7 @@ async function globalSetup() {
       await seedStudentUser();
       await seedMentorAndLog();
       await seedClosedPlacementForCommission();
+      await seedPublicPortfolio();
       console.log('Database seeded successfully.');
   } catch (error) {
       console.error('Failed to seed database:', error);

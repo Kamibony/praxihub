@@ -98,3 +98,18 @@ export async function seedClosedPlacementForCommission() {
     createdAt: oldDate.toISOString()
   });
 }
+
+export async function seedPublicPortfolio() {
+  await db.collection('public_portfolios').doc('student123').set({
+    displayName: 'Student 123',
+    major: 'KPV',
+    bio: 'Jsem motivovaný student KPV se zájmem o výuku.',
+    skills: [
+      { skill: 'Komunikace', level: 85 },
+      { skill: 'Plánování výuky', level: 70 },
+      { skill: 'Reflexe', level: 90 }
+    ],
+    completedPlacements: 2,
+    totalHours: 120
+  });
+}
