@@ -61,10 +61,15 @@ export default function StudentDashboard() {
 
   // State for Time Logs
   const [timeLogs, setTimeLogs] = useState<any[]>([]);
+
+  // Formularove stavy pre time logs
   const [newLogDate, setNewLogDate] = useState("");
   const [newLogHours, setNewLogHours] = useState("");
   const [newLogDescription, setNewLogDescription] = useState("");
   const [submittingLog, setSubmittingLog] = useState(false);
+  const [isDictating, setIsDictating] = useState(false);
+  const [isEnhancing, setIsEnhancing] = useState(false);
+
 
   // State for AI Evaluation
   const [reflectionText, setReflectionText] = useState("");
@@ -95,7 +100,68 @@ export default function StudentDashboard() {
     return () => unsubscribe();
   }, [placement?.id]);
 
+
+  // Web Speech API for Dictation
+  const handleDictation = () => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert("Tvůj prohlížeč nepodporuje hlasové zadávání. Zkus Google Chrome nebo Safari.");
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'cs-CZ';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    recognition.onstart = () => {
+      setIsDictating(true);
+    };
+
+    recognition.onresult = async (event: any) => {
+      const transcript = event.results[0][0].transcript;
+
+      // Compute the combined text locally
+      const currentDescription = newLogDescription;
+      const combinedText = currentDescription + (currentDescription ? ' ' : '') + transcript;
+
+      // Update state purely
+      setNewLogDescription(combinedText);
+      setIsDictating(false);
+
+      // Perform side effects outside of the setState updater
+      setIsEnhancing(true);
+      try {
+        const enhanceVoiceLog = httpsCallable(functions, 'enhanceVoiceLog');
+        const result = await enhanceVoiceLog({ text: combinedText });
+        const data = result.data as any;
+        if (data.enhancedText) {
+          setNewLogDescription(data.enhancedText);
+        }
+      } catch (error) {
+        console.error("AI Enhance error:", error);
+      } finally {
+        setIsEnhancing(false);
+      }
+    };
+
+    recognition.onerror = (event: any) => {
+      console.error("Speech recognition error", event.error);
+      setIsDictating(false);
+      if (event.error !== 'no-speech') {
+          alert("Chyba při rozpoznávání hlasu.");
+      }
+    };
+
+    recognition.onend = () => {
+      setIsDictating(false);
+    };
+
+    recognition.start();
+  };
+
   const handleTimeLogSubmit = async (e: React.FormEvent) => {
+
     e.preventDefault();
     if (!placement?.id || !newLogDate || !newLogHours || !newLogDescription)
       return;
@@ -1423,21 +1489,39 @@ export default function StudentDashboard() {
                                       className="w-full px-3 py-2 bg-slate-800/50 border border-slate-700/50 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 text-slate-100 placeholder-slate-500"
                                     />
                                   </div>
-                                  <div className="md:col-span-3">
+
+                                  <div className="md:col-span-3 relative">
                                     <label className="block text-xs font-bold text-blue-200 uppercase mb-1">
-                                      Popis činnosti
+                                      Popis činnosti (Co jsi dělal/a?)
                                     </label>
-                                    <textarea
-                                      required
-                                      rows={2}
-                                      value={newLogDescription}
-                                      onChange={(e) =>
-                                        setNewLogDescription(e.target.value)
-                                      }
-                                      className="w-full px-3 py-2 bg-slate-800/50 border border-slate-700/50 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 text-slate-100 placeholder-slate-500"
-                                      placeholder="Co jste dělali?"
-                                    />
+                                    <div className="relative">
+                                      <textarea
+                                        required
+                                        rows={2}
+                                        value={newLogDescription}
+                                        onChange={(e) =>
+                                          setNewLogDescription(e.target.value)
+                                        }
+                                        placeholder="Např.: Práce na backendu v Node.js..."
+                                        className="w-full px-3 py-2 pr-12 bg-slate-800/50 border border-slate-700/50 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 text-slate-100 placeholder-slate-500"
+                                      />
+                                      <button
+                                        type="button"
+                                        onClick={handleDictation}
+                                        disabled={isDictating || isEnhancing}
+                                        title="Nadiktovat"
+                                        className={`absolute right-2 bottom-2 p-2 rounded-xl transition-all ${
+                                            isDictating ? 'bg-red-500/20 text-red-400 animate-pulse' :
+                                            isEnhancing ? 'bg-blue-500/20 text-blue-400' :
+                                            'bg-slate-700/50 text-slate-300 hover:bg-slate-600/50'
+                                        }`}
+                                      >
+                                        {isEnhancing ? '✨' : '🎙️'}
+                                      </button>
+                                    </div>
+                                    {isEnhancing && <p className="text-xs text-blue-400 mt-1 flex items-center gap-1"><span>✨</span> AI upravuje gramatiku a stylistiku...</p>}
                                   </div>
+
                                 </div>
                                 <button
                                   type="submit"
