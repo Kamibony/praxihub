@@ -24,6 +24,15 @@ jobs:
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps chromium
 
+      - name: Clean up orphaned ports
+        run: |
+          kill $(lsof -t -i :3000) 2>/dev/null || true
+          kill $(lsof -t -i :8080) 2>/dev/null || true
+          kill $(lsof -t -i :9099) 2>/dev/null || true
+          kill $(lsof -t -i :5001) 2>/dev/null || true
+          kill $(lsof -t -i :9199) 2>/dev/null || true
+          kill $(lsof -t -i :4000) 2>/dev/null || true
+
       - name: Run tests
         run: npx playwright test --config playwright.config.ts
         timeout-minutes: 10
