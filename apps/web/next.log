@@ -1,0 +1,47 @@
+  ▲ Next.js 14.2.3
+  - Local:        http://localhost:3000
+
+ ✓ Starting...
+npm error code ENOWORKSPACES
+npm error This command does not support workspaces.
+npm error A complete log of this run can be found in: /home/jules/.npm/_logs/2026-05-03T11_58_22_212Z-debug-0.log
+ ✓ Ready in 2.2s
+ ○ Compiling /p/[studentId] ...
+ ✓ Compiled /p/[studentId] in 15.4s (1710 modules)
+ ✓ Compiled in 1434ms (752 modules)
+ ⨯ Error: Page "/p/[studentId]/page" is missing exported function "generateStaticParams()", which is required with "output: export" config.
+    at DevServer.renderToResponseWithComponentsImpl (/app/node_modules/next/dist/server/base-server.js:1082:27)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async DevServer.renderPageComponent (/app/node_modules/next/dist/server/base-server.js:1924:24)
+    at async DevServer.renderToResponseImpl (/app/node_modules/next/dist/server/base-server.js:1962:32)
+    at async DevServer.pipeImpl (/app/node_modules/next/dist/server/base-server.js:920:25)
+    at async NextNodeServer.handleCatchallRenderRequest (/app/node_modules/next/dist/server/next-server.js:272:17)
+    at async DevServer.handleRequestImpl (/app/node_modules/next/dist/server/base-server.js:816:17)
+    at async /app/node_modules/next/dist/server/dev/next-dev-server.js:339:20
+    at async Span.traceAsyncFn (/app/node_modules/next/dist/trace/trace.js:154:20)
+    at async DevServer.handleRequest (/app/node_modules/next/dist/server/dev/next-dev-server.js:336:24)
+    at async invokeRender (/app/node_modules/next/dist/server/lib/router-server.js:174:21)
+    at async handleRequest (/app/node_modules/next/dist/server/lib/router-server.js:353:24)
+    at async requestHandlerImpl (/app/node_modules/next/dist/server/lib/router-server.js:377:13)
+    at async Server.requestListener (/app/node_modules/next/dist/server/lib/start-server.js:141:13) {
+  page: '/p/student123'
+}
+ ○ Compiling /_error ...
+ GET /p/student123 500 in 30053ms
+ ✓ Compiled /_error in 15.5s (1897 modules)
+ ✓ Compiled in 1647ms (982 modules)
+ ✓ Compiled in 2s (934 modules)
+ ✓ Compiled in 2.1s (934 modules)
+ ○ Compiling /p/[studentId] ...
+ ✓ Compiled /p/[studentId] in 514ms (975 modules)
+ ⨯ Error: Page "/p/[studentId]/page" is missing exported function "generateStaticParams()", which is required with "output: export" config.
+    at DevServer.renderToResponseWithComponentsImpl (/app/node_modules/next/dist/server/base-server.js:1082:27) {
+  page: '/p/student123'
+}
+ ✓ Compiled /_error in 425ms (1897 modules)
+ GET /p/student123 500 in 1151ms
+ ⨯ Error: Page "/p/[studentId]/page" is missing exported function "generateStaticParams()", which is required with "output: export" config.
+    at DevServer.renderToResponseWithComponentsImpl (/app/node_modules/next/dist/server/base-server.js:1082:27) {
+  page: '/p/student123'
+}
+ GET /p/student123 500 in 75ms
