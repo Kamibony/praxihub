@@ -185,26 +185,24 @@ export default function InstitutionDashboard() {
     );
   }
 
-  const handleScanSuccess = async (scannedId: string) => {
-    // Optionally alert the mentor or verify the ID format
+  const handleScanSuccess = async (scannedText: string) => {
     try {
-      const placementRef = doc(db, "placements", scannedId);
-      const placementDoc = await getDoc(placementRef);
-      if (placementDoc.exists()) {
-        const data = placementDoc.data();
-        if (data.institutionId === user.uid || data.mentorId === user.uid) {
-           alert("Praxe úspěšně načtena pomocí QR kódu.");
-           // Since the snapshot already fetches based on institutionId/mentorId, it might already be loaded.
-           // This provides a manual check for immediate sync if needed, or visual feedback.
-        } else {
-           alert("Nemáte oprávnění spravovat tuto praxi.");
-        }
-      } else {
-        alert("Praxe nebyla nalezena.");
+      // Expecting URL like https://praxihub.cz/verify?id=[docId] or just [docId]
+      let docId = scannedText;
+      if (scannedText.includes('verify?id=')) {
+        const url = new URL(scannedText);
+        docId = url.searchParams.get('id') || scannedText;
+      } else if (scannedText.includes('/verify/')) {
+        const parts = scannedText.split('/');
+        docId = parts[parts.length - 1];
       }
+
+      // Check if it's an audit_log/document or placement
+      // Let's open the verify page directly for full validation
+      router.push(`/verify?id=${docId}`);
     } catch (err) {
       console.error("Error reading scanned placement:", err);
-      alert("Chyba při čtení praxe z QR kódu. Zkontrolujte, zda máte oprávnění.");
+      alert("Chyba při čtení praxe z QR kódu.");
     }
   };
 
@@ -239,9 +237,9 @@ export default function InstitutionDashboard() {
       <main className="max-w-3xl mx-auto p-4 space-y-6">
 
         {/* QR Scanner Hub */}
-        <section className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm text-center">
-           <h2 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4">Naskenovat QR kód studenta</h2>
-           <p className="text-xs text-slate-500 mb-4">Naskenujte QR kód z aplikace studenta pro rychlé ověření nebo načtení praxe.</p>
+        <section className="bg-slate-800/75 backdrop-blur-md p-6 rounded-3xl border border-white/10 shadow-lg text-center">
+           <h2 className="text-sm font-bold text-indigo-300 uppercase tracking-wider mb-4 flex items-center justify-center gap-2">📷 QR Hub Scanner</h2>
+           <p className="text-xs text-slate-400 mb-4">Naskenujte QR kód ze smlouvy nebo certifikátu pro bezpečné ověření pravosti (Audit Logs).</p>
            <QrScanner onScanSuccess={handleScanSuccess} />
         </section>
 

@@ -17,6 +17,10 @@
     ],
     "rewrites": [
       {
+        "source": "/p/**",
+        "destination": "/p/fallback.html"
+      },
+      {
         "source": "**",
         "destination": "/404.html"
       }

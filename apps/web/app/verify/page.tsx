@@ -47,7 +47,15 @@ function VerifyCertificateContent() {
           setSnapshot(docSnap.data());
           setSnapshotType("CERTIFICATE");
         } else {
-          setError("Záznam nenalezen. ID neexistuje nebo je neplatné.");
+          // If not in archived, it might be an active placement ID (used for QR scanning for Mentors)
+          const placementRef = doc(db, "placements", snapshotId);
+          const placementSnap = await getDoc(placementRef);
+          if (placementSnap.exists()) {
+             setSnapshot(placementSnap.data());
+             setSnapshotType("CERTIFICATE"); // Reusing this for UI purposes
+          } else {
+             setError("Záznam nenalezen. ID neexistuje nebo je neplatné.");
+          }
         }
       } catch (err: any) {
         console.error("Error fetching snapshot:", err);
