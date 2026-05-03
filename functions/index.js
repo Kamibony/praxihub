@@ -2016,18 +2016,18 @@ exports.routeDocument = functions.https.onCall(async (data, context) => {
   // If no text sample was provided (e.g. not CSV/Excel), extract from PDF/DOCX
   if (!textToParse && fileDataBase64) {
       if (mimeType === "application/pdf") {
-          const pdfParse = require('pdf-parse');
           const buffer = Buffer.from(fileDataBase64, 'base64');
           try {
+              const pdfParse = require('pdf-parse');
               const parsedData = await pdfParse(buffer);
               textToParse = parsedData.text;
           } catch (err) {
                throw new functions.https.HttpsError("internal", "Chyba při parsování PDF: " + err.message);
           }
       } else if (mimeType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
-          const mammoth = require("mammoth");
           const buffer = Buffer.from(fileDataBase64, 'base64');
           try {
+              const mammoth = require("mammoth");
               const result = await mammoth.extractRawText({ buffer: buffer });
               textToParse = result.value;
           } catch (err) {
@@ -2180,18 +2180,18 @@ exports.parseDocumentForAI = functions.https.onCall(async (data, context) => {
   let textToParse = "";
 
   if (mimeType === "application/pdf") {
-      const pdfParse = require('pdf-parse');
       const buffer = Buffer.from(fileDataBase64, 'base64');
       try {
+          const pdfParse = require('pdf-parse');
           const parsedData = await pdfParse(buffer);
           textToParse = parsedData.text;
       } catch (err) {
            throw new functions.https.HttpsError("internal", "Chyba při parsování PDF: " + err.message);
       }
   } else if (mimeType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
-      const mammoth = require("mammoth");
       const buffer = Buffer.from(fileDataBase64, 'base64');
       try {
+          const mammoth = require("mammoth");
           const result = await mammoth.extractRawText({ buffer: buffer });
           textToParse = result.value;
       } catch (err) {
