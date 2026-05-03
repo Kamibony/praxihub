@@ -10,7 +10,8 @@ export default defineConfig({
   globalSetup: require.resolve('./tests/global-setup.ts'),
   use: {
     baseURL: 'http://127.0.0.1:3000',
-    trace: 'on-first-retry',
+    trace: process.env.CI ? 'on' : 'on-first-retry',
+    video: process.env.CI ? 'on' : 'off',
   },
   projects: [
     {
