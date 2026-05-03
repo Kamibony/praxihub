@@ -21,6 +21,12 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Install Backend dependencies
+        run: npm install --prefix functions
+
+      - name: Run backend unit tests
+        run: npm run test:backend --prefix functions
+
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps chromium
 
