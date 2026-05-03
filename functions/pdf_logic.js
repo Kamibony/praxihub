@@ -81,7 +81,7 @@ async function createCertificatePdf(snapshotData, snapshotId) {
   });
 
   const qrCodeDataUrl = await QRCode.toDataURL(
-    `https://praxihub-app.web.app/verify?id=${snapshotId}`,
+    `https://praxihub.cz/verify?id=${snapshotId}`,
   );
   const qrImage = await pdfDoc.embedPng(qrCodeDataUrl);
 
@@ -157,7 +157,7 @@ async function createCommissionDecreePdf(decreeData, decreeId) {
   });
 
   const qrCodeDataUrl = await QRCode.toDataURL(
-    `https://praxihub-app.web.app/verify?id=${decreeId}`,
+    `https://praxihub.cz/verify?id=${decreeId}`,
   );
   const qrImage = await pdfDoc.embedPng(qrCodeDataUrl);
 
