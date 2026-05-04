@@ -119,7 +119,7 @@ exports.sendEmailNotification = functions.firestore
 
 // 3. AI CHATBOT (Sprievodca)
 // Volateľná funkcia z frontendu (Webu)
-exports.chatWithAI = functions.https.onCall(async (data, context) => {
+exports.chatWithAI = functions.runWith({ memory: "512MB" }).https.onCall(async (data, context) => {
   // data obsahuje: { message: "Otázka užívateľa", role: "student/company/..." }
 
   const userMessage = data.message;
@@ -339,7 +339,7 @@ exports.createContractPDF = functions
   });
 
 // 5. AI MATCHMAKING
-exports.findMatches = functions.https.onCall(async (data, context) => {
+exports.findMatches = functions.runWith({ memory: "1GB", timeoutSeconds: 300 }).https.onCall(async (data, context) => {
   if (!context.auth) {
     throw new functions.https.HttpsError(
       "unauthenticated",
@@ -884,7 +884,7 @@ exports.importRoster = functions
     return { added, updated, ignored };
   });
 
-exports.evaluateReflection = functions.https.onCall(async (data, context) => {
+exports.evaluateReflection = functions.runWith({ memory: "1GB", timeoutSeconds: 300 }).https.onCall(async (data, context) => {
   if (!context.auth) {
     throw new functions.https.HttpsError(
       "unauthenticated",
@@ -1994,7 +1994,7 @@ Explain this data into a 2-sentence spoken explanation. You must answer in stric
 
 // 16. PARSE DOCUMENT FOR AI KNOWLEDGE BASE
 
-exports.routeDocument = functions.https.onCall(async (data, context) => {
+exports.routeDocument = functions.runWith({ memory: "1GB", timeoutSeconds: 300 }).https.onCall(async (data, context) => {
   if (!context.auth) {
     throw new functions.https.HttpsError(
       "unauthenticated",
@@ -2153,7 +2153,7 @@ ${textToParse.substring(0, 30000)}
 });
 
 
-exports.parseDocumentForAI = functions.https.onCall(async (data, context) => {
+exports.parseDocumentForAI = functions.runWith({ memory: "1GB", timeoutSeconds: 300 }).https.onCall(async (data, context) => {
   if (!context.auth) {
     throw new functions.https.HttpsError(
       "unauthenticated",
