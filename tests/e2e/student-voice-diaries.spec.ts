@@ -1,10 +1,10 @@
 import { test, expect } from '@playwright/test';
-import { loginAsRole } from './login-helper';
+import { loginAs } from './login-helper';
 
 test.describe('Student Dashboard - Zero-Cost Voice Diaries', () => {
     test('Should render the Dictate button and display AI loading state', async ({ page }) => {
         // Log in as student
-        await loginAsRole(page, 'student');
+        await loginAs(page, 'test-student-id');
 
         // Wait for dashboard to load
         await page.waitForSelector('h1:has-text("Moje Praxe")');

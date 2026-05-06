@@ -1,0 +1,26 @@
+  ▲ Next.js 14.2.3
+  - Local:        http://localhost:3000
+
+ ✓ Starting...
+npm error code ENOWORKSPACES
+npm error This command does not support workspaces.
+npm error A complete log of this run can be found in: /home/jules/.npm/_logs/2026-05-06T11_53_52_917Z-debug-0.log
+ ✓ Ready in 2.1s
+ ○ Compiling / ...
+ ✓ Compiled / in 8.3s (957 modules)
+✅ Firebase Config loaded successfully.
+🔌 Connected to Firebase Local Emulators
+ GET / 200 in 8937ms
+ ✓ Compiled in 1072ms (375 modules)
+ ○ Compiling /login ...
+ ✓ Compiled /login in 1044ms (918 modules)
+✅ Firebase Config loaded successfully.
+🔌 Connected to Firebase Local Emulators
+ GET /login 200 in 1699ms
+ ✓ Compiled /_not-found in 354ms (921 modules)
+✅ Firebase Config loaded successfully.
+🔌 Connected to Firebase Local Emulators
+ GET /_next/static/css/app/layout.css?v=1778071231611 404 in 541ms
+ GET /_next/static/chunks/main-app.js?v=1778071231611 404 in 553ms
+ GET /_next/static/chunks/app-pages-internals.js 404 in 552ms
+ GET /_next/static/chunks/app/layout.js 404 in 554ms

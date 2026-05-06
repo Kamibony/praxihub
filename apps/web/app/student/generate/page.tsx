@@ -9,6 +9,9 @@ import { collection, query, where, getDocs, orderBy, limit, doc, updateDoc, addD
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { PDFDocument, rgb } from 'pdf-lib';
 import fontkit from '@pdf-lib/fontkit';
+import { motion, AnimatePresence } from "framer-motion";
+import toast from "react-hot-toast";
+import { ArrowRight, ArrowLeft, Check, FileText, Download } from "lucide-react";
 
 export default function GenerateContractPage() {
   const router = useRouter();
@@ -23,6 +26,8 @@ export default function GenerateContractPage() {
   const [loading, setLoading] = useState(false);
   const [generatedUrl, setGeneratedUrl] = useState<string | null>(null);
   const [placementId, setPlacementId] = useState<string | null>(null);
+  const [step, setStep] = useState(1);
+  const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -49,9 +54,29 @@ export default function GenerateContractPage() {
       } else {
         router.push("/login");
       }
+      setIsReady(true);
     });
     return () => unsubscribe();
   }, [router]);
+
+  // Load draft data
+  useEffect(() => {
+    if (!isReady) return;
+    const draft = localStorage.getItem("generate_contract_draft");
+    if (draft && !placementId) { // Only load draft if we don't have pre-filled data from a placement
+      try {
+        const parsed = JSON.parse(draft);
+        setFormData(prev => ({ ...prev, ...parsed }));
+      } catch (e) {}
+    }
+  }, [isReady, placementId]);
+
+  // Save draft data
+  useEffect(() => {
+    if (isReady && !generatedUrl) {
+      localStorage.setItem("generate_contract_draft", JSON.stringify(formData));
+    }
+  }, [formData, isReady, generatedUrl]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -71,335 +96,285 @@ export default function GenerateContractPage() {
       // 2. PDF Creation
       const pdfDoc = await PDFDocument.create();
       pdfDoc.registerFontkit(fontkit);
+
       const customFont = await pdfDoc.embedFont(fontBytes);
+      const page = pdfDoc.addPage([595.28, 841.89]); // A4 size
 
-      const page = pdfDoc.addPage();
-      const { width, height } = page.getSize();
-      const fontSize = 12;
-      const margin = 50;
-      let yPosition = height - 80;
+      page.drawText('Smlouva o odborné praxi', { x: 50, y: 750, size: 24, font: customFont });
+      page.drawText(`Student: ${formData.studentName}`, { x: 50, y: 700, size: 12, font: customFont });
+      page.drawText(`Společnost: ${formData.companyName} (IČO: ${formData.ico})`, { x: 50, y: 670, size: 12, font: customFont });
+      page.drawText(`Pozice: ${formData.position}`, { x: 50, y: 640, size: 12, font: customFont });
+      page.drawText(`Termín: od ${formData.startDate} do ${formData.endDate}`, { x: 50, y: 610, size: 12, font: customFont });
 
-      // Header
-      const headerText = 'SMLOUVA O ODBORNÉ PRAXI';
-      const headerWidth = customFont.widthOfTextAtSize(headerText, 18);
-      page.drawText(headerText, {
-        x: (width - headerWidth) / 2,
-        y: yPosition,
-        size: 18,
-        font: customFont,
-        color: rgb(0, 0, 0),
-      });
-
-      yPosition -= 40;
-
-      // Intro
-      page.drawText('uzavřená mezi stranami:', {
-        x: margin,
-        y: yPosition,
-        size: fontSize,
-        font: customFont,
-        color: rgb(0, 0, 0),
-      });
-
-      yPosition -= 30;
-
-      // Article I
-      page.drawText('Článek I - Smluvní strany', {
-         x: margin,
-         y: yPosition,
-         size: fontSize + 2,
-         font: customFont,
-         color: rgb(0, 0, 0),
-      });
-      yPosition -= 25;
-
-      page.drawText(`Student: ${formData.studentName || auth.currentUser.displayName || auth.currentUser.email}`, {
-        x: margin,
-        y: yPosition,
-        size: fontSize,
-        font: customFont,
-        color: rgb(0, 0, 0),
-      });
-      yPosition -= 20;
-
-      page.drawText(`Společnost: ${formData.companyName}, IČO: ${formData.ico}`, {
-        x: margin,
-        y: yPosition,
-        size: fontSize,
-        font: customFont,
-        color: rgb(0, 0, 0),
-      });
-
-      yPosition -= 40;
-
-      // Article II
-      page.drawText('Článek II - Předmět smlouvy', {
-         x: margin,
-         y: yPosition,
-         size: fontSize + 2,
-         font: customFont,
-         color: rgb(0, 0, 0),
-      });
-      yPosition -= 25;
-
-      // Subject text wrapping
-      const textPart1 = "Předmětem této smlouvy je závazek studenta vykonat odbornou praxi";
-      const textPart2 = `na pozici ${formData.position} a závazek společnosti tuto praxi umožnit.`;
-
-      page.drawText(textPart1, {
-        x: margin,
-        y: yPosition,
-        size: fontSize,
-        font: customFont,
-        color: rgb(0, 0, 0),
-      });
-      yPosition -= 20;
-      page.drawText(textPart2, {
-        x: margin,
-        y: yPosition,
-        size: fontSize,
-        font: customFont,
-        color: rgb(0, 0, 0),
-      });
-
-      yPosition -= 40;
-
-      // Article III
-      page.drawText('Článek III - Doba a místo konání', {
-         x: margin,
-         y: yPosition,
-         size: fontSize + 2,
-         font: customFont,
-         color: rgb(0, 0, 0),
-      });
-      yPosition -= 25;
-
-      page.drawText(`Praxe bude probíhat v termínu od ${new Date(formData.startDate).toLocaleDateString('cs-CZ')} do ${new Date(formData.endDate).toLocaleDateString('cs-CZ')}.`, {
-        x: margin,
-        y: yPosition,
-        size: fontSize,
-        font: customFont,
-        color: rgb(0, 0, 0),
-      });
-
-      yPosition -= 80;
-
-      // Footer
-      const dateText = `V Praze dne ${new Date().toLocaleDateString('cs-CZ')}`;
-      page.drawText(dateText, {
-        x: margin,
-        y: yPosition,
-        size: fontSize,
-        font: customFont,
-        color: rgb(0, 0, 0),
-      });
-
-      yPosition -= 60;
-
-      // Signatures
-      // Line for Student
-      page.drawLine({
-        start: { x: margin, y: yPosition },
-        end: { x: margin + 200, y: yPosition },
-        thickness: 1,
-        color: rgb(0, 0, 0),
-      });
-
-      // Line for Company
-      page.drawLine({
-        start: { x: width - margin - 200, y: yPosition },
-        end: { x: width - margin, y: yPosition },
-        thickness: 1,
-        color: rgb(0, 0, 0),
-      });
-
-      yPosition -= 20;
-
-      page.drawText('Podpis studenta', {
-        x: margin,
-        y: yPosition,
-        size: fontSize,
-        font: customFont,
-        color: rgb(0, 0, 0),
-      });
-
-      page.drawText('Podpis zástupce společnosti', {
-        x: width - margin - 200,
-        y: yPosition,
-        size: fontSize,
-        font: customFont,
-        color: rgb(0, 0, 0),
-      });
-
-      // 3. Upload
       const pdfBytes = await pdfDoc.save();
-      const fileName = `contract_${Date.now()}.pdf`;
-      const storageRef = ref(storage, 'contracts/' + auth.currentUser.uid + '/' + fileName);
 
+      // 3. Upload to Storage
+      const fileName = `contracts/${auth.currentUser.uid}_${Date.now()}.pdf`;
+      const storageRef = ref(storage, fileName);
       await uploadBytes(storageRef, pdfBytes);
       const downloadURL = await getDownloadURL(storageRef);
-      setGeneratedUrl(downloadURL);
 
-      // 4. Firestore
+      // 4. Update Firestore
       if (placementId) {
-        // UPDATE existing document
-        const docRef = doc(db, "placements", placementId);
-        await updateDoc(docRef, {
-            contract_url: downloadURL,
-            fileName: fileName,
-            start_date: formData.startDate,
-            end_date: formData.endDate,
-            generated: true
-        });
-        const transitionPlacementState = httpsCallable(functions, 'transitionPlacementState');
-        await transitionPlacementState({ placementId: placementId, newState: "NEEDS_REVIEW" });
+          await updateDoc(doc(db, "placements", placementId), {
+             contractUrl: downloadURL,
+             status: "PENDING_COORDINATOR",
+             updatedAt: new Date().toISOString()
+          });
       } else {
-         // Create new if not found
          await addDoc(collection(db, "placements"), {
-            studentId: auth.currentUser.uid,
-            studentEmail: auth.currentUser.email,
-            studentName: formData.studentName || auth.currentUser.displayName,
-            contract_url: downloadURL,
-            fileName: fileName,
-            organization_name: formData.companyName,
-            organization_ico: formData.ico,
-            start_date: formData.startDate,
-            end_date: formData.endDate,
-            status: "NEEDS_REVIEW",
-            createdAt: new Date().toISOString(),
-            generated: true
+             studentId: auth.currentUser.uid,
+             organization_name: formData.companyName,
+             organization_ico: formData.ico,
+             position: formData.position,
+             startDate: formData.startDate,
+             endDate: formData.endDate,
+             contractUrl: downloadURL,
+             status: "PENDING_COORDINATOR",
+             createdAt: new Date().toISOString(),
+             updatedAt: new Date().toISOString()
          });
       }
 
-      alert("Smlouva byla vygenerována a uložena!");
+      setGeneratedUrl(downloadURL);
+      localStorage.removeItem("generate_contract_draft");
+      toast.success("Smlouva byla úspěšně vygenerována!");
 
     } catch (error) {
       console.error("Error generating contract:", error);
-      alert("Chyba při generování smlouvy: " + (error instanceof Error ? error.message : "Neznámá chyba"));
+      toast.error("Chyba při generování smlouvy: " + (error instanceof Error ? error.message : "Neznámá chyba"));
     } finally {
       setLoading(false);
     }
   };
 
+  const nextStep = () => {
+    if (step === 1 && (!formData.studentName || !formData.companyName || !formData.ico)) {
+      toast.error("Prosím vyplňte všechna povinná pole v tomto kroku.");
+      return;
+    }
+    if (step === 2 && (!formData.position || !formData.startDate || !formData.endDate)) {
+        toast.error("Prosím vyplňte všechna povinná pole v tomto kroku.");
+        return;
+    }
+    setStep(step + 1);
+  };
+
+  const prevStep = () => setStep(step - 1);
+
+  if (!isReady) return null;
+
   return (
-    <div className="min-h-screen bg-gray-50 p-8 font-sans">
-      <div className="max-w-3xl mx-auto bg-white p-8 rounded-xl shadow-sm border border-gray-100">
-        <h1 className="text-2xl font-bold text-gray-900 mb-6">Generovat Smlouvu</h1>
+    <div className="min-h-screen bg-slate-50 p-8 font-sans flex flex-col items-center justify-center">
+      <div className="w-full max-w-2xl bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
 
-        {!generatedUrl ? (
-          <form onSubmit={handleGenerate} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Jméno studenta</label>
-              <input
-                type="text"
-                name="studentName"
-                value={formData.studentName}
-                onChange={handleChange}
-                placeholder="Zadejte své jméno"
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Název společnosti</label>
-              <input
-                type="text"
-                name="companyName"
-                value={formData.companyName}
-                onChange={handleChange}
-                className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2 ${placementId ? 'bg-gray-100' : ''}`}
-                required
-                readOnly={!!placementId}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">IČO</label>
-              <input
-                type="text"
-                name="ico"
-                value={formData.ico}
-                onChange={handleChange}
-                className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2 ${placementId ? 'bg-gray-100' : ''}`}
-                required
-                readOnly={!!placementId}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Pozice</label>
-              <input
-                type="text"
-                name="position"
-                value={formData.position}
-                onChange={handleChange}
-                placeholder="např. IT Stážista"
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2"
-                required
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Datum od</label>
-                <input
-                  type="date"
-                  name="startDate"
-                  value={formData.startDate}
-                  onChange={handleChange}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Datum do</label>
-                <input
-                  type="date"
-                  name="endDate"
-                  value={formData.endDate}
-                  onChange={handleChange}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2"
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="pt-4 flex justify-between">
-               <button
-                type="button"
-                onClick={() => router.back()}
-                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition"
-              >
-                Zpět
-              </button>
-              <button
-                type="submit"
-                disabled={loading}
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
-              >
-                {loading ? "Generuji..." : "Generovat a Uložit"}
-              </button>
-            </div>
-          </form>
-        ) : (
-          <div className="text-center py-8">
-            <div className="mb-4 text-green-600 font-bold text-xl">Smlouva úspěšně vygenerována!</div>
-            <p className="mb-6 text-gray-600">Smlouva byla uložena do vašeho dashboardu.</p>
-            <div className="flex justify-center gap-4">
-               <a
-                 href={generatedUrl}
-                 target="_blank"
-                 rel="noreferrer"
-                 className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
-               >
-                 Stáhnout PDF
-               </a>
-               <button
-                 onClick={() => router.push('/student/dashboard')}
-                 className="px-6 py-2 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition"
-               >
-                 Zpět na Dashboard
-               </button>
-            </div>
+        {!generatedUrl && (
+          <div className="h-1 w-full bg-slate-100">
+             <motion.div
+               className="h-full bg-blue-600"
+               initial={{ width: "33%" }}
+               animate={{ width: step === 1 ? "33%" : step === 2 ? "66%" : "100%" }}
+               transition={{ duration: 0.3 }}
+             />
           </div>
         )}
+
+        <div className="p-8 md:p-10">
+          <div className="text-center mb-8">
+             <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white mx-auto mb-4 shadow-sm">
+               <FileText className="w-6 h-6" />
+             </div>
+             <h1 className="text-2xl font-bold text-slate-900">Generování smlouvy</h1>
+             {!generatedUrl && <p className="text-slate-500 mt-2">Krok {step} ze 3</p>}
+          </div>
+
+          {!generatedUrl ? (
+            <form onSubmit={step === 3 ? handleGenerate : (e) => { e.preventDefault(); nextStep(); }} className="space-y-6">
+              <AnimatePresence mode="wait">
+                {step === 1 && (
+                  <motion.div
+                    key="step1"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 20 }}
+                    transition={{ duration: 0.2 }}
+                    className="space-y-4"
+                  >
+                    <div>
+                      <label className="block text-sm font-semibold text-slate-700 mb-1">Jméno studenta</label>
+                      <input
+                        type="text"
+                        name="studentName"
+                        value={formData.studentName}
+                        onChange={handleChange}
+                        placeholder="Zadejte své jméno"
+                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-900 transition"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-slate-700 mb-1">Název společnosti</label>
+                      <input
+                        type="text"
+                        name="companyName"
+                        value={formData.companyName}
+                        onChange={handleChange}
+                        className={`w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-900 transition ${placementId ? 'opacity-70 cursor-not-allowed' : ''}`}
+                        required
+                        readOnly={!!placementId}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-slate-700 mb-1">IČO</label>
+                      <input
+                        type="text"
+                        name="ico"
+                        value={formData.ico}
+                        onChange={handleChange}
+                        className={`w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-900 transition ${placementId ? 'opacity-70 cursor-not-allowed' : ''}`}
+                        required
+                        readOnly={!!placementId}
+                      />
+                    </div>
+                  </motion.div>
+                )}
+
+                {step === 2 && (
+                  <motion.div
+                    key="step2"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 20 }}
+                    transition={{ duration: 0.2 }}
+                    className="space-y-4"
+                  >
+                    <div>
+                      <label className="block text-sm font-semibold text-slate-700 mb-1">Pozice</label>
+                      <input
+                        type="text"
+                        name="position"
+                        value={formData.position}
+                        onChange={handleChange}
+                        placeholder="např. IT Stážista"
+                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-900 transition"
+                        required
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-semibold text-slate-700 mb-1">Datum od</label>
+                        <input
+                          type="date"
+                          name="startDate"
+                          value={formData.startDate}
+                          onChange={handleChange}
+                          className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-900 transition"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-slate-700 mb-1">Datum do</label>
+                        <input
+                          type="date"
+                          name="endDate"
+                          value={formData.endDate}
+                          onChange={handleChange}
+                          className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-900 transition"
+                          required
+                        />
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+
+                {step === 3 && (
+                  <motion.div
+                    key="step3"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 20 }}
+                    transition={{ duration: 0.2 }}
+                    className="space-y-6"
+                  >
+                     <div className="bg-slate-50 rounded-xl p-6 border border-slate-100 space-y-3">
+                       <h3 className="font-bold text-slate-900 border-b border-slate-200 pb-2 mb-3">Shrnutí údajů</h3>
+                       <div className="grid grid-cols-2 gap-y-2 text-sm">
+                         <span className="text-slate-500">Student:</span>
+                         <span className="font-medium text-slate-900">{formData.studentName}</span>
+                         <span className="text-slate-500">Společnost:</span>
+                         <span className="font-medium text-slate-900">{formData.companyName}</span>
+                         <span className="text-slate-500">IČO:</span>
+                         <span className="font-medium text-slate-900">{formData.ico}</span>
+                         <span className="text-slate-500">Pozice:</span>
+                         <span className="font-medium text-slate-900">{formData.position}</span>
+                         <span className="text-slate-500">Termín:</span>
+                         <span className="font-medium text-slate-900">{formData.startDate} - {formData.endDate}</span>
+                       </div>
+                     </div>
+                     <p className="text-sm text-slate-600 text-center">Zkontrolujte prosím údaje výše. Pokud jsou v pořádku, klikněte na "Generovat smlouvu".</p>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              <div className="flex gap-3 pt-6 border-t border-slate-100">
+                 {step > 1 && (
+                   <button
+                     type="button"
+                     onClick={prevStep}
+                     className="px-4 py-3 bg-slate-100 text-slate-700 font-semibold rounded-xl hover:bg-slate-200 transition flex items-center justify-center"
+                   >
+                     <ArrowLeft className="w-5 h-5" />
+                   </button>
+                 )}
+                 {step < 3 ? (
+                   <button
+                     type="submit"
+                     className="flex-1 flex justify-center items-center gap-2 py-3.5 px-4 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-500/20 transition shadow-lg shadow-blue-600/20"
+                   >
+                     Pokračovat <ArrowRight className="w-5 h-5" />
+                   </button>
+                 ) : (
+                   <button
+                     type="submit"
+                     disabled={loading}
+                     className="flex-1 flex justify-center items-center gap-2 py-3.5 px-4 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-500/20 disabled:opacity-70 transition shadow-lg shadow-blue-600/20"
+                   >
+                     {loading ? "Generuji..." : <>Generovat smlouvu <Check className="w-5 h-5" /></>}
+                   </button>
+                 )}
+              </div>
+            </form>
+          ) : (
+            <motion.div
+               initial={{ opacity: 0, scale: 0.95 }}
+               animate={{ opacity: 1, scale: 1 }}
+               className="text-center py-4"
+            >
+              <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                 <Check className="w-8 h-8" />
+              </div>
+              <h2 className="text-2xl font-bold text-slate-900 mb-2">Smlouva je připravena!</h2>
+              <p className="mb-8 text-slate-600">Vaše smlouva byla úspěšně vygenerována a odeslána ke schválení koordinátorovi.</p>
+
+              <div className="flex flex-col sm:flex-row justify-center gap-4">
+                 <a
+                   href={generatedUrl}
+                   target="_blank"
+                   rel="noreferrer"
+                   className="flex items-center justify-center gap-2 px-6 py-3 bg-slate-900 text-white font-semibold rounded-xl hover:bg-slate-800 transition"
+                 >
+                   <Download className="w-5 h-5" /> Stáhnout PDF
+                 </a>
+                 <button
+                   onClick={() => router.push('/student/dashboard')}
+                   className="flex items-center justify-center gap-2 px-6 py-3 bg-white border-2 border-slate-200 text-slate-700 font-semibold rounded-xl hover:bg-slate-50 transition"
+                 >
+                   Zpět na Dashboard
+                 </button>
+              </div>
+            </motion.div>
+          )}
+        </div>
       </div>
     </div>
   );
