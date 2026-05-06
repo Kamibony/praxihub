@@ -5,6 +5,8 @@ import Chatbot from "../components/Chatbot";
 import Navbar from "../components/Navbar";
 import UatGate from "../components/UatGate";
 import ImpersonationBanner from "../components/ImpersonationBanner";
+import CommandPalette from "../components/CommandPalette";
+import { Toaster } from "react-hot-toast";
 
 export const metadata: Metadata = {
   title: "PraxiHub",
@@ -22,9 +24,11 @@ export default function RootLayout({
         <ImpersonationBanner />
         <UatGate>
           <Navbar />
+          <CommandPalette />
           {children}
           <Chatbot />
         </UatGate>
+        <Toaster position="bottom-right" />
       </body>
     </html>
   );
