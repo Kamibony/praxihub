@@ -7,6 +7,7 @@ import UatGate from "../components/UatGate";
 import ImpersonationBanner from "../components/ImpersonationBanner";
 import CommandPalette from "../components/CommandPalette";
 import { Toaster } from "react-hot-toast";
+import { Providers } from "./providers";
 
 export const metadata: Metadata = {
   title: "PraxiHub",
@@ -19,16 +20,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="cs">
-      <body>
-        <ImpersonationBanner />
-        <UatGate>
-          <Navbar />
-          <CommandPalette />
-          {children}
-          <Chatbot />
-        </UatGate>
-        <Toaster position="bottom-right" />
+    <html lang="cs" suppressHydrationWarning>
+      <body className="bg-background text-foreground transition-colors duration-200">
+        <Providers>
+          <ImpersonationBanner />
+          <UatGate>
+            <Navbar />
+            <CommandPalette />
+            {children}
+            <Chatbot />
+          </UatGate>
+          <Toaster position="bottom-right" />
+        </Providers>
       </body>
     </html>
   );

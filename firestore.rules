@@ -2,14 +2,11 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    function getUserRole() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
-    }
     function isAdmin() {
-      return getUserRole() == 'admin';
+      return request.auth.token.role == 'admin';
     }
     function isCoordinator() {
-      return getUserRole() == 'coordinator';
+      return request.auth.token.role == 'coordinator';
     }
 
     // Allow user to update their own profile completely, or admins/coordinators to update
@@ -38,9 +35,17 @@ service cloud.firestore {
       // Restrict update: do not allow the client to update the 'status' field directly.
       // Any attempt to modify 'status' via client-side sdk updateDoc() will be rejected.
       // (This forces them to use the callable transitionPlacementState function)
-      // Note: For UAT Bypass, we're removing `status`, `targetHours`, `migratedHours` restrictions.
+      // UAT Bypass: explicitly allow updating ONLY 'status', 'targetHours', 'migratedHours'
+      // and ONLY for users with admin or coordinator claims.
       allow update: if request.auth != null
-                    && (!request.resource.data.diff(resource.data).affectedKeys().hasAny([]));
+                    && (
+                      !request.resource.data.diff(resource.data).affectedKeys().hasAny(['status', 'targetHours', 'migratedHours'])
+                      ||
+                      (
+                        (isAdmin() || isCoordinator()) &&
+                        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'targetHours', 'migratedHours'])
+                      )
+                    );
 
       allow delete: if request.auth != null && resource.data.studentId == request.auth.uid;
 

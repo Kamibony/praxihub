@@ -2,6 +2,16 @@ import { execSync } from 'child_process';
 import { clearFirestore, clearAuth, seedAdminUser, seedStudentUser, seedMentorAndLog, seedClosedPlacementForCommission, seedPublicPortfolio } from './e2e/seed';
 
 async function globalSetup() {
+  console.log('Pre-flight: Checking for orphaned processes on critical ports...');
+  const ports = [3000, 4000, 5000, 5001, 8080, 9099, 9150];
+  for (const port of ports) {
+    try {
+      execSync(`kill $(lsof -t -i :${port}) 2>/dev/null || true`);
+    } catch (e) {
+      // Ignored
+    }
+  }
+
   console.log('Waiting for emulators and web app to be fully ready...');
   try {
     // Wait for all essential ports to be reachable. Playwright starts the webServer for us,
