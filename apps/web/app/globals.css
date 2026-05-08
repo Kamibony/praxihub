@@ -3,37 +3,103 @@
 @tailwind utilities;
 
 :root {
-  --foreground-rgb: 255, 255, 255;
-  --background-rgb: 15, 23, 42; /* slate-900 */
+  /* Default: Dark Theme */
+  --bg-color: #0f172a; /* slate-900 */
+  --bg-gradient-start: #1e293b; /* slate-800 */
+  --bg-gradient-mid: #0f172a;
+  --bg-gradient-end: #0f172a;
+  --text-color: #f8fafc; /* slate-50 */
+  --card-bg: rgba(30, 41, 59, 0.75); /* slate-800/75 */
+  --card-border: rgba(255, 255, 255, 0.08);
+  --btn-primary-bg: #312e81; /* indigo-900 */
+  --btn-primary-hover: #3730a3; /* indigo-800 */
+  --btn-primary-text: #ffffff;
+  --icon-btn-bg: rgba(30, 41, 59, 0.75);
+  --icon-btn-hover: rgba(51, 65, 85, 0.75);
+}
+
+[data-theme='light'] {
+  /* Enterprise Light Theme */
+  --bg-color: #f1f5f9; /* slate-100 */
+  --bg-gradient-start: #ffffff;
+  --bg-gradient-mid: #f8fafc;
+  --bg-gradient-end: #f1f5f9;
+  --text-color: #0f172a; /* slate-900 */
+  --card-bg: rgba(255, 255, 255, 0.9);
+  --card-border: rgba(0, 0, 0, 0.1);
+  --btn-primary-bg: #2563eb; /* blue-600 */
+  --btn-primary-hover: #1d4ed8; /* blue-700 */
+  --btn-primary-text: #ffffff;
+  --icon-btn-bg: rgba(255, 255, 255, 0.9);
+  --icon-btn-hover: rgba(241, 245, 249, 0.9);
 }
 
 body {
-  color: rgb(var(--foreground-rgb));
-  @apply bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-[#0f172a] to-[#0f172a] min-h-screen text-slate-100;
+  background-color: var(--bg-color);
+  background-image: radial-gradient(ellipse at top, var(--bg-gradient-start), var(--bg-gradient-mid), var(--bg-gradient-end));
+  color: var(--text-color);
+  min-height: 100vh;
 }
 
 @layer components {
   .card {
-    @apply bg-slate-800/75 backdrop-blur-md border border-white/10 p-6 rounded-3xl shadow-sm;
+    background: var(--card-bg);
+    backdrop-filter: blur(16px);
+    border: 1px solid var(--card-border);
+    padding: 1.5rem;
+    border-radius: 1.5rem;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   }
   .card-gradient {
-    @apply bg-gradient-to-br from-slate-800/80 to-slate-900/90 backdrop-blur-sm border border-white/5 p-6 rounded-3xl shadow-sm;
+    background: var(--card-bg);
+    backdrop-filter: blur(16px);
+    border: 1px solid var(--card-border);
+    padding: 1.5rem;
+    border-radius: 1.5rem;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   }
   .btn-primary {
-    @apply px-6 py-3 bg-indigo-900 text-white rounded-3xl font-bold shadow-sm hover:bg-indigo-800 transition disabled:opacity-50 disabled:cursor-not-allowed;
+    background-color: var(--btn-primary-bg);
+    color: var(--btn-primary-text);
+    padding: 0.75rem 1.5rem;
+    border-radius: 1.5rem;
+    font-weight: 700;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    transition-property: background-color, border-color, color, fill, stroke;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 150ms;
+  }
+  .btn-primary:hover:not(:disabled) {
+    background-color: var(--btn-primary-hover);
+  }
+  .btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
   .icon-btn {
-    @apply p-4 bg-slate-800/75 backdrop-blur-md text-slate-100 border border-white/10 rounded-3xl hover:bg-slate-700/75 transition flex flex-col items-center justify-center gap-2;
+    background: var(--icon-btn-bg);
+    backdrop-filter: blur(16px);
+    color: var(--text-color);
+    border: 1px solid var(--card-border);
+    border-radius: 1.5rem;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition-property: background-color, border-color, color, fill, stroke;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 150ms;
+  }
+  .icon-btn:hover {
+    background: var(--icon-btn-hover);
   }
 }
-body {
-  background-color: #0f172a;
-  background-image: radial-gradient(ellipse at top, #1e293b, #0f172a, #0f172a);
-  color: #f8fafc;
-}
+
 .card-glass {
-  background: rgba(30, 41, 59, 0.75);
+  background: var(--card-bg);
   backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--card-border);
   border-radius: 2.5rem;
 }

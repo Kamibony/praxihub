@@ -7,6 +7,7 @@ import { auth, db } from '../lib/firebase';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { Menu, X, User as UserIcon, LogIn, BookOpen, MonitorPlay } from 'lucide-react';
+import ThemeToggle from './ThemeToggle';
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -65,6 +66,7 @@ export default function Navbar() {
 
         {/* Desktop Nav */}
         <div className="hidden md:flex items-center gap-6">
+           <ThemeToggle />
            <Link href="/manual" className="text-sm font-medium text-slate-600 hover:text-blue-600 transition flex items-center gap-2">
              <BookOpen size={16} /> Manuál
            </Link>
@@ -95,6 +97,7 @@ export default function Navbar() {
       {/* Mobile Menu */}
       {mobileMenuOpen && (
         <div className="md:hidden absolute top-full left-0 w-full bg-white border-b border-slate-100 p-4 flex flex-col gap-4 shadow-xl">
+           <div className="p-2"><ThemeToggle /></div>
            <Link href="/manual" className="flex items-center gap-2 text-slate-600 font-medium p-2 hover:bg-slate-50 rounded-lg" onClick={() => setMobileMenuOpen(false)}>
              <BookOpen size={18} /> Manuál
            </Link>
