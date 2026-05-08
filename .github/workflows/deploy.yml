@@ -77,6 +77,16 @@ jobs:
             exit 1
           fi
 
+      # --- PRIDANÝ KROK NA MIGRÁCIU CUSTOM CLAIMS ---
+      - name: Run Custom Claims Migration
+        run: |
+          echo "Vytváram dočasný kľúč pre migráciu..."
+          echo '${{ secrets.GCP_SA_KEY }}' > sa-key.json
+          export GOOGLE_APPLICATION_CREDENTIALS="${PWD}/sa-key.json"
+          echo "Spúšťam migračný skript..."
+          node scripts/setClaims.js
+          rm sa-key.json
+
       - name: Deploy to Firebase
         uses: w9jds/firebase-action@master
         with:
