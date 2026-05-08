@@ -1,8 +1,5 @@
 const functions = require("firebase-functions/v1");
 const admin = require("firebase-admin");
-const { GoogleGenerativeAI, SchemaType } = require("@google/generative-ai");
-const axios = require("axios");
-const cors = require("cors")({ origin: true });
 
 if (!admin.apps.length) {
   admin.initializeApp();
@@ -27,9 +24,25 @@ exports.analyzeContract = functions.firestore
       console.log(`🚀 Začínam analýzu pre: ${context.params.docId}`);
 
       try {
+        const { GoogleGenerativeAI, SchemaType } = require("@google/generative-ai");
+        const axios = require("axios");
+
         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-        // Používame gemini-1.5-pro alebo 2.0-flash podľa dostupnosti, tu je 2.5-pro z promptu
-        const model = genAI.getGenerativeModel({ model: "gemini-2.5-pro" });
+        const model = genAI.getGenerativeModel({
+          model: "gemini-2.5-pro",
+          generationConfig: {
+            responseMimeType: "application/json",
+            responseSchema: {
+              type: SchemaType.OBJECT,
+              properties: {
+                organization_name: { type: SchemaType.STRING, description: "Názov firmy" },
+                organization_ico: { type: SchemaType.STRING, description: "IČO firmy (iba čísla)" },
+                start_date: { type: SchemaType.STRING, description: "YYYY-MM-DD" },
+                end_date: { type: SchemaType.STRING, description: "YYYY-MM-DD" }
+              }
+            }
+          }
+        });
 
         const fileUrl = newData.contract_url;
         if (!fileUrl) throw new Error("Chýba URL zmluvy");
@@ -61,12 +74,8 @@ exports.analyzeContract = functions.firestore
           prompt,
           { inlineData: { data: base64File, mimeType: mimeType } },
         ]);
-        const cleanJson = result.response
-          .text()
-          .replace(/```json/g, "")
-          .replace(/```/g, "")
-          .trim();
-        const extractedData = JSON.parse(cleanJson);
+        const responseText = result.response.text();
+        const extractedData = JSON.parse(responseText);
 
         // Nastavíme status na NEEDS_REVIEW, aby to študent skontroloval
         await change.after.ref.update({
@@ -75,7 +84,7 @@ exports.analyzeContract = functions.firestore
           start_date: extractedData.start_date,
           end_date: extractedData.end_date,
           status: "NEEDS_REVIEW",
-          ai_analysis_result: cleanJson,
+          ai_analysis_result: responseText,
           is_verified: false,
         });
       } catch (error) {
@@ -137,6 +146,7 @@ exports.chatWithAI = functions.runWith({ memory: "512MB" }).https.onCall(async (
       console.warn("Could not fetch chatbot_knowledge from system_configs, using fallback.", err);
     }
 
+    const { GoogleGenerativeAI } = require("@google/generative-ai");
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-pro" });
 
@@ -188,6 +198,7 @@ exports.chatWithAI = functions.runWith({ memory: "512MB" }).https.onCall(async (
 exports.createContractPDF = functions
   .runWith({ memory: "512MB", timeoutSeconds: 60 })
   .https.onRequest((req, res) => {
+    const cors = require("cors")({ origin: true });
     cors(req, res, async () => {
       console.log("Starting createContractPDF");
 
@@ -227,6 +238,7 @@ exports.createContractPDF = functions
         console.log("Loading dependencies (pdf-lib)...");
         const { PDFDocument, rgb } = require("pdf-lib");
         const fontkit = require("@pdf-lib/fontkit");
+        const axios = require("axios");
         console.log("Dependencies loaded.");
 
         // Fetch font supporting Latin-2 (Czech)
@@ -433,8 +445,26 @@ exports.findMatches = functions.runWith({ memory: "1GB", timeoutSeconds: 300 }).
       };
     }
 
+    const { GoogleGenerativeAI, SchemaType } = require("@google/generative-ai");
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-pro" });
+    const model = genAI.getGenerativeModel({
+      model: "gemini-2.5-pro",
+      generationConfig: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: SchemaType.ARRAY,
+          items: {
+            type: SchemaType.OBJECT,
+            properties: {
+              organizationId: { type: SchemaType.STRING, description: "ID firmy ze vstupu" },
+              matchScore: { type: SchemaType.INTEGER, description: "číslo 0-100" },
+              reasoning: { type: SchemaType.STRING, description: "stručné vysvětlení v češtině, proč se hodí/nehodí - max 2 věty" }
+            },
+            required: ["organizationId", "matchScore", "reasoning"]
+          }
+        }
+      }
+    });
 
     const prompt = `
       You are a strict matchmaking engine. use ONLY the provided JSON data. DO NOT invent or assume any skills or requirements not explicitly listed. If a profile is empty, ignore it.
@@ -461,11 +491,7 @@ exports.findMatches = functions.runWith({ memory: "1GB", timeoutSeconds: 300 }).
     `;
 
     const result = await model.generateContent(prompt);
-    const text = result.response
-      .text()
-      .replace(/```json/g, "")
-      .replace(/```/g, "")
-      .trim();
+    const text = result.response.text();
 
     let matches;
     try {
@@ -926,6 +952,7 @@ exports.evaluateReflection = functions.runWith({ memory: "1GB", timeoutSeconds: 
   }
 
   try {
+    const { GoogleGenerativeAI, SchemaType } = require("@google/generative-ai");
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
     const model = genAI.getGenerativeModel({
       model: "gemini-2.5-flash",
@@ -1365,6 +1392,7 @@ exports.testEvaluateReflection = functions.https.onCall(
     }
 
     try {
+      const { GoogleGenerativeAI, SchemaType } = require("@google/generative-ai");
       const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
       const model = genAI.getGenerativeModel({
         model: "gemini-2.5-flash",
@@ -1713,6 +1741,7 @@ exports.correctReflectionGrammar = functions.https.onCall(
     }
 
     try {
+      const { GoogleGenerativeAI } = require("@google/generative-ai");
       const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
       const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
@@ -1860,6 +1889,7 @@ exports.fetchAresAndLink = functions.https.onCall(async (data, context) => {
   const placementRef = db.collection("placements").doc(placementId);
 
   try {
+    const axios = require("axios");
     const placementDoc = await placementRef.get();
     if (!placementDoc.exists) {
       throw new functions.https.HttpsError("not-found", "Placement not found.");
@@ -2043,6 +2073,9 @@ exports.routeDocument = functions.runWith({ memory: "1GB", timeoutSeconds: 300 }
       textToParse = "Prázdný dokument.";
   }
 
+  // Basic sanitization: strip zero-width characters, generic malicious patterns
+  textToParse = textToParse.replace(/[\u200B-\u200D\uFEFF]/g, '');
+
   try {
     const { GoogleGenerativeAI, SchemaType } = require("@google/generative-ai");
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
@@ -2092,7 +2125,7 @@ Department Scope:
 3. UNKNOWN: If not explicitly clear.
 
 Text dokumentu k analýze (prvních pár tisíc znaků):
-${textToParse.substring(0, 5000)}
+${textToParse.substring(0, 30000)}
 `;
 
     const result = await model.generateContent(prompt);
@@ -2137,7 +2170,7 @@ Rozděl zjištěné informace do tří kategorií:
 Ponech informace v profesionální češtině a stručném bodovém formátu. Pokud některá kategorie v dokumentu zcela chybí, vrať pro ni prázdný řetězec.
 
 Text dokumentu k analýze:
-${textToParse.substring(0, 30000)}
+${textToParse.substring(0, 80000)}
 `;
         const proResult = await proModel.generateContent(proPrompt);
         const proParsed = JSON.parse(proResult.response.text());
@@ -2205,6 +2238,9 @@ exports.parseDocumentForAI = functions.runWith({ memory: "1GB", timeoutSeconds: 
       throw new functions.https.HttpsError("internal", "Nepodařilo se extrahovat žádný text.");
   }
 
+  // Basic sanitization
+  textToParse = textToParse.replace(/[\u200B-\u200D\uFEFF]/g, '');
+
   try {
     const { GoogleGenerativeAI, SchemaType } = require("@google/generative-ai");
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
@@ -2244,7 +2280,7 @@ Rozděl zjištěné informace do tří kategorií:
 Ponech informace v profesionální češtině a stručném bodovém formátu. Pokud některá kategorie v dokumentu zcela chybí, vrať pro ni prázdný řetězec.
 
 Text dokumentu k analýze:
-${textToParse.substring(0, 30000)} // Limit to avoid hitting context window excessively if file is massive
+${textToParse.substring(0, 80000)} // Increased limit leveraging Gemini 2.5 Pro massive context window
 `;
 
     const result = await model.generateContent(prompt);
