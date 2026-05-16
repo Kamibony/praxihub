@@ -25,6 +25,8 @@ import Chatbot from "@/components/Chatbot";
 import ContractSignature from "@/components/ContractSignature";
 
 import QRCode from "react-qr-code";
+import SHA256 from "crypto-js/sha256";
+import UatGate from "@/components/UatGate";
 
 export default function StudentDashboard() {
 
@@ -66,6 +68,7 @@ export default function StudentDashboard() {
   const [newLogDate, setNewLogDate] = useState("");
   const [newLogHours, setNewLogHours] = useState("");
   const [newLogDescription, setNewLogDescription] = useState("");
+  const [newLogCategory, setNewLogCategory] = useState("shadowing_hours");
   const [submittingLog, setSubmittingLog] = useState(false);
   const [isDictating, setIsDictating] = useState(false);
   const [isEnhancing, setIsEnhancing] = useState(false);
@@ -75,12 +78,78 @@ export default function StudentDashboard() {
   const [reflectionText, setReflectionText] = useState("");
   const [evaluating, setEvaluating] = useState(false);
   const [isCorrectingGrammar, setIsCorrectingGrammar] = useState(false);
+  const [isGeneratingMatrix, setIsGeneratingMatrix] = useState(false);
 
   // State for Voice Dictation
   const [isRecording, setIsRecording] = useState(false);
   const recognitionRef = useRef<any>(null);
 
+  const [activeTab, setActiveTab] = useState("náslechy");
+  const [rubrics, setRubrics] = useState<any>({});
+  const [systemRubricConfig, setSystemRubricConfig] = useState<any>(null);
+
   const router = useRouter();
+
+  useEffect(() => {
+    async function fetchSystemRubrics() {
+      try {
+        const configDoc = await getDoc(doc(db, "system_configs", "ai_krau_rules"));
+        if (configDoc.exists()) {
+           setSystemRubricConfig(configDoc.data());
+        }
+      } catch (err) {
+        console.error("Error fetching system rubrics config:", err);
+      }
+    }
+    fetchSystemRubrics();
+  }, []);
+
+  useEffect(() => {
+    if (!placement?.id) return;
+    const unsub = onSnapshot(
+      collection(db, "placements", placement.id, "rubrics"),
+      (snapshot) => {
+        let currentRubrics: any = {};
+        snapshot.forEach((doc) => {
+          currentRubrics[doc.id] = doc.data();
+        });
+        setRubrics(currentRubrics);
+      }
+    );
+    return () => unsub();
+  }, [placement?.id]);
+
+  const handleRubricChange = (domainId: string, value: string) => {
+     setRubrics((prev: any) => ({
+       ...prev,
+       [domainId]: { ...prev[domainId], value }
+     }));
+     debouncedSaveRubric(domainId, value);
+  };
+
+  const saveRubricToDb = async (domainId: string, value: string) => {
+    if (!placement?.id) return;
+    try {
+      const rubricRef = doc(collection(db, "placements", placement.id, "rubrics"), domainId);
+      await setDoc(rubricRef, { value, updatedAt: new Date().toISOString() }, { merge: true });
+    } catch (err) {
+       console.error("Failed to auto-save rubric:", err);
+    }
+  };
+
+  const debouncedSaveRubric = useRef(
+    // Simple debounce implementation directly in component
+    (() => {
+      let timer: NodeJS.Timeout;
+      return (domainId: string, value: string) => {
+        clearTimeout(timer);
+        timer = setTimeout(() => {
+          saveRubricToDb(domainId, value);
+        }, 2000);
+      };
+    })()
+  ).current;
+
 
   // Fetch time logs
   useEffect(() => {
@@ -163,7 +232,7 @@ export default function StudentDashboard() {
   const handleTimeLogSubmit = async (e: React.FormEvent) => {
 
     e.preventDefault();
-    if (!placement?.id || !newLogDate || !newLogHours || !newLogDescription)
+    if (!placement?.id || !newLogDate || !newLogHours || !newLogDescription || !newLogCategory)
       return;
 
     setSubmittingLog(true);
@@ -172,6 +241,7 @@ export default function StudentDashboard() {
       await addDoc(logsRef, {
         date: newLogDate,
         hours: Number(newLogHours),
+        category: newLogCategory,
         description: newLogDescription,
         status: "pending",
         mentorId: placement.mentorId || null,
@@ -451,6 +521,30 @@ export default function StudentDashboard() {
     }
   };
 
+  const handleGenerateKraumMatrix = async () => {
+    if (!placement?.id) return;
+    setIsGeneratingMatrix(true);
+    try {
+      const generateMatrixFn = httpsCallable(functions, 'generateSkillMatrixPDF');
+      const response = await generateMatrixFn({ placementId: placement.id });
+      const data = response.data as any;
+
+      if (data.success && data.url) {
+        // Update local state and DB manually just in case listener is slow
+        await updateDoc(doc(db, "placements", placement.id), {
+           skillMatrixUrl: data.url
+        });
+        setPlacement({ ...placement, skillMatrixUrl: data.url });
+        alert("KRAU Matrix byl úspěšně vygenerován.");
+      }
+    } catch (error: any) {
+      console.error("Matrix generation error:", error);
+      alert("Chyba při generování PDF matice.");
+    } finally {
+      setIsGeneratingMatrix(false);
+    }
+  };
+
   const addSkill = async () => {
     if (!newSkill.trim() || !user) return;
     const updatedSkills = [...skills, newSkill.trim()];
@@ -477,6 +571,30 @@ export default function StudentDashboard() {
       console.error("Error removing skill:", error);
     }
   };
+
+  // Cognitive Telemetry Logic
+  useEffect(() => {
+    if (!reflectionText || !user?.uid) return;
+
+    const timeoutId = setTimeout(async () => {
+      try {
+        const anonymousId = SHA256(user.uid).toString();
+        const telemetryRef = collection(db, "research_telemetry");
+
+        await addDoc(telemetryRef, {
+          anonymousId,
+          textDraft: reflectionText,
+          major: placement?.studentMajor || placement?.major || "UNKNOWN",
+          timestamp: new Date().toISOString()
+        });
+      } catch (err) {
+         // Silently fail as telemetry should not disrupt UX
+         console.warn("Background telemetry failed", err);
+      }
+    }, 3000); // 3-second debounce on reflection text drafts
+
+    return () => clearTimeout(timeoutId);
+  }, [reflectionText, user?.uid, placement]);
 
   // Web Speech API Logic
   useEffect(() => {
@@ -1444,145 +1562,338 @@ export default function StudentDashboard() {
                             </div>
                           )}
 
-                          {/* EVIDENCE HODIN (Time Logs) - Zobrazia sa len ak je APPROVED alebo EVALUATION alebo CLOSED */}
-                          {(placement.status === "APPROVED" || placement.status === "ACTIVE" ||
-                            placement.status === "EVALUATION" ||
-                            placement.status === "CLOSED") && (
-                            <div className="bg-blue-900/20 card-glass p-6 rounded-2xl border border-blue-800/50 mb-6">
-                              <h3 className="font-bold text-blue-900 text-lg mb-4 flex items-center gap-2">
-                                <span className="text-xl">⏱️</span>
-                                Evidence hodin
-                              </h3>
+                          {/* 3-PILLAR PRACTICE UI (Náslechy, Výstupy, Reflexe) */}
+                          {(placement.status === "APPROVED" || placement.status === "ACTIVE" || placement.status === "EVALUATION" || placement.status === "CLOSED") && (
+                            <UatGate>
+                            <div className="mt-8 bg-slate-900/50 card-glass rounded-3xl overflow-hidden border border-white/10">
+                               <div className="flex border-b border-white/10">
+                                  <button onClick={() => setActiveTab('náslechy')} className={`flex-1 py-4 text-sm font-bold tracking-wider uppercase transition-colors ${activeTab === 'náslechy' ? 'bg-blue-600/20 text-blue-400 border-b-2 border-blue-500' : 'text-slate-400 hover:bg-white/5'}`}>Náslechy</button>
+                                  <button onClick={() => setActiveTab('výstupy')} className={`flex-1 py-4 text-sm font-bold tracking-wider uppercase transition-colors ${activeTab === 'výstupy' ? 'bg-indigo-600/20 text-indigo-400 border-b-2 border-indigo-500' : 'text-slate-400 hover:bg-white/5'}`}>Výstupy</button>
+                                  <button onClick={() => setActiveTab('reflexe')} className={`flex-1 py-4 text-sm font-bold tracking-wider uppercase transition-colors ${activeTab === 'reflexe' ? 'bg-purple-600/20 text-purple-400 border-b-2 border-purple-500' : 'text-slate-400 hover:bg-white/5'}`}>Reflexe</button>
+                               </div>
 
-                              <form
-                                onSubmit={handleTimeLogSubmit}
-                                className="mb-6 card-glass p-4 rounded-2xl border border-blue-800/30 shadow-sm"
-                              >
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                                  <div>
-                                    <label className="block text-xs font-bold text-blue-200 uppercase mb-1">
-                                      Datum
-                                    </label>
-                                    <input
-                                      type="date"
-                                      required
-                                      value={newLogDate}
-                                      onChange={(e) =>
-                                        setNewLogDate(e.target.value)
-                                      }
-                                      className="w-full px-3 py-2 bg-slate-800/50 border border-slate-700/50 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 text-slate-100 placeholder-slate-500"
-                                    />
-                                  </div>
-                                  <div>
-                                    <label className="block text-xs font-bold text-blue-200 uppercase mb-1">
-                                      Počet hodin
-                                    </label>
-                                    <input
-                                      type="number"
-                                      step="0.5"
-                                      min="0.5"
-                                      required
-                                      value={newLogHours}
-                                      onChange={(e) =>
-                                        setNewLogHours(e.target.value)
-                                      }
-                                      className="w-full px-3 py-2 bg-slate-800/50 border border-slate-700/50 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 text-slate-100 placeholder-slate-500"
-                                    />
-                                  </div>
+                               <div className="p-6">
+                                  {/* PILLAR 1: NÁSLECHY (LIVE TRACKER) */}
+                                  {activeTab === 'náslechy' && (
+                                    <div className="space-y-6">
+                                      <h3 className="font-bold text-blue-400 text-lg flex items-center gap-2">
+                                        <span className="text-xl">⏱️</span> Evidence hodin a náslechy
+                                      </h3>
 
-                                  <div className="md:col-span-3 relative">
-                                    <label className="block text-xs font-bold text-blue-200 uppercase mb-1">
-                                      Popis činnosti (Co jsi dělal/a?)
-                                    </label>
-                                    <div className="relative">
-                                      <textarea
-                                        required
-                                        rows={2}
-                                        value={newLogDescription}
-                                        onChange={(e) =>
-                                          setNewLogDescription(e.target.value)
-                                        }
-                                        placeholder="Např.: Práce na backendu v Node.js..."
-                                        className="w-full px-3 py-2 pr-12 bg-slate-800/50 border border-slate-700/50 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 text-slate-100 placeholder-slate-500"
-                                      />
-                                      <button
-                                        type="button"
-                                        onClick={handleDictation}
-                                        disabled={isDictating || isEnhancing}
-                                        title="Nadiktovat"
-                                        className={`absolute right-2 bottom-2 p-2 rounded-xl transition-all ${
-                                            isDictating ? 'bg-red-500/20 text-red-400 animate-pulse' :
-                                            isEnhancing ? 'bg-blue-500/20 text-blue-400' :
-                                            'bg-slate-700/50 text-slate-300 hover:bg-slate-600/50'
-                                        }`}
+                                      <form
+                                        onSubmit={handleTimeLogSubmit}
+                                        className="mb-6 card-glass p-4 rounded-2xl border border-blue-800/30 shadow-sm"
                                       >
-                                        {isEnhancing ? '✨' : '🎙️'}
-                                      </button>
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                                          <div>
+                                            <label className="block text-xs font-bold text-blue-200 uppercase mb-1">
+                                              Datum
+                                            </label>
+                                            <input
+                                              type="date"
+                                              required
+                                              value={newLogDate}
+                                              onChange={(e) =>
+                                                setNewLogDate(e.target.value)
+                                              }
+                                              className="w-full px-3 py-2 bg-slate-800/50 border border-slate-700/50 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 text-slate-100 placeholder-slate-500"
+                                            />
+                                          </div>
+                                          <div>
+                                            <label className="block text-xs font-bold text-blue-200 uppercase mb-1">
+                                              Počet hodin
+                                            </label>
+                                            <input
+                                              type="number"
+                                              step="0.5"
+                                              min="0.5"
+                                              required
+                                              value={newLogHours}
+                                              onChange={(e) =>
+                                                setNewLogHours(e.target.value)
+                                              }
+                                              className="w-full px-3 py-2 bg-slate-800/50 border border-slate-700/50 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 text-slate-100 placeholder-slate-500"
+                                            />
+                                          </div>
+                                          <div>
+                                            <label className="block text-xs font-bold text-blue-200 uppercase mb-1">
+                                              Kategorie
+                                            </label>
+                                            <select
+                                              required
+                                              value={newLogCategory}
+                                              onChange={(e) => setNewLogCategory(e.target.value)}
+                                              className="w-full px-3 py-2 bg-slate-800/50 border border-slate-700/50 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 text-slate-100 placeholder-slate-500"
+                                            >
+                                              {placement?.studentMajor === 'UPV' || placement?.major === 'UPV' ? (
+                                                <>
+                                                  <option value="theoretical_observations">Teoretické náslechy</option>
+                                                  <option value="practical_observations">Praktické náslechy</option>
+                                                </>
+                                              ) : (
+                                                <>
+                                                  <option value="shadowing_hours">Stínování</option>
+                                                  <option value="case_studies">Případové studie</option>
+                                                </>
+                                              )}
+                                            </select>
+                                          </div>
+
+                                          <div className="md:col-span-3 relative">
+                                            <label className="block text-xs font-bold text-blue-200 uppercase mb-1">
+                                              Popis činnosti (Co jsi dělal/a?)
+                                            </label>
+                                            <div className="relative">
+                                              <textarea
+                                                required
+                                                rows={2}
+                                                value={newLogDescription}
+                                                onChange={(e) =>
+                                                  setNewLogDescription(e.target.value)
+                                                }
+                                                placeholder="Např.: Práce na backendu v Node.js..."
+                                                className="w-full px-3 py-2 pr-12 bg-slate-800/50 border border-slate-700/50 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 text-slate-100 placeholder-slate-500"
+                                              />
+                                              <button
+                                                type="button"
+                                                onClick={handleDictation}
+                                                disabled={isDictating || isEnhancing}
+                                                title="Nadiktovat"
+                                                className={`absolute right-2 bottom-2 p-2 rounded-xl transition-all ${
+                                                    isDictating ? 'bg-red-500/20 text-red-400 animate-pulse' :
+                                                    isEnhancing ? 'bg-blue-500/20 text-blue-400' :
+                                                    'bg-slate-700/50 text-slate-300 hover:bg-slate-600/50'
+                                                }`}
+                                              >
+                                                {isEnhancing ? '✨' : '🎙️'}
+                                              </button>
+                                            </div>
+                                            {isEnhancing && <p className="text-xs text-blue-400 mt-1 flex items-center gap-1"><span>✨</span> AI upravuje gramatiku a stylistiku...</p>}
+                                          </div>
+
+                                        </div>
+                                        <button
+                                          type="submit"
+                                          disabled={submittingLog}
+                                          className="px-4 py-2 bg-blue-600 text-white rounded-2xl font-bold hover:bg-blue-700 disabled:opacity-50 transition"
+                                        >
+                                          {submittingLog
+                                            ? "Ukládám..."
+                                            : "Přidat záznam"}
+                                        </button>
+                                      </form>
+
+                                      <div className="space-y-3">
+                                        <h4 className="font-semibold text-blue-900">
+                                          Historie záznamů
+                                        </h4>
+                                        {timeLogs.length === 0 ? (
+                                          <p className="text-sm text-blue-300 italic">
+                                            Zatím nebyly zapsány žádné hodiny.
+                                          </p>
+                                        ) : (
+                                          timeLogs.map((log) => (
+                                            <div
+                                              key={log.id}
+                                              className="card-glass p-4 rounded-2xl border border-blue-800/30 flex flex-col sm:flex-row justify-between sm:items-center gap-2 shadow-sm"
+                                            >
+                                              <div>
+                                                <p className="font-bold text-slate-100">
+                                                  {new Date(
+                                                    log.date,
+                                                  ).toLocaleDateString("cs-CZ")}{" "}
+                                                  <span className="text-blue-400 ml-2">
+                                                    {log.hours} h
+                                                  </span>
+                                                </p>
+                                                <p className="text-sm text-slate-600">
+                                                  {log.description}
+                                                </p>
+                                                <p className="text-blue-400 text-xs mt-1 font-medium">
+                                                  {log.category === 'theoretical_observations' && "Teoretické náslechy"}
+                                                  {log.category === 'practical_observations' && "Praktické náslechy"}
+                                                  {log.category === 'shadowing_hours' && "Stínování"}
+                                                  {log.category === 'case_studies' && "Případové studie"}
+                                                </p>
+                                              </div>
+                                              <div className="shrink-0">
+                                                {log.status === "pending" && (
+                                                  <span className="px-2 py-1 bg-yellow-800/40 text-yellow-300 text-xs font-bold rounded-full">
+                                                    Čeká na schválení
+                                                  </span>
+                                                )}
+                                                {log.status === "approved" && (
+                                                  <span className="px-2 py-1 bg-green-800/40 text-green-300 text-xs font-bold rounded-full">
+                                                    Schváleno
+                                                  </span>
+                                                )}
+                                                {log.status === "rejected" && (
+                                                  <span className="px-2 py-1 bg-red-800/40 text-red-300 text-xs font-bold rounded-full">
+                                                    Zamítnuto
+                                                  </span>
+                                                )}
+                                              </div>
+                                            </div>
+                                          ))
+                                        )}
+                                      </div>
                                     </div>
-                                    {isEnhancing && <p className="text-xs text-blue-400 mt-1 flex items-center gap-1"><span>✨</span> AI upravuje gramatiku a stylistiku...</p>}
+                                  )}
+
+                                  {/* PILLAR 2: VÝSTUPY (MICROTEACHING RUBRICS) */}
+                                  {activeTab === 'výstupy' && (
+                                    <div className="space-y-6">
+                                      <h3 className="font-bold text-indigo-400 text-lg flex items-center gap-2">
+                                        <span className="text-xl">📊</span> Kompetenční rámec (MŠMT KRAU)
+                                      </h3>
+                                      <p className="text-sm text-slate-400">
+                                         Hodnotící matice vychází přímo z předpisů MŠMT KRAU. Změny se ukládají automaticky.
+                                      </p>
+
+                                      <div className="space-y-4 mt-4">
+                                        {systemRubricConfig ? (
+                                           <div className="text-sm text-slate-300 bg-slate-800/40 p-4 rounded-xl mb-4 border border-white/5">
+                                              <p className="font-bold mb-2 text-indigo-300">{systemRubricConfig.title}</p>
+                                              <div className="prose prose-sm prose-invert" dangerouslySetInnerHTML={{ __html: systemRubricConfig.content?.substring(0, 300) + '...' }} />
+                                           </div>
+                                        ) : (
+                                          <p className="text-xs text-slate-500 italic">Načítám kompetenční rámec...</p>
+                                        )}
+
+                                        {/* Domains based on generic KRAU criteria */}
+                                        {systemRubricConfig?.domains ? systemRubricConfig.domains.map((domain: string, idx: number) => {
+                                          const domainId = `domain_${idx + 1}`;
+                                          return (
+                                            <div key={domainId} className="card-glass p-4 rounded-2xl border border-indigo-800/30">
+                                               <label className="block text-sm font-bold text-indigo-200 mb-2">{domain}</label>
+                                               <textarea
+                                                  value={rubrics[domainId]?.value || ""}
+                                                  onChange={(e) => handleRubricChange(domainId, e.target.value)}
+                                                  rows={3}
+                                                  placeholder="Důkazy a hodnocení studenta v této oblasti..."
+                                                  className="w-full p-3 bg-slate-900/50 text-slate-100 border border-indigo-800/50 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm placeholder-slate-600 transition"
+                                               />
+                                               <div className="flex justify-end mt-1">
+                                                 <span className="text-[10px] text-slate-500">Automaticky se ukládá...</span>
+                                               </div>
+                                            </div>
+                                          )
+                                        }) : <p className="text-xs text-slate-500 italic">Načítám oblasti hodnocení...</p>}
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  {/* PILLAR 3: REFLEXE A AI HODNOCENÍ */}
+                                  {activeTab === 'reflexe' && (
+                                     <div className="space-y-6">
+                                        <div className="bg-purple-900/20 card-glass p-6 rounded-2xl border border-purple-800/50">
+                                            <h3 className="font-bold text-purple-300 text-lg mb-2 flex items-center gap-2">
+                                              <span className="text-2xl">✨</span>
+                                              Závěrečná reflexe
+                                            </h3>
+                                            <p className="text-sm text-purple-400 mb-4">
+                                              Aby byla vaše praxe úspěšně uzavřena, vypracujte stručnou reflexi. AI Sensei váš text vyhodnotí podle KRAU kritérií.
+                                            </p>
+
+                                            {placement.evaluationResult && !placement.evaluationResult.isPass && (
+                                                <div className="bg-red-900/20 card-glass text-red-400 p-4 rounded mb-4 text-sm border border-red-800/50">
+                                                  <p className="font-bold mb-2">Hodnocení AI – Reflexe nesplňuje metodiku (MŠMT KRAU)</p>
+                                                  <div className="grid grid-cols-1 gap-2 mt-2">
+                                                    {['didacticCompetence', 'pedagogicalCompetence', 'socialCompetence', 'reflectiveCompetence'].map((compKey) => {
+                                                        const comp = placement.evaluationResult[compKey];
+                                                        if (!comp) return null;
+                                                        return (
+                                                          <div key={compKey} className="card-glass p-3 rounded border border-red-800/30">
+                                                            <span className="font-bold text-red-300">{compKey} ({comp.score}/100):</span>
+                                                            <p className="text-red-400 mt-1">{comp.reasoning}</p>
+                                                          </div>
+                                                        )
+                                                    })}
+                                                  </div>
+                                                </div>
+                                            )}
+
+                                            <div className="relative mb-4">
+                                              <textarea
+                                                value={reflectionText}
+                                                onChange={(e) => setReflectionText(e.target.value)}
+                                                rows={8}
+                                                className="w-full p-4 pr-14 bg-slate-900/60 text-slate-100 border border-purple-800/50 rounded-2xl focus:ring-2 focus:ring-purple-500 outline-none text-sm placeholder-slate-500"
+                                                placeholder="Zde napište nebo nadiktujte svou závěrečnou reflexi..."
+                                              />
+                                              <button
+                                                onClick={toggleRecording}
+                                                className={`absolute bottom-4 right-4 p-3 rounded-full transition-all shadow-lg ${isRecording ? "bg-red-600 text-white animate-pulse" : "bg-purple-600 text-white hover:bg-purple-500"}`}
+                                                title="Diktovat hlasem"
+                                              >
+                                                {isRecording ? <span className="text-xl">🛑</span> : <span className="text-xl">🎙️</span>}
+                                              </button>
+                                            </div>
+
+                                            <div className="flex flex-col sm:flex-row gap-3 mt-4">
+                                              <button
+                                                onClick={handleImproveWithAI}
+                                                disabled={isCorrectingGrammar || reflectionText.trim().length === 0}
+                                                className="flex-1 py-3 bg-purple-800/40 text-purple-300 rounded-xl font-bold hover:bg-purple-800/60 disabled:opacity-50 transition flex items-center justify-center gap-2"
+                                              >
+                                                <span className="text-xl">✨</span> {isCorrectingGrammar ? "Vylepšujem..." : "Vylepšit gramatiku (AI)"}
+                                              </button>
+                                              <button
+                                                onClick={handleEvaluateReflection}
+                                                disabled={evaluating || isCorrectingGrammar || reflectionText.trim().length === 0 || placement.status === "CLOSED"}
+                                                className="flex-1 py-3 bg-purple-600 text-white rounded-xl font-bold hover:bg-purple-700 disabled:opacity-50 transition"
+                                              >
+                                                {evaluating ? "Hodnocení..." : "Odeslat k hodnocení AI"}
+                                              </button>
+                                            </div>
+                                        </div>
+
+                                        {placement.status === "CLOSED" && placement.evaluationResult && (
+                                            <div className="bg-green-900/20 card-glass p-6 rounded-2xl border border-green-800/50 mt-6">
+                                                <h3 className="font-bold text-green-400 text-lg mb-2 flex items-center gap-2">
+                                                    <span className="text-2xl">🏆</span> Praxe úspěšně uzavřena
+                                                </h3>
+                                                <p className="text-sm text-green-300 mb-4">Vaše reflexe byla schválena AI Senseiem.</p>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    {['didacticCompetence', 'pedagogicalCompetence', 'socialCompetence', 'reflectiveCompetence'].map((compKey) => {
+                                                        const comp = placement.evaluationResult[compKey];
+                                                        if (!comp) return null;
+                                                        return (
+                                                          <div key={compKey} className="card-glass p-3 rounded border border-green-800/30">
+                                                            <span className="font-bold text-green-300">{compKey} ({comp.score}/100):</span>
+                                                            <p className="text-green-400 mt-1 italic">"{comp.reasoning}"</p>
+                                                          </div>
+                                                        )
+                                                    })}
+                                                </div>
+
+                                                <div className="mt-6 flex flex-col sm:flex-row justify-center gap-4 border-t border-green-800/30 pt-6">
+                                                   {placement.skillMatrixUrl ? (
+                                                      <a
+                                                        href={placement.skillMatrixUrl}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="inline-flex justify-center items-center gap-2 px-6 py-3 bg-green-700 text-white rounded-2xl font-bold shadow-md hover:bg-green-600 transition"
+                                                      >
+                                                        <span className="text-xl">📄</span> Stáhnout KRAU Matrix
+                                                      </a>
+                                                   ) : (
+                                                      <button
+                                                        onClick={handleGenerateKraumMatrix}
+                                                        disabled={isGeneratingMatrix}
+                                                        className="inline-flex justify-center items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-2xl font-bold shadow-md hover:bg-indigo-700 disabled:opacity-50 transition"
+                                                      >
+                                                        <span className="text-xl">⚙️</span> {isGeneratingMatrix ? 'Generuji PDF...' : 'Generovat KRAU Matrix'}
+                                                      </button>
+                                                   )}
+                                                </div>
+                                            </div>
+                                        )}
                                   </div>
-
-                                </div>
-                                <button
-                                  type="submit"
-                                  disabled={submittingLog}
-                                  className="px-4 py-2 bg-blue-600 text-white rounded-2xl font-bold hover:bg-blue-700 disabled:opacity-50 transition"
-                                >
-                                  {submittingLog
-                                    ? "Ukládám..."
-                                    : "Přidat záznam"}
-                                </button>
-                              </form>
-
-                              <div className="space-y-3">
-                                <h4 className="font-semibold text-blue-900">
-                                  Historie záznamů
-                                </h4>
-                                {timeLogs.length === 0 ? (
-                                  <p className="text-sm text-blue-300 italic">
-                                    Zatím nebyly zapsány žádné hodiny.
-                                  </p>
-                                ) : (
-                                  timeLogs.map((log) => (
-                                    <div
-                                      key={log.id}
-                                      className="card-glass p-4 rounded-2xl border border-blue-800/30 flex flex-col sm:flex-row justify-between sm:items-center gap-2 shadow-sm"
-                                    >
-                                      <div>
-                                        <p className="font-bold text-slate-100">
-                                          {new Date(
-                                            log.date,
-                                          ).toLocaleDateString("cs-CZ")}{" "}
-                                          <span className="text-blue-400 ml-2">
-                                            {log.hours} h
-                                          </span>
-                                        </p>
-                                        <p className="text-sm text-slate-600">
-                                          {log.description}
-                                        </p>
-                                      </div>
-                                      <div className="shrink-0">
-                                        {log.status === "pending" && (
-                                          <span className="px-2 py-1 bg-yellow-800/40 text-yellow-300 text-xs font-bold rounded-full">
-                                            Čeká na schválení
-                                          </span>
-                                        )}
-                                        {log.status === "approved" && (
-                                          <span className="px-2 py-1 bg-green-800/40 text-green-300 text-xs font-bold rounded-full">
-                                            Schváleno
-                                          </span>
-                                        )}
-                                        {log.status === "rejected" && (
-                                          <span className="px-2 py-1 bg-red-800/40 text-red-300 text-xs font-bold rounded-full">
-                                            Zamítnuto
-                                          </span>
-                                        )}
-                                      </div>
-                                    </div>
-                                  ))
-                                )}
-                              </div>
+                                  )}
+                               </div>
                             </div>
+                            </UatGate>
                           )}
 
                           {/* HODNOCENÍ PRAXE (Dostupné pro APPROVED, EVALUATION, CLOSED) */}
@@ -1666,66 +1977,81 @@ export default function StudentDashboard() {
           <div className="space-y-6">
             {/* Circular Progress Component */}
             {placement && ["APPROVED", "ACTIVE", "EVALUATION", "CLOSED"].includes(placement.status) && (
+              <UatGate>
               <div className="card-glass p-6 rounded-3xl shadow-sm border border-white/5 text-center">
                 <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4">
                   Postup praxe
                 </h3>
                 {(() => {
-                  const targetHours = placement.targetHours || 15;
-                  const migratedHours = placement.migratedHours || 0;
-                  const approvedHours = timeLogs.filter(log => log.status === 'approved').reduce((sum, log) => sum + (Number(log.hours) || 0), 0);
-                  const totalHours = migratedHours + approvedHours;
-                  const progressPercent = Math.min(100, Math.round((totalHours / targetHours) * 100));
+                  const isUPV = placement?.studentMajor === 'UPV' || placement?.major === 'UPV';
 
-                  const circleRadius = 50;
-                  const circleCircumference = 2 * Math.PI * circleRadius;
-                  const strokeDashoffset = circleCircumference - (progressPercent / 100) * circleCircumference;
-
-                  return (
-                    <div className="flex flex-col items-center">
-                      <div className="relative w-32 h-32 flex items-center justify-center">
-                        <svg className="w-full h-full transform -rotate-90" viewBox="0 0 120 120">
-                          {/* Background Circle */}
-                          <circle
-                            className="text-gray-100"
-                            strokeWidth="10"
-                            stroke="currentColor"
-                            fill="transparent"
-                            r={circleRadius}
-                            cx="60"
-                            cy="60"
-                          />
-                          {/* Progress Circle */}
-                          <circle
-                            className={`${progressPercent >= 100 ? 'text-green-500' : 'text-blue-400'} transition-all duration-1000 ease-out`}
-                            strokeWidth="10"
-                            strokeDasharray={circleCircumference}
-                            strokeDashoffset={strokeDashoffset}
-                            strokeLinecap="round"
-                            stroke="currentColor"
-                            fill="transparent"
-                            r={circleRadius}
-                            cx="60"
-                            cy="60"
-                          />
-                        </svg>
-                        <div className="absolute inset-0 flex flex-col items-center justify-center">
-                          <span className="text-2xl font-bold text-white">{totalHours}</span>
-                          <span className="text-xs text-slate-400">/ {targetHours} hod</span>
+                  const renderCircle = (label: string, total: number, target: number) => {
+                    const progressPercent = Math.min(100, Math.round((total / target) * 100));
+                    const circleRadius = 30;
+                    const circleCircumference = 2 * Math.PI * circleRadius;
+                    const strokeDashoffset = circleCircumference - (progressPercent / 100) * circleCircumference;
+                    return (
+                      <div className="flex flex-col items-center" key={label}>
+                        <div className="relative w-20 h-20 flex items-center justify-center">
+                          <svg className="w-full h-full transform -rotate-90" viewBox="0 0 80 80">
+                            {/* Background Circle */}
+                            <circle
+                              className="text-slate-700"
+                              strokeWidth="6"
+                              stroke="currentColor"
+                              fill="transparent"
+                              r={circleRadius}
+                              cx="40"
+                              cy="40"
+                            />
+                            {/* Progress Circle */}
+                            <circle
+                              className={`${progressPercent >= 100 ? 'text-green-500' : 'text-blue-400'} transition-all duration-1000 ease-out`}
+                              strokeWidth="6"
+                              strokeDasharray={circleCircumference}
+                              strokeDashoffset={strokeDashoffset}
+                              strokeLinecap="round"
+                              stroke="currentColor"
+                              fill="transparent"
+                              r={circleRadius}
+                              cx="40"
+                              cy="40"
+                            />
+                          </svg>
+                          <div className="absolute inset-0 flex flex-col items-center justify-center">
+                            <span className="text-sm font-bold text-white">{total}</span>
+                            <span className="text-[10px] text-slate-400">/ {target} h</span>
+                          </div>
                         </div>
-                      </div>
-                      <p className="mt-4 text-sm text-slate-300 font-medium">
-                        Splněno <span className={progressPercent >= 100 ? "text-green-400 font-bold" : "text-blue-400 font-bold"}>{progressPercent}%</span>
-                      </p>
-                      {migratedHours > 0 && (
-                        <p className="text-xs text-slate-500 mt-2">
-                          (Z toho {migratedHours} hod migrováno)
+                        <p className="mt-2 text-[10px] text-slate-300 font-medium text-center leading-tight h-6">
+                          {label}
                         </p>
-                      )}
-                    </div>
-                  );
+                      </div>
+                    );
+                  };
+
+                  if (isUPV) {
+                    const theoreticalHours = timeLogs.filter(log => log.status === 'approved' && log.category === 'theoretical_observations').reduce((sum, log) => sum + (Number(log.hours) || 0), 0);
+                    const practicalHours = timeLogs.filter(log => log.status === 'approved' && log.category === 'practical_observations').reduce((sum, log) => sum + (Number(log.hours) || 0), 0);
+                    return (
+                      <div className="flex justify-around gap-2">
+                         {renderCircle("Teoretické náslechy", theoreticalHours, 10)}
+                         {renderCircle("Praktické náslechy", practicalHours, 2)}
+                      </div>
+                    )
+                  } else {
+                    const shadowingHours = timeLogs.filter(log => log.status === 'approved' && log.category === 'shadowing_hours').reduce((sum, log) => sum + (Number(log.hours) || 0), 0);
+                    const caseStudiesHours = timeLogs.filter(log => log.status === 'approved' && log.category === 'case_studies').reduce((sum, log) => sum + (Number(log.hours) || 0), 0);
+                     return (
+                      <div className="flex justify-around gap-2">
+                         {renderCircle("Stínování", shadowingHours, 20)}
+                         {renderCircle("Případové studie", caseStudiesHours, 10)}
+                      </div>
+                    )
+                  }
                 })()}
               </div>
+              </UatGate>
             )}
 
             {/* QR Kód pro mentora */}

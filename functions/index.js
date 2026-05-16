@@ -2294,3 +2294,102 @@ ${textToParse.substring(0, 80000)} // Increased limit leveraging Gemini 2.5 Pro 
      throw new functions.https.HttpsError("internal", "Nepodařilo se zpracovat dokument pomocí AI: " + error.message);
   }
 });
+
+exports.generateSkillMatrixPDF = functions.runWith({ memory: "512MB" }).https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError("unauthenticated", "Musíte být přihlášeni.");
+  }
+
+  const { placementId } = data;
+  if (!placementId) {
+    throw new functions.https.HttpsError("invalid-argument", "Chybí placementId.");
+  }
+
+  const placementDoc = await admin.firestore().collection("placements").doc(placementId).get();
+  if (!placementDoc.exists) {
+    throw new functions.https.HttpsError("not-found", "Praxe nebyla nalezena.");
+  }
+
+  const placementData = placementDoc.data();
+
+  if (placementData.studentId !== context.auth.uid && context.auth.token.role !== 'admin' && context.auth.token.role !== 'coordinator') {
+    throw new functions.https.HttpsError("permission-denied", "Nemáte oprávnění.");
+  }
+
+  try {
+    const { PDFDocument, rgb } = require('pdf-lib');
+    const QRCode = require('qrcode');
+
+    // Create a new PDFDocument
+    const pdfDoc = await PDFDocument.create();
+    const page = pdfDoc.addPage();
+    const { width, height } = page.getSize();
+
+    const title = `KRAU Kompetenční matice: ${placementData.studentName || 'Student'}`;
+    page.drawText(title, { x: 50, y: height - 50, size: 20 });
+    page.drawText(`Praxe ID: ${placementId}`, { x: 50, y: height - 80, size: 12 });
+    page.drawText(`Organizace: ${placementData.organization_name || 'Neznámá'}`, { x: 50, y: height - 100, size: 12 });
+
+    // Fetch Rubrics
+    const rubricsSnapshot = await admin.firestore().collection("placements").doc(placementId).collection("rubrics").get();
+
+    let yPosition = height - 150;
+    rubricsSnapshot.forEach(doc => {
+      if (yPosition < 100) {
+        // Simple page break logic for demonstration
+        yPosition = height - 50;
+      }
+      const rubricData = doc.data();
+      const domainName = doc.id; // Just using ID as domain name for now
+      page.drawText(`${domainName}:`, { x: 50, y: yPosition, size: 14 });
+
+      const valueLines = (rubricData.value || 'Nevyplněno').match(/.{1,80}/g) || [];
+      yPosition -= 20;
+      valueLines.forEach(line => {
+        page.drawText(line, { x: 60, y: yPosition, size: 10 });
+        yPosition -= 15;
+      });
+      yPosition -= 10;
+    });
+
+    // Generate QR Code
+    const verifyUrl = `https://praxihub.cz/verify?id=${placementId}`;
+    const qrCodeDataUrl = await QRCode.toDataURL(verifyUrl);
+    const qrImageBytes = Buffer.from(qrCodeDataUrl.split(',')[1], 'base64');
+    const qrImage = await pdfDoc.embedPng(qrImageBytes);
+    const qrDims = qrImage.scale(0.5);
+
+    page.drawImage(qrImage, {
+      x: width - qrDims.width - 50,
+      y: 50,
+      width: qrDims.width,
+      height: qrDims.height,
+    });
+
+    page.drawText('Naskenujte pro ověření', {
+      x: width - qrDims.width - 50,
+      y: 40,
+      size: 10,
+    });
+
+    const pdfBytes = await pdfDoc.save();
+
+    // Upload to Storage
+    const bucket = admin.storage().bucket();
+    const fileName = `contracts/${placementData.studentId}/KRAU_Matrix_${placementId}.pdf`;
+    const file = bucket.file(fileName);
+
+    await file.save(pdfBytes, {
+      metadata: { contentType: 'application/pdf' },
+      public: true, // Making public for easy download/verification in this context
+    });
+
+    const publicUrl = `https://storage.googleapis.com/${bucket.name}/${fileName}`;
+
+    return { success: true, url: publicUrl };
+
+  } catch (error) {
+    console.error("PDF Generation Error:", error);
+    throw new functions.https.HttpsError("internal", "Chyba při generování PDF: " + error.message);
+  }
+});
