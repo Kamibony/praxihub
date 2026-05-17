@@ -1,57 +1,60 @@
 # PraxiHub: Definitive Product Summary
 
-## Executive Summary & Vision
-PraxiHub is a centralized pedagogical practice platform designed to eliminate friction in the management, tracking, and evaluation of student practicums. By digitalizing the entire workflow—from contract generation to final reflection—PraxiHub connects students, coordinators, and institutions in a seamless, secure, and intuitive ecosystem.
+## Executive Overview
+PraxiHub is a centralized pedagogical practice platform designed to eliminate friction in the management, tracking, and evaluation of student practicums. By digitalizing the entire workflow—from contract generation to final reflection—PraxiHub connects students, coordinators, and partner institutions in a seamless, secure, and intuitive cloud-based ecosystem, completely replacing fragmented workflows.
 
-## UI/UX Innovations (Code-Driven)
+## Core UI/UX Innovations & Friction Elimination
 
-### "Enterprise Light Mode"
-PraxiHub implements a robust "Enterprise Light Mode" utilizing Tailwind CSS semantic CSS variables (`--background`, `--primary`, etc.) defined in `globals.css` and managed by `next-themes`. This approach supports dynamic theming without relying on hardcoded utility classes (like `slate-900`), ensuring a clean, modern, and accessible interface. The design system leverages Glassmorphism and custom utility classes like `.card` and `.btn-primary` for consistency across the platform.
+### Enterprise Light Mode & Theme System
+PraxiHub implements a robust "Enterprise Light Mode" utilizing Tailwind CSS semantic CSS variables (`--background`, `--primary`, etc.) defined in `globals.css` and strictly managed by the `next-themes` library. This ensures adherence to strict accessibility standards and supports dynamic theming without relying on hardcoded utility classes like `slate-900`.
 
-### Command Palette (⌘K)
-Global navigation for Admins and Institutions is powered by a Command Palette (⌘K) integrated via the `cmdk` library at the root `layout.tsx`. This feature enables rapid, keyboard-driven access to key platform areas, such as the Dashboard, Document Center, User Management, and specific student records, dramatically improving operational efficiency.
+### Global Command Palette
+High-speed administrative navigation for Admins and Institutions is powered by a Command Palette implemented using the `cmdk` library. Bound to the `⌘K` / `Ctrl+K` shortcut and injected at the root `layout.tsx`, this feature enables rapid access to critical platform areas.
 
-### Micro-interactions & Toast Notifications
-To enhance user feedback and interface fluidity, PraxiHub standardizes global micro-interactions using a toast notification library (e.g., `sonner` or `react-hot-toast`), which is seamlessly integrated into the root `layout.tsx`. Form transitions are smoothed using `@formkit/auto-animate`, providing progressive disclosure and intuitive step-by-step guidance.
+### Micro-interactions
+To enhance user feedback and interface fluidity, PraxiHub standardizes global micro-interactions. Progressive form step transitions are smoothed out using `@formkit/auto-animate` (as architected), combined with instantaneous visual feedback via toast notifications (`react-hot-toast` / `sonner`).
 
-### Local Form Persistence (`useDraftStorage`)
-To prevent data loss in complex, monolithic forms such as onboarding and contract generation, PraxiHub utilizes a custom `useDraftStorage` hook. This hook synchronizes form state (`formData` and `currentStep`) with `localStorage`, ensuring that users can safely pause and resume their workflows without losing progress.
+### State Persistence
+To protect users against data loss on accidental browser refreshes, complex, multi-step wizards (such as onboarding and contract generation) utilize a `useDraftStorage` custom hook architecture, securely keeping the `formData` and `currentStep` synchronized with `localStorage`.
+
+### Admin Impersonation
+PraxiHub features secure role-masking through the `getImpersonationToken` Cloud Function. This functionality safely allows admins to audit and experience workflows from a student's or institution's perspective, complete with a persistent UI banner reminding the user to exit the impersonation session safely via `stopImpersonating`.
 
 ## The 3-Pillar "Pedagogická praxe" Module
 
-### Náslechy (Observations)
-The "Náslechy" module features a Live Tracker with advanced state management. It accurately captures and logs timestamps differentiating between periods when the teacher is speaking and when the student is speaking, providing granular insights into classroom dynamics during observations.
+### Náslechy (Live Tracker)
+The Observation (Náslechy) module includes a sophisticated stopwatch component designed for live event tracking. It precisely measures and logs intervals—differentiating between "Učitel hovoří" (Teacher speaking) and "Student hovoří" (Student speaking)—to provide a synchronized timeline chart of classroom dynamics.
 
-### Výstupy (Microteaching)
-The "Výstupy" module incorporates comprehensive Microteaching Rubrics. To optimize performance and prevent database overload during continuous evaluation, the platform employs a `lodash.debounce` auto-save mechanism, ensuring that rubric scores and feedback are reliably synchronized with Firestore without excessive write operations.
+### Výstupy (Microteaching Rubrics)
+The "Výstupy" module features matrix-style evaluation forms driven dynamically from the `system_configs` Firestore collection (e.g., `system_configs/ai_krau_rules`), eliminating hardcoded graduation rules. To optimize performance and prevent database write bloat, auto-saving logic utilizes a precise client-side `lodash.debounce` mechanism.
 
-### Reflexe (Reflection)
-The "Reflexe" module revolutionizes post-practicum analysis by integrating the HTML5 Web Speech API (`SpeechRecognition`) for intuitive voice dictation. Furthermore, student reflections are automatically evaluated against MŠMT KRAU rules by Gemini AI (specifically Gemini 2.5 Pro/Flash), providing immediate, structured, and objective feedback.
+### Reflexe (Portfólio & AI Assistance)
+The Post-Practicum Reflection layer integrates the HTML5 Web Speech API (`SpeechRecognition`) for zero-friction audio dictation. Once reflections are drafted, an automated evaluation layer leverages Gemini Cloud Functions (e.g., Gemini 2.5) to provide immediate, structured, and objective feedback against MŠMT KRAU standards.
 
-## Advanced Architecture & Security
+## Advanced Infrastructure, Security & AI Automation
 
-### Cognitive Telemetry
-PraxiHub includes a GDPR-compliant Cognitive Telemetry system. A background `useEffect` logger anonymously captures reflection drafts, utilizing `crypto-js` to generate SHA-256 hashes of user IDs. This data is securely stored in the `research_telemetry` Firestore collection, which enforces strict WORM (Write-Once-Read-Many) compliance (allowing creates only).
+### AI Smart Uploader & Document Center
+The Admin Document Center utilizes a sophisticated AI Smart Uploader. Powered by the `routeDocument` Cloud Function using Gemini models, it automatically analyzes uploaded PDFs/DOCX files, categorizing them across departments (UPV/KPV) with a strict 80% AI confidence gate before enforcing manual overrides.
 
-### WORM Storage for Contracts
-To support legally binding Tripartite Signatures, generated contracts are stored in Firebase Storage under strict WORM (Write-Once-Read-Many) policies. Once a contract is written to `contracts/{userId}/{fileName}`, Firebase Storage rules strictly block any modifications (updates or deletions), guaranteeing document immutability.
+### Cognitive Telemetry & Privacy
+PraxiHub employs a background logging engine that chronologically captures text draft progress securely. Stored in the `research_telemetry` Firestore collection, the telemetry relies on one-way SHA-256 hashing (via `crypto-js`) for User IDs, ensuring the system remains entirely anonymous and fully GDPR-compliant.
 
-### Role-Based Access Control
-Security and authorization are managed via Firebase Auth Custom Claims (`request.auth.token.role`). This allows `firestore.rules` and Cloud Functions to efficiently validate roles (`isAdmin`, `isCoordinator`, etc.) without requiring redundant database reads, optimizing performance and security.
+### WORM Legal Shield
+To support legally binding Tripartite Signatures, generated contracts enforce a strict WORM (Write-Once-Read-Many) compliance via Firebase Storage rules (`allow update, delete: if false`). This guarantees cryptographic immutability of signed documents stored under `contracts/{userId}/{fileName}`.
 
-### AI Document Router & Payroll
-The backend features a sophisticated AI Document Router powered by Gemini (e.g., Gemini 2.5 Flash via the `routeDocument` Cloud Function). This system automatically classifies uploaded files and routes them to appropriate storage or processes. Additionally, the Admin Payroll module dynamically calculates payouts by multiplying approved student time logs against rates fetched directly from `system_configs/payroll_settings`, ensuring accurate and automated financial processing.
+### Dynamic Admin Payroll Module
+The platform automatically orchestrates payouts via the `/admin/payroll` module. It dynamically calculates compensation by aggregating approved mentor hours against standardized rates directly fetched from the `system_configs/payroll_settings` document, providing robust cross-institution grouping and one-click browser Blob CSV exports.
 
 ## Stakeholder Value Matrix
 
 ### The Student
-*   **Frictionless Access:** Magic link authentication provides seamless entry to the platform.
-*   **Verifiable Credentials:** The QR Skill Matrix PDF offers a dynamically generated, easily verifiable record of the student's competencies and completed practicums.
+*   **Seamless Access:** Passwordless Magic Link authentication provides secure, frictionless entry.
+*   **Verifiable Credentials:** The dynamically generated, QR-verified Skill Matrix PDF offers an objective record of completed practicums and competencies.
 
 ### The Coordinator/Teacher
-*   **Efficient Data Management:** The Visual CSV import simplifies the process of onboarding and managing large rosters.
-*   **Automated Evaluation:** Gemini AI evaluates student reflections against MŠMT KRAU rubrics, saving significant time while ensuring consistent and objective feedback.
+*   **Efficient Operations:** The `VisualMappingImport` tool translates messy Excel/CSV rosters into structured database records seamlessly.
+*   **Financial Automation:** The Admin Payroll module instantly calculates multi-tier mentor rewards without error-prone manual spreadsheets.
 
-### The Mentor/Institution
-*   **Streamlined Administration:** Click-to-sign contracts facilitate rapid and secure legal agreements (Tripartite Digital Signatures).
-*   **Simplified Approvals:** Easy hour approvals allow mentors to quickly validate student time logs, seamlessly feeding into the automated payroll system.
+### The Partner Institution/Mentor
+*   **Legal Security:** Click-to-sign cryptographic non-repudiation contract signatures dramatically speed up partnership agreements.
+*   **Simplified Feedback:** The intuitive portal simplifies validating student hours and finalizing necessary practicum evaluations.
