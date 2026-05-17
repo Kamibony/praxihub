@@ -207,7 +207,7 @@ export default function UserManagementPage() {
         const unsubscribeFirestore = onSnapshot(q, (snapshot) => {
           const data = snapshot.docs.map(doc => ({
             id: doc.id,
-            ...doc.data()
+            ...doc.data() as any
           }));
           setUsers(data);
           setLoading(false);

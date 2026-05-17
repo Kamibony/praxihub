@@ -75,7 +75,7 @@ export default function CoordinatorDashboard() {
     let unsubscribeFirestore: (() => void) | null = null;
 
     const unsubOrgs = onSnapshot(query(collection(db, "organizations")), (snap) => {
-          setOrganizations(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+          setOrganizations(snap.docs.map(d => ({ id: d.id, ...d.data() as any })));
         });
 
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
@@ -97,7 +97,7 @@ export default function CoordinatorDashboard() {
         unsubscribeFirestore = onSnapshot(q, (snapshot) => {
           const data = snapshot.docs.map((doc) => ({
             id: doc.id,
-            ...doc.data(),
+            ...doc.data() as any,
           }));
           setPlacements(data);
           setLoading(false);
@@ -122,7 +122,7 @@ export default function CoordinatorDashboard() {
       const q = query(collection(db, "users"), orderBy("createdAt", "desc"));
       const unsubscribe = onSnapshot(q, (snapshot) => {
         const insts = snapshot.docs
-          .map((doc) => ({ id: doc.id, ...doc.data() }))
+          .map((doc) => ({ id: doc.id, ...(doc.data() as any) }))
           .filter((u: any) => u.role === "institution");
         setInstitutions(insts);
       });
@@ -136,7 +136,7 @@ export default function CoordinatorDashboard() {
       const unsubscribeComm = onSnapshot(commQ, (snapshot) => {
         const comms = snapshot.docs.map((doc) => ({
           id: doc.id,
-          ...doc.data(),
+          ...doc.data() as any,
         }));
         setCommissions(comms);
       });
@@ -144,7 +144,7 @@ export default function CoordinatorDashboard() {
       const userQ = query(collection(db, "users"));
       const unsubscribeUsers = onSnapshot(userQ, (snapshot) => {
         const guarantorsList = snapshot.docs
-          .map((doc) => ({ id: doc.id, ...doc.data() }))
+          .map((doc) => ({ id: doc.id, ...(doc.data() as any) }))
           .filter((u: any) => u.role === "coordinator" || u.role === "admin"); // Or specifically guarantors if there is a field
         setGuarantors(guarantorsList);
       });

@@ -102,7 +102,7 @@ export default function InstitutionDashboard() {
           );
 
           unsubscribeFirestore = onSnapshot(q, (snapshot) => {
-            const rawPlacements = snapshot.docs.map(d => ({ id: d.id, ...d.data() })) as any[];
+            const rawPlacements = snapshot.docs.map(d => ({ id: d.id, ...(d.data() as any) }));
             setPlacements(rawPlacements);
 
             // Clean up old listeners
@@ -121,7 +121,7 @@ export default function InstitutionDashboard() {
                   placementId: placement.id,
                   studentName: placement.studentName || 'Student',
                   organizationName: placement.companyData?.name || 'Firma',
-                  ...doc.data()
+                  ...doc.data() as any
                 }));
 
                 // Update allLogs and set state

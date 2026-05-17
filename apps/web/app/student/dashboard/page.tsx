@@ -161,7 +161,7 @@ export default function StudentDashboard() {
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const logsData = snapshot.docs.map((doc) => ({
         id: doc.id,
-        ...doc.data(),
+        ...doc.data() as any,
       }));
       setTimeLogs(logsData);
     });

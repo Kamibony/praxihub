@@ -30,7 +30,7 @@ export default function PayrollModule() {
         const closedQ = query(placementsRef, where("status", "==", "CLOSED"));
 
         const [evalSnap, closedSnap] = await Promise.all([getDocs(evaluationQ), getDocs(closedQ)]);
-        const allPlacements = [...evalSnap.docs, ...closedSnap.docs].map(d => ({ id: d.id, ...d.data() }));
+        const allPlacements: any[] = [...evalSnap.docs, ...closedSnap.docs].map(d => ({ id: d.id, ...(d.data() as any) }));
 
         const groupedData: Record<string, any> = {};
 
