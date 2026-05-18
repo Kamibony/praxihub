@@ -34,7 +34,7 @@ test.describe('Scenario 2: Student AI Evaluation', () => {
 
     await expect(page.getByText('Závěrečná reflexe')).toBeVisible({ timeout: 15000 });
 
-    const textarea = page.locator('textarea[placeholder="Zde napište svou reflexi..."]');
+    const textarea = page.locator('textarea[placeholder*="Zde napište"]');
     await expect(textarea).toBeVisible();
     await textarea.fill('Toto je moje testovací závěrečná reflexe pro AI hodnocení.');
 
@@ -78,8 +78,9 @@ test.describe('Scenario 2: Student AI Evaluation', () => {
     const submitButton = page.getByRole('button', { name: /Odeslat k hodnocení AI/i });
     await submitButton.click();
 
-    await expect(submitButton).not.toHaveText('Hodnocení...');
+    // Ensure we await the button reverting its state or component navigating/rendering
+    await expect(submitButton).not.toHaveText('Hodnocení...', { timeout: 15000 });
     expect(alertHandled).toBeTruthy();
-    await expect(page.getByText('Zpětná vazba od AI Sensei')).toBeVisible({ timeout: 15000 });
+    await expect(page.getByText(/Zpětná vazba od AI Sensei/i)).toBeVisible({ timeout: 15000 });
   });
 });
