@@ -45,7 +45,7 @@ test.describe('Epic 1: Complex Methodology & Hours Tracking', () => {
     await page.click('button:has-text("Přidat záznam")');
 
     // Wait for the new log to appear
-    await expect(page.locator('text=Test observation')).toBeVisible();
+    await expect(page.locator('p', { hasText: 'Test observation' })).toBeVisible();
     await expect(page.locator('p', { hasText: 'Teoretické náslechy' }).nth(1)).toBeVisible();
   });
 
@@ -85,7 +85,7 @@ test.describe('Epic 1: Complex Methodology & Hours Tracking', () => {
     await page.click('button:has-text("Přidat záznam")');
 
     // Wait for the new log to appear
-    await expect(page.locator('text=Test case study')).toBeVisible();
+    await expect(page.locator('p', { hasText: 'Test case study' })).toBeVisible();
     await expect(page.locator('p', { hasText: 'Případové studie' }).nth(1)).toBeVisible();
   });
 });
