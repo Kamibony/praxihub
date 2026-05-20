@@ -43,12 +43,13 @@ test.describe('Epic 2: The 3-Pillar Practice UI', () => {
 
     // Pillar 1: Náslechy (Live Tracker)
     await expect(page.locator('button', { hasText: 'Náslechy' })).toBeVisible();
+    await page.click('button:has-text("Náslechy")');
     await expect(page.locator('h3', { hasText: 'Evidence hodin a náslechy' })).toBeVisible();
     await page.fill('input[type="date"]', '2023-11-11');
     await page.fill('input[type="number"]', '1');
     await page.fill('textarea', 'Test log in Náslechy');
     await page.click('button:has-text("Přidat záznam")');
-    await expect(page.locator('text=Test log in Náslechy')).toBeVisible();
+    await expect(page.locator('p', { hasText: 'Test log in Náslechy' })).toBeVisible();
 
     // Pillar 2: Výstupy
     await page.click('button:has-text("Výstupy")');

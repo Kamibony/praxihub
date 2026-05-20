@@ -1,13 +1,41 @@
 import { test, expect } from '@playwright/test';
 import { loginAs } from './login-helper';
+import { db, auth } from './setup-firebase-admin';
+import { clearFirestore, clearAuth } from './seed';
 
 test.describe('Student Dashboard - Zero-Cost Voice Diaries', () => {
+    test.beforeEach(async () => {
+      await clearFirestore();
+      await clearAuth();
+
+      // Seed student user
+      await auth.createUser({ uid: 'student-voice', email: 'student-voice@praxihub.cz' });
+      await db.collection('users').doc('student-voice').set({
+        role: 'student',
+        researchConsent: true,
+        email: 'student-voice@praxihub.cz',
+        active_placement_id: 'placement-voice',
+        createdAt: new Date().toISOString()
+      });
+
+      await db.collection('placements').doc('placement-voice').set({
+        studentId: 'student-voice',
+        status: 'APPROVED',
+        organization_name: 'Mock School',
+        studentMajor: 'UPV',
+        createdAt: new Date().toISOString()
+      });
+    });
+
     test('Should render the Dictate button and display AI loading state', async ({ page }) => {
         // Log in as student
-        await loginAs(page, 'test-student-id');
+        await loginAs(page, 'student-voice');
+        await page.goto('/student/dashboard');
 
         // Wait for dashboard to load
-        await page.waitForSelector('h1:has-text("Moje Praxe")');
+        await page.waitForURL('**/student/dashboard', { timeout: 15000 });
+
+        await page.click('button:has-text("Náslechy")');
 
         // Add log form should be visible (assuming an active placement)
         const addLogForm = page.locator('form:has(label:has-text("Popis činnosti (Co jsi dělal/a?)"))');
