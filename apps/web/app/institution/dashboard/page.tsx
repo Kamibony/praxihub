@@ -1,4 +1,5 @@
 'use client';
+import { toast } from "react-hot-toast";
 
 import React, { useEffect, useState } from 'react';
 import { db, auth } from "../../../lib/firebase";
@@ -163,7 +164,7 @@ export default function InstitutionDashboard() {
       await updateDoc(logRef, { status: newStatus });
     } catch (err) {
       console.error("Chyba při aktualizaci stavu:", err);
-      alert("Nepodařilo se aktualizovat stav.");
+      toast.error("Nepodařilo se aktualizovat stav.");
     }
   };
 
@@ -173,7 +174,7 @@ export default function InstitutionDashboard() {
       await updateDoc(logRef, { mentorRating: rating });
     } catch (err) {
       console.error("Chyba při hodnocení:", err);
-      alert("Nepodařilo se uložit hodnocení.");
+      toast.error("Nepodařilo se uložit hodnocení.");
     }
   };
 
@@ -202,7 +203,7 @@ export default function InstitutionDashboard() {
       router.push(`/verify?id=${docId}`);
     } catch (err) {
       console.error("Error reading scanned placement:", err);
-      alert("Chyba při čtení praxe z QR kódu.");
+      toast.error("Chyba při čtení praxe z QR kódu.");
     }
   };
 

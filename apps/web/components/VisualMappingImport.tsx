@@ -1,4 +1,5 @@
 "use client";
+import { toast } from "react-hot-toast";
 
 import React, { useState } from 'react';
 import * as xlsx from 'xlsx';
@@ -97,7 +98,7 @@ export default function VisualMappingImport({ onSuccess, department, initialFile
     if (!fileData) return null;
 
     if (mapping.name === -1 && (mapping.firstName === -1 || mapping.lastName === -1)) {
-        alert("Musíte namapovat buď Celé jméno, nebo Jméno a Příjmení.");
+        toast.success("Musíte namapovat buď Celé jméno, nebo Jméno a Příjmení.");
         return null;
     }
 
@@ -162,7 +163,7 @@ export default function VisualMappingImport({ onSuccess, department, initialFile
         onSuccess(res.data);
     } catch (error) {
         console.error("Import execution failed", error);
-        alert('Chyba při vykonávání importu. Zkontrolujte konzoli.');
+        toast.success('Chyba při vykonávání importu. Zkontrolujte konzoli.');
     } finally {
         setImporting(false);
     }

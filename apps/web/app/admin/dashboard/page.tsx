@@ -1,5 +1,5 @@
 "use client";
-
+import { toast } from "react-hot-toast";
 import React, { useEffect, useState } from "react";
 import { db, auth, functions } from "../../../lib/firebase";
 import { httpsCallable } from "firebase/functions";
@@ -189,11 +189,11 @@ export default function CoordinatorDashboard() {
     try {
       const storageRef = ref(storage, `global_documents/${file.name}`);
       await uploadBytes(storageRef, file);
-      alert("Dokument úspěšně nahrán.");
+      toast.success("Dokument úspěšně nahrán.");
       fetchGlobalDocs();
     } catch (error) {
       console.error("Upload failed", error);
-      alert("Chyba při nahrávání dokumentu.");
+      toast.error("Chyba při nahrávání dokumentu.");
     } finally {
       setUploadingDoc(false);
       e.target.value = "";
@@ -205,11 +205,11 @@ export default function CoordinatorDashboard() {
     try {
       const docRef = ref(storage, path);
       await deleteObject(docRef);
-      alert("Dokument byl smazán.");
+      toast.success("Dokument byl smazán.");
       fetchGlobalDocs();
     } catch (error) {
       console.error("Delete failed", error);
-      alert("Chyba při mazání dokumentu.");
+      toast.error("Chyba při mazání dokumentu.");
     }
   };
 
@@ -291,10 +291,10 @@ export default function CoordinatorDashboard() {
         guarantorId,
         guarantorName,
       });
-      alert("Dekret byl úspěšně vygenerován.");
+      toast.success("Dekret byl úspěšně vygenerován.");
     } catch (error: any) {
       console.error("Error generating decree:", error);
-      alert(`Chyba při generování dekretu: ${error.message}`);
+      toast.success(`Chyba při generování dekretu: ${error.message}`);
     } finally {
       setGeneratingDecree(false);
     }
@@ -307,10 +307,10 @@ export default function CoordinatorDashboard() {
         "transitionPlacementState",
       );
       await transitionPlacementState({ placementId, newState: "FINAL_EXAM" });
-      alert("Praxe byla úspěšně posunuta do fáze Státnic (FINAL_EXAM).");
+      toast.success("Praxe byla úspěšně posunuta do fáze Státnic (FINAL_EXAM).");
     } catch (error: any) {
       console.error("Error promoting to final exam:", error);
-      alert(`Chyba při posunu do FINAL_EXAM: ${error.message}`);
+      toast.success(`Chyba při posunu do FINAL_EXAM: ${error.message}`);
     }
   };
 
@@ -360,7 +360,7 @@ export default function CoordinatorDashboard() {
       document.body.removeChild(link);
     } catch (error) {
       console.error("Chyba při exportu mzdových výkazů:", error);
-      alert("Nepodařilo se exportovat mzdové výkazy.");
+      toast.error("Nepodařilo se exportovat mzdové výkazy.");
     } finally {
       setExportingPayroll(false);
     }
@@ -377,7 +377,7 @@ export default function CoordinatorDashboard() {
       });
     } catch (error) {
       console.error("Error updating framework agreement:", error);
-      alert("Nepodařilo se aktualizovat datum expirace.");
+      toast.error("Nepodařilo se aktualizovat datum expirace.");
     }
   };
 
@@ -385,7 +385,7 @@ export default function CoordinatorDashboard() {
 
   const handleMatchPlacement = async (placementId: string) => {
     if (!matchmakingOrgId) {
-      alert("Vyberte organizaci pro propojení.");
+      toast.success("Vyberte organizaci pro propojení.");
       return;
     }
     try {
@@ -395,12 +395,12 @@ export default function CoordinatorDashboard() {
         status: "PENDING_INSTITUTION",
         updatedAt: new Date().toISOString()
       });
-      alert("Praxe úspěšně propojena s organizací.");
+      toast.success("Praxe úspěšně propojena s organizací.");
       setLinkingPlacementId(null);
       setMatchmakingOrgId("");
     } catch (error) {
       console.error("Chyba při propojování:", error);
-      alert("Nepodařilo se propojit praxi.");
+      toast.error("Nepodařilo se propojit praxi.");
     }
   };
 
@@ -418,7 +418,7 @@ export default function CoordinatorDashboard() {
       });
     } catch (e) {
       console.error("Error approving org:", e);
-      alert("Chyba při schvalování.");
+      toast.error("Chyba při schvalování.");
     }
   };
 
@@ -437,7 +437,7 @@ export default function CoordinatorDashboard() {
       });
     } catch (e) {
       console.error("Error rejecting org:", e);
-      alert("Chyba při zamítání.");
+      toast.error("Chyba při zamítání.");
     }
   };
 
@@ -798,7 +798,7 @@ export default function CoordinatorDashboard() {
                             onClick={() => {
                               const gId = selectedGuarantors[comm.id];
                               if (!gId) {
-                                alert("Vyberte garanta IVP.");
+                                toast.success("Vyberte garanta IVP.");
                                 return;
                               }
                               const guarantor = guarantors.find(

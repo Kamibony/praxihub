@@ -1,5 +1,5 @@
 "use client";
-
+import { toast } from "react-hot-toast";
 import React, { useState, useEffect, useRef } from "react";
 import { db, auth, functions, storage } from "../../../lib/firebase";
 import { httpsCallable } from "firebase/functions";
@@ -174,7 +174,7 @@ export default function StudentDashboard() {
   const handleDictation = () => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) {
-      alert("Tvůj prohlížeč nepodporuje hlasové zadávání. Zkus Google Chrome nebo Safari.");
+      toast.success("Tvůj prohlížeč nepodporuje hlasové zadávání. Zkus Google Chrome nebo Safari.");
       return;
     }
 
@@ -218,7 +218,7 @@ export default function StudentDashboard() {
       console.error("Speech recognition error", event.error);
       setIsDictating(false);
       if (event.error !== 'no-speech') {
-          alert("Chyba při rozpoznávání hlasu.");
+          toast.error("Chyba při rozpoznávání hlasu.");
       }
     };
 
@@ -254,7 +254,7 @@ export default function StudentDashboard() {
       setNewLogDescription("");
     } catch (error) {
       console.error("Error adding time log: ", error);
-      alert("Chyba při ukládání záznamu.");
+      toast.error("Chyba při ukládání záznamu.");
     } finally {
       setSubmittingLog(false);
     }
@@ -338,7 +338,7 @@ export default function StudentDashboard() {
   const handleOrgRequestSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !orgRequest.name || !orgRequest.ico) {
-      alert("Vyplňte prosím povinné údaje (Název a IČO).");
+      toast.success("Vyplňte prosím povinné údaje (Název a IČO).");
       return;
     }
     setSubmittingOrg(true);
@@ -362,24 +362,24 @@ export default function StudentDashboard() {
         try {
           const fetchAres = httpsCallable(functions, 'fetchAresAndLink');
           await fetchAres({ ico: orgRequest.ico, placementId: docRef.id });
-          alert("Žádost odeslána. Organizace byla automaticky ověřena v registru ARES (Fast-Track)!");
+          toast.success("Žádost odeslána. Organizace byla automaticky ověřena v registru ARES (Fast-Track)!");
         } catch (aresError) {
           console.error("ARES error:", aresError);
           // Fallback if ARES fails
           const transitionFn = httpsCallable(functions, 'transitionPlacementState');
           await transitionFn({ placementId: docRef.id, newState: 'PENDING_MATCH' });
-          alert("Žádost odeslána, ale ověření v ARES se nezdařilo. Přesunuto k manuálnímu schválení.");
+          toast.success("Žádost odeslána, ale ověření v ARES se nezdařilo. Přesunuto k manuálnímu schválení.");
         }
       } else {
         const transitionFn = httpsCallable(functions, 'transitionPlacementState');
         await transitionFn({ placementId: docRef.id, newState: 'PENDING_MATCH' });
-        alert("Žádost odeslána a čeká na manuální přiřazení koordinátorem (UPV).");
+        toast.success("Žádost odeslána a čeká na manuální přiřazení koordinátorem (UPV).");
       }
 
       setOrgRequest({ name: "", ico: "", web: "" });
     } catch (error) {
       console.error("Error submitting org request:", error);
-      alert("Chyba při odesílání žádosti.");
+      toast.error("Chyba při odesílání žádosti.");
     } finally {
       setSubmittingOrg(false);
     }
@@ -426,7 +426,7 @@ export default function StudentDashboard() {
       }
     } catch (error) {
       console.error("Upload failed", error);
-      alert("Chyba při nahrávání souboru.");
+      toast.error("Chyba při nahrávání souboru.");
     } finally {
       setUploading(false);
     }
@@ -449,10 +449,10 @@ export default function StudentDashboard() {
         placementId: placement.id,
         newState: "APPROVED",
       });
-      alert("Údaje potvrzeny!");
+      toast.success("Údaje potvrzeny!");
     } catch (error) {
       console.error("Error confirming data:", error);
-      alert("Chyba při ukládání.");
+      toast.error("Chyba při ukládání.");
     }
   };
 
@@ -464,10 +464,10 @@ export default function StudentDashboard() {
         studentRating,
         studentReview,
       });
-      alert("Hodnocení odesláno!");
+      toast.success("Hodnocení odesláno!");
     } catch (error) {
       console.error("Error submitting rating:", error);
-      alert("Chyba při odesílání hodnocení.");
+      toast.error("Chyba při odesílání hodnocení.");
     }
   };
 
@@ -484,7 +484,7 @@ export default function StudentDashboard() {
       setReflectionText(data.correctedText);
     } catch (error: any) {
       console.error("Grammar Correction Error:", error);
-      alert(`Chyba při opravě textu: ${error.message}`);
+      toast.success(`Chyba při opravě textu: ${error.message}`);
     } finally {
       setIsCorrectingGrammar(false);
     }
@@ -505,17 +505,17 @@ export default function StudentDashboard() {
 
       const data = response.data as any;
       if (data.evaluation.isPass) {
-        alert(
+        toast.success(
           "Gratulujeme! Reflexe byla úspěšně vyhodnocena a praxe je nyní uzavřena.",
         );
       } else {
-        alert(
+        toast.success(
           "Reflexe nebyla úspěšně vyhodnocena. Prosím, upravte text podle zpětné vazby a zkuste to znovu.",
         );
       }
     } catch (error: any) {
       console.error("Evaluation Error:", error);
-      alert(`Chyba při vyhodnocování: ${error.message}`);
+      toast.success(`Chyba při vyhodnocování: ${error.message}`);
     } finally {
       setEvaluating(false);
     }
@@ -535,11 +535,11 @@ export default function StudentDashboard() {
            skillMatrixUrl: data.url
         });
         setPlacement({ ...placement, skillMatrixUrl: data.url });
-        alert("KRAU Matrix byl úspěšně vygenerován.");
+        toast.success("KRAU Matrix byl úspěšně vygenerován.");
       }
     } catch (error: any) {
       console.error("Matrix generation error:", error);
-      alert("Chyba při generování PDF matice.");
+      toast.error("Chyba při generování PDF matice.");
     } finally {
       setIsGeneratingMatrix(false);
     }
@@ -650,7 +650,7 @@ export default function StudentDashboard() {
       setIsRecording(false);
     } else {
       if (!recognitionRef.current) {
-        alert("Váš prohlížeč nepodporuje rozpoznávání řeči.");
+        toast.success("Váš prohlížeč nepodporuje rozpoznávání řeči.");
         return;
       }
       try {
@@ -672,7 +672,7 @@ export default function StudentDashboard() {
           targetHours: 80,
           migratedHours: 80
         });
-        alert("UAT: Placement status forced to EVALUATION.");
+        toast.success("UAT: Placement status forced to EVALUATION.");
       } else {
         const newPlacement = {
           studentId: user.uid,
@@ -688,11 +688,11 @@ export default function StudentDashboard() {
           migratedHours: 80
         };
         await addDoc(collection(db, "placements"), newPlacement);
-        alert("UAT: Dummy placement created and forced to EVALUATION.");
+        toast.success("UAT: Dummy placement created and forced to EVALUATION.");
       }
     } catch (error) {
       console.error("UAT Bypass Error:", error);
-      alert("Chyba při UAT bypassu.");
+      toast.error("Chyba při UAT bypassu.");
     }
   };
 

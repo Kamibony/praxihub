@@ -1,4 +1,5 @@
 'use client';
+import { toast } from "react-hot-toast";
 
 import React, { useEffect, useState } from 'react';
 import { db, auth } from "../../../lib/firebase";
@@ -14,17 +15,46 @@ export default function UserManagementPage() {
   const [wipeConfirmation, setWipeConfirmation] = useState('');
   const [wipingDb, setWipingDb] = useState(false);
   const [currentUserRole, setCurrentUserRole] = useState<string | null>(null);
-  const handleDeleteUser = async (userId: string, userName: string) => {
-    if (window.confirm(`Opravdu chcete smazat uživatele ${userName || 'Bez jména'}? Tato akce je nevratná.`)) {
-      try {
-        await deleteDoc(doc(db, "users", userId));
-        // Note: In a full app, you might also want to delete the user from Firebase Auth using an Admin SDK cloud function.
-        // For cleaning up ghost accounts in Firestore during this database wipe phase, deleting the doc is often the primary goal.
-      } catch (error) {
-        console.error("Chyba při mazání uživatele:", error);
-        alert("Nepodařilo se smazat uživatele.");
-      }
-    }
+  const handleDeleteUser = (userId: string, userName: string) => {
+    toast.custom((t) => (
+      <div className={`${t.visible ? 'animate-enter' : 'animate-leave'} max-w-md w-full bg-white shadow-lg rounded-lg pointer-events-auto flex ring-1 ring-black ring-opacity-5`}>
+        <div className="flex-1 w-0 p-4">
+          <div className="flex items-start">
+            <div className="ml-3 flex-1">
+              <p className="text-sm font-medium text-gray-900">
+                Opravdu chcete smazat uživatele {userName || 'Bez jména'}?
+              </p>
+              <p className="mt-1 text-sm text-gray-500">
+                Tato akce je nevratná.
+              </p>
+            </div>
+          </div>
+        </div>
+        <div className="flex border-l border-gray-200">
+          <button
+            onClick={async () => {
+              toast.dismiss(t.id);
+              try {
+                await deleteDoc(doc(db, "users", userId));
+                toast.success("Uživatel smazán.");
+              } catch (error) {
+                console.error("Chyba při mazání uživatele:", error);
+                toast.error("Nepodařilo se smazat uživatele.");
+              }
+            }}
+            className="w-full border border-transparent rounded-none rounded-r-lg p-4 flex items-center justify-center text-sm font-medium text-red-600 hover:text-red-500 focus:outline-none focus:ring-2 focus:ring-red-500"
+          >
+            Smazat
+          </button>
+          <button
+            onClick={() => toast.dismiss(t.id)}
+            className="w-full border border-transparent rounded-none p-4 flex items-center justify-center text-sm font-medium text-gray-600 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-500"
+          >
+            Zrušit
+          </button>
+        </div>
+      </div>
+    ), { duration: Infinity });
   };
 
   const [users, setUsers] = useState<any[]>([]);
@@ -91,7 +121,7 @@ export default function UserManagementPage() {
       });
 
       setShowEditUserModal(false);
-      alert('Uživatel byl úspěšně upraven.');
+      toast.success('Uživatel byl úspěšně upraven.');
       // Refresh selected user if it's the one we're editing
       if (selectedUser && selectedUser.id === editUserId) {
         setSelectedUser({
@@ -132,7 +162,7 @@ export default function UserManagementPage() {
       setNewUserName('');
       setNewUserEmail('');
       setNewUserRole('student');
-      alert('Uživatel byl úspěšně vytvořen.');
+      toast.success('Uživatel byl úspěšně vytvořen.');
     } catch (error: any) {
       console.error("Chyba při vytváření uživatele:", error);
       setCreateUserError(error.message || 'Nepodařilo se vytvořit uživatele.');
@@ -165,30 +195,55 @@ export default function UserManagementPage() {
     document.body.removeChild(link);
   };
 
-  const handleImpersonate = async (userId: string, userName: string) => {
-    if (!window.confirm(`Opravdu se chcete přihlásit jako uživatel ${userName || 'Bez jména'}?`)) {
-      return;
-    }
+  const handleImpersonate = (userId: string, userName: string) => {
+    toast.custom((t) => (
+      <div className={`${t.visible ? 'animate-enter' : 'animate-leave'} max-w-md w-full bg-white shadow-lg rounded-lg pointer-events-auto flex ring-1 ring-black ring-opacity-5`}>
+        <div className="flex-1 w-0 p-4">
+          <div className="flex items-start">
+            <div className="ml-3 flex-1">
+              <p className="text-sm font-medium text-gray-900">
+                Opravdu se chcete přihlásit jako uživatel {userName || 'Bez jména'}?
+              </p>
+            </div>
+          </div>
+        </div>
+        <div className="flex border-l border-gray-200">
+          <button
+            onClick={async () => {
+              toast.dismiss(t.id);
+              setImpersonating(userId);
+              try {
+                const functions = getFunctions();
+                const getImpersonationToken = httpsCallable(functions, 'getImpersonationToken');
+                const result = await getImpersonationToken({ targetUserId: userId });
+                const data = result.data as { targetToken: string };
 
-    setImpersonating(userId);
-    try {
-      const functions = getFunctions();
-      const getImpersonationToken = httpsCallable(functions, 'getImpersonationToken');
-      const result = await getImpersonationToken({ targetUserId: userId });
-      const data = result.data as { targetToken: string };
-
-      if (data.targetToken) {
-        await signInWithCustomToken(auth, data.targetToken);
-        router.push('/dashboard'); // Route based on user role
-      } else {
-        throw new Error("Missing token in response.");
-      }
-    } catch (error) {
-      console.error("Chyba při přihlašování za uživatele:", error);
-      alert("Nepodařilo se přihlásit jako tento uživatel.");
-    } finally {
-      setImpersonating(null);
-    }
+                if (data.targetToken) {
+                  await signInWithCustomToken(auth, data.targetToken);
+                  router.push('/dashboard');
+                } else {
+                  throw new Error("Missing token in response.");
+                }
+              } catch (error) {
+                console.error("Chyba při přihlašování za uživatele:", error);
+                toast.error("Nepodařilo se přihlásit jako tento uživatel.");
+              } finally {
+                setImpersonating(null);
+              }
+            }}
+            className="w-full border border-transparent rounded-none rounded-r-lg p-4 flex items-center justify-center text-sm font-medium text-blue-600 hover:text-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            Přihlásit
+          </button>
+          <button
+            onClick={() => toast.dismiss(t.id)}
+            className="w-full border border-transparent rounded-none p-4 flex items-center justify-center text-sm font-medium text-gray-600 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-500"
+          >
+            Zrušit
+          </button>
+        </div>
+      </div>
+    ), { duration: Infinity });
   };
 
   useEffect(() => {
@@ -232,13 +287,13 @@ export default function UserManagementPage() {
         const result = await sanitizeDb();
         const data = result.data as any;
         if (data && data.success) {
-            alert(`Úspěšně smazáno ${data.deletedAuthCount} uživatelů z Auth a ${data.deletedUsersCount} uživatelů z Firestore.`);
+            toast.success(`Úspěšně smazáno ${data.deletedAuthCount} uživatelů z Auth a ${data.deletedUsersCount} uživatelů z Firestore.`);
         } else {
-            alert('Nastala chyba při mazání databáze.');
+            toast.success('Nastala chyba při mazání databáze.');
         }
     } catch (e: any) {
         console.error('Chyba mazání DB', e);
-        alert('Chyba: ' + e.message);
+        toast.success('Chyba: ' + e.message);
     } finally {
         setWipingDb(false);
         setShowWipeModal(false);

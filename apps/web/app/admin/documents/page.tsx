@@ -1,4 +1,5 @@
 'use client';
+import { toast } from "react-hot-toast";
 
 import React, { useState, useEffect } from 'react';
 import { db, functions } from "../../../lib/firebase";
@@ -110,16 +111,16 @@ export default function DocumentCenter() {
         content: content,
         isCritical: true
       });
-      alert('Pravidla byla úspěšně uložena.');
+      toast.success('Pravidla byla úspěšně uložena.');
     } catch (e) {
       console.error(e);
-      alert('Chyba při ukládání.');
+      toast.success('Chyba při ukládání.');
     }
     setSaving(false);
   };
 
   const handleTest = async () => {
-    if (!testReflection) return alert('Zadejte text reflexe pro testování.');
+    if (!testReflection) return toast.success('Zadejte text reflexe pro testování.');
     setTesting(true);
     setTestResult(null);
     try {
@@ -141,7 +142,7 @@ ${currentRulesObj.kompetencni_ramec}
       setTestResult(res.data);
     } catch (e) {
       console.error(e);
-      alert('Chyba při testování AI.');
+      toast.success('Chyba při testování AI.');
     }
     setTesting(false);
   };
@@ -213,7 +214,7 @@ ${currentRulesObj.kompetencni_ramec}
 
     } catch (err: any) {
       console.error(err);
-      alert("Chyba při analýze dokumentu: " + err.message);
+      toast.error("Chyba při analýze dokumentu: " + err.message);
       setManualOverride(true);
     }
     setRoutingFile(false);
@@ -241,9 +242,9 @@ ${currentRulesObj.kompetencni_ramec}
         } else {
           setRulesKpv(updateRules(rulesKpv));
         }
-        alert("Text úspěšně extrahován a přidán. Nezapomeňte změny ULOŽIT.");
+        toast.success("Text úspěšně extrahován a přidán. Nezapomeňte změny ULOŽIT.");
       } else {
-          alert("Vyberte dokument znovu v záložce AI pro manuální extrakci.");
+          toast.success("Vyberte dokument znovu v záložce AI pro manuální extrakci.");
       }
     } else if (category === 'ROSTER') {
       setActiveTab('IMPORT');
@@ -254,10 +255,10 @@ ${currentRulesObj.kompetencni_ramec}
       try {
         const storageRef = ref(storage, `global_documents/templates/${dept}/${droppedFile.name}`);
         await uploadBytes(storageRef, droppedFile);
-        alert('Šablona úspěšně nahrána.');
+        toast.success('Šablona úspěšně nahrána.');
         fetchDocs('templates');
       } catch (err) {
-        alert('Chyba při nahrávání.');
+        toast.success('Chyba při nahrávání.');
       }
       setUploadingTemplate(false);
     } else if (category === 'COMPLIANCE') {
@@ -266,10 +267,10 @@ ${currentRulesObj.kompetencni_ramec}
       try {
         const storageRef = ref(storage, `global_documents/compliance/${dept}/${droppedFile.name}`);
         await uploadBytes(storageRef, droppedFile);
-        alert('Smlouva úspěšně nahrána.');
+        toast.success('Smlouva úspěšně nahrána.');
         fetchDocs('compliance');
       } catch (err) {
-        alert('Chyba při nahrávání.');
+        toast.success('Chyba při nahrávání.');
       }
       setUploadingCompliance(false);
     }
@@ -299,12 +300,12 @@ ${currentRulesObj.kompetencni_ramec}
     try {
       const storageRef = ref(storage, `global_documents/${pathPrefix}/${activeDept}/${file.name}`);
       await uploadBytes(storageRef, file);
-      alert('Soubor úspěšně nahrán.');
+      toast.success('Soubor úspěšně nahrán.');
       // Refresh documents list
       fetchDocs(pathPrefix);
     } catch (err) {
       console.error(err);
-      alert('Chyba při nahrávání souboru.');
+      toast.success('Chyba při nahrávání souboru.');
     }
     setUploading(false);
   };
@@ -319,10 +320,10 @@ ${currentRulesObj.kompetencni_ramec}
       const migrateFn = httpsCallable(functions, 'migrateInstitutions');
       const res = await migrateFn();
       const data = res.data as { success: boolean; createdCount: number; updatedCount: number };
-      alert(`Migrace úspěšná! Vytvořeno institucí: ${data.createdCount}, Aktualizováno smluv: ${data.updatedCount}`);
+      toast.success(`Migrace úspěšná! Vytvořeno institucí: ${data.createdCount}, Aktualizováno smluv: ${data.updatedCount}`);
     } catch (e: any) {
       console.error(e);
-      alert(`Chyba při migraci: ${e.message}`);
+      toast.success(`Chyba při migraci: ${e.message}`);
     }
     setRunningMigration(false);
   };
@@ -333,7 +334,7 @@ ${currentRulesObj.kompetencni_ramec}
 
     const validTypes = ["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
     if (!validTypes.includes(file.type)) {
-      alert("Prosím nahrajte soubor ve formátu PDF nebo DOCX.");
+      toast.success("Prosím nahrajte soubor ve formátu PDF nebo DOCX.");
       return;
     }
 
@@ -366,12 +367,12 @@ ${currentRulesObj.kompetencni_ramec}
           setRulesKpv(updateRules(rulesKpv));
         }
 
-        alert("Text úspěšně extrahován z PDF a přidán k existujícím pravidlům. Nezapomeňte změny ULOŽIT.");
+        toast.success("Text úspěšně extrahován z PDF a přidán k existujícím pravidlům. Nezapomeňte změny ULOŽIT.");
         setParsingPdf(false);
       };
       reader.onerror = (err) => {
         console.error("FileReader error:", err);
-        alert("Chyba při čtení souboru.");
+        toast.error("Chyba při čtení souboru.");
         setParsingPdf(false);
       };
 
@@ -379,7 +380,7 @@ ${currentRulesObj.kompetencni_ramec}
 
     } catch (e: any) {
       console.error(e);
-      alert(`Chyba při analýze PDF: ${e.message}`);
+      toast.success(`Chyba při analýze PDF: ${e.message}`);
       setParsingPdf(false);
     }
   };
