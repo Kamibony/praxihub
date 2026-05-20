@@ -1,4 +1,5 @@
 'use client';
+import { toast } from "react-hot-toast";
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -38,7 +39,7 @@ export default function ConsentPage() {
       router.push("/dashboard");
     } catch (err) {
       console.error(err);
-      alert("Chyba při ukládání souhlasu.");
+      toast.error("Chyba při ukládání souhlasu.");
     } finally {
       setLoading(false);
     }

@@ -1,4 +1,5 @@
 'use client';
+import { toast } from "react-hot-toast";
 
 import React, { useEffect, useState } from 'react';
 import { signInWithCustomToken, onAuthStateChanged } from 'firebase/auth';
@@ -66,7 +67,7 @@ export default function ImpersonationBanner() {
       }
     } catch (error) {
       console.error('Error returning to admin session:', error);
-      alert('Chyba při návratu do administrátorského účtu.');
+      toast.success('Chyba při návratu do administrátorského účtu.');
     } finally {
         setLoading(false);
     }
