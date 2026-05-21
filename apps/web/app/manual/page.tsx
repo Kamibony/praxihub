@@ -1,4 +1,3 @@
-
 'use client';
 
 import React from 'react';
@@ -10,7 +9,10 @@ import {
   ArrowLeft,
   CheckCircle,
   Bot,
-  FileText
+  FileText,
+  Lock,
+  Unlock,
+  PlayCircle
 } from 'lucide-react';
 
 export default function ManualPage() {
@@ -38,158 +40,138 @@ export default function ManualPage() {
         {/* Hero Section */}
         <section className="text-center max-w-4xl mx-auto">
           <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-6 text-gray-900">
-            PraxiHub Manuál
+            Manuál pro UAT Testování
           </h1>
           <p className="text-xl md:text-2xl text-gray-600 leading-relaxed">
-            Méně byrokracie, více praxe. Digitální platforma pro řízení odborných stáží.
+            Vyzkoušejte si systém od nuly bez zkratek. Tento průvodce vás provede autentickou cestou nového studenta i procesem schvalování.
           </p>
         </section>
 
-        {/* Section 1: Pro koho je PraxiHub? */}
-        <section>
-          <h2 className="text-3xl font-bold text-center mb-12 text-gray-900">
-            Pro koho je PraxiHub?
-          </h2>
-          <div className="grid md:grid-cols-3 gap-8">
-
-            {/* Student */}
-            <div className="bg-white p-8 rounded-2xl shadow-sm hover:shadow-md transition-shadow border border-gray-100 prose prose-blue">
-              <div className="flex flex-col items-center text-center">
-                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 mb-6">
-                  <GraduationCap className="w-8 h-8" />
-                </div>
-                <h3 className="text-xl font-bold mb-4 mt-0">Student</h3>
-                <p className="text-gray-600 mb-0">
-                  Konec zmatků. Jasný postup krok za krokem, AI Matchmaking pro nalezení firmy a automatické generování smluv bez přepisování a možnost opravy chyb ve smlouvě.
-                </p>
-              </div>
-            </div>
-
-            {/* Koordinátor */}
-            <div className="bg-white p-8 rounded-2xl shadow-sm hover:shadow-md transition-shadow border border-gray-100 prose prose-indigo">
-              <div className="flex flex-col items-center text-center">
-                <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 mb-6">
-                  <Users className="w-8 h-8" />
-                </div>
-                <h3 className="text-xl font-bold mb-4 mt-0">Koordinátor</h3>
-                <p className="text-gray-600 mb-0">
-                  Centrální přehled všech stáží. Schvalování firem a smluv na jedno kliknutí, automatická kontrola dat, <strong>export do CSV pro reporting</strong> a vizuální <strong>statistiky postupu ročníku</strong>.
-                </p>
-              </div>
-            </div>
-
-            {/* Firma */}
-            <div className="bg-white p-8 rounded-2xl shadow-sm hover:shadow-md transition-shadow border border-gray-100 prose prose-green">
-              <div className="flex flex-col items-center text-center">
-                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center text-green-600 mb-6">
-                  <Building2 className="w-8 h-8" />
-                </div>
-                <h3 className="text-xl font-bold mb-4 mt-0">Firma</h3>
-                <p className="text-gray-600 mb-0">
-                  Přístup k talentům. Vše na jednom místě: v <strong>detailu studenta</strong> stáhnete smlouvu a zadáte hodnocení.
-                </p>
-              </div>
-            </div>
-
-          </div>
-        </section>
-
-        {/* Section 2: Klíčové Funkce */}
+        {/* Příprava účtů */}
         <section className="bg-white rounded-3xl p-8 md:p-12 shadow-sm border border-gray-200">
-          <h2 className="text-3xl font-bold text-center mb-12 text-gray-900">
-            Klíčové Funkce
+          <h2 className="text-2xl font-bold mb-6 text-gray-900 flex items-center gap-3">
+            <CheckCircle className="w-6 h-6 text-green-600" />
+            Příprava před testováním
           </h2>
-          <div className="grid md:grid-cols-3 gap-12">
-
-            <div className="flex flex-col items-start gap-4">
-              <div className="p-3 bg-blue-50 rounded-xl text-blue-600">
-                <CheckCircle className="w-6 h-6" />
-              </div>
-              <h3 className="text-xl font-bold text-gray-900">Dvoufázové Schvalování</h3>
-              <p className="text-gray-600 leading-relaxed">
-                Nejprve koordinátor schválí firmu, až poté student generuje smlouvu. Tím předcházíme chybám.
-              </p>
-            </div>
-
-            <div className="flex flex-col items-start gap-4">
-              <div className="p-3 bg-indigo-50 rounded-xl text-indigo-600">
-                <Bot className="w-6 h-6" />
-              </div>
-              <h3 className="text-xl font-bold text-gray-900">Inteligentní Chatbot</h3>
-              <p className="text-gray-600 leading-relaxed">
-                Průvodce, který radí v každém kroku. Upozorní na čekající úkoly a nové žádosti.
-              </p>
-            </div>
-
-            <div className="flex flex-col items-start gap-4">
-              <div className="p-3 bg-green-50 rounded-xl text-green-600">
-                <FileText className="w-6 h-6" />
-              </div>
-              <h3 className="text-xl font-bold text-gray-900">AI & PDF Generátor</h3>
-              <p className="text-gray-600 leading-relaxed">
-                Systém automaticky vyplní smlouvy a při nahrání zkontroluje správnost údajů.
-              </p>
-            </div>
-
+          <div className="text-gray-700 space-y-4">
+            <p>Pro správný průběh testování potřebujete dva přístupy:</p>
+            <ul className="list-disc list-inside ml-4 space-y-2">
+              <li><strong>Účet koordinátora:</strong> Použijte připravený účet (např. <code>admin@praxihub.cz</code>).</li>
+              <li><strong>Nový účet studenta:</strong> Vytvořte si zcela nový účet pomocí registrační stránky (<code>/signup</code>) nebo použijte čistý testovací e-mail.</li>
+            </ul>
           </div>
         </section>
 
-        {/* Section 3: Jak to funguje? */}
+        {/* Cesta Krok za Krokem */}
         <section>
           <h2 className="text-3xl font-bold text-center mb-16 text-gray-900">
-            Jak to funguje?
+            Průběh testování (Příběh ve třech fázích)
           </h2>
 
           <div className="space-y-12">
 
-            {/* Pohled Studenta */}
-            <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
-              <div className="bg-blue-50 px-8 py-4 border-b border-blue-100">
-                <h3 className="text-xl font-bold text-blue-800 flex items-center gap-3">
-                  <GraduationCap className="w-5 h-5" />
-                  Pohled Studenta
-                </h3>
+            {/* Fáze 1 */}
+            <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+              <div className="bg-blue-50 px-8 py-6 border-b border-blue-100 flex items-center justify-between">
+                <div>
+                  <h3 className="text-xl font-bold text-blue-800 flex items-center gap-3">
+                    <span className="bg-blue-200 text-blue-800 rounded-full w-8 h-8 flex items-center justify-center text-sm">1</span>
+                    Fáze 1: Nováček (Pohled Studenta)
+                  </h3>
+                  <p className="text-blue-600 mt-1 ml-11 text-sm font-medium">Navození prvního kontaktu se systémem</p>
+                </div>
+                <GraduationCap className="w-8 h-8 text-blue-300 hidden sm:block" />
               </div>
               <div className="p-8">
-                <ol className="space-y-4 list-decimal list-inside text-gray-700 marker:text-blue-600 marker:font-bold">
-                  <li className="pl-2"><span className="ml-2">Vyplníte žádost o schválení firmy (IČO, Název).</span></li>
-                  <li className="pl-2"><span className="ml-2">Počkáte na schválení koordinátorem (Chatbot vás upozorní).</span></li>
-                  <li className="pl-2"><span className="ml-2">Po schválení vygenerujete smlouvu, necháte podepsat a nahrajete sken. (Pokud uděláte chybu, použijte tlačítko <strong>&apos;Nová smlouva / Opravit&apos;</strong> v hlavičce).</span></li>
+                <ol className="space-y-6 list-decimal list-inside text-gray-700 marker:text-blue-600 marker:font-bold">
+                  <li className="pl-2">
+                    <span className="font-semibold text-gray-900">Registrace a Login:</span> Zaregistrujte se a přihlaste jako nový student.
+                  </li>
+                  <li className="pl-2">
+                    <span className="font-semibold text-gray-900">Vyplnění profilu (Onboarding):</span> Projděte vstupním dotazníkem a vyplňte své údaje.
+                  </li>
+                  <li className="pl-2">
+                    <span className="font-semibold text-gray-900">Výběr oboru:</span> Zvolte si svůj obor (UPV nebo KPV).
+                  </li>
+                  <li className="pl-2">
+                    <span className="font-semibold text-gray-900">Založení praxe:</span> Vyhledejte a požádejte o propojení s institucí (školkou/školou).
+                  </li>
+                  <li className="pl-2">
+                    <span className="font-semibold text-gray-900">Generování smlouvy:</span> Nechte si vygenerovat trojdohodu a "podepište" ji.
+                  </li>
+                </ol>
+                <div className="mt-6 bg-slate-50 p-4 rounded-lg flex items-start gap-3 border border-slate-200">
+                  <Lock className="w-5 h-5 text-slate-500 shrink-0 mt-0.5" />
+                  <p className="text-sm text-slate-600">
+                    <strong>Všimněte si:</strong> V této chvíli jsou všechny záložky v Dashboardu (Náslechy, Výstupy, Reflexe) zamčené. Toto je záměrný stav, systém čeká na schválení koordinátorem!
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Fáze 2 */}
+            <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+              <div className="bg-indigo-50 px-8 py-6 border-b border-indigo-100 flex items-center justify-between">
+                <div>
+                  <h3 className="text-xl font-bold text-indigo-800 flex items-center gap-3">
+                    <span className="bg-indigo-200 text-indigo-800 rounded-full w-8 h-8 flex items-center justify-center text-sm">2</span>
+                    Fáze 2: Schválení (Pohled Koordinátora)
+                  </h3>
+                  <p className="text-indigo-600 mt-1 ml-11 text-sm font-medium">Odemknutí cesty pro studenta</p>
+                </div>
+                <Users className="w-8 h-8 text-indigo-300 hidden sm:block" />
+              </div>
+              <div className="p-8">
+                <ol className="space-y-6 list-decimal list-inside text-gray-700 marker:text-indigo-600 marker:font-bold">
+                  <li className="pl-2">
+                    <span className="font-semibold text-gray-900">Přihlášení Koordinátora:</span> Odhlaste se a přihlaste se jako koordinátor (<code>admin@praxihub.cz</code>).
+                  </li>
+                  <li className="pl-2">
+                    <span className="font-semibold text-gray-900">Lokalizace žádosti:</span> V administraci najděte žádost nového studenta o zahájení praxe.
+                  </li>
+                  <li className="pl-2">
+                    <span className="font-semibold text-gray-900">Aktivace:</span> Zkontrolujte údaje a klikněte na "Schválit" / "Aktivovat". Tímto krokem stvrzujete smlouvu.
+                  </li>
                 </ol>
               </div>
             </div>
 
-            {/* Pohled Koordinátora */}
-            <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
-              <div className="bg-indigo-50 px-8 py-4 border-b border-indigo-100">
-                <h3 className="text-xl font-bold text-indigo-800 flex items-center gap-3">
-                  <Users className="w-5 h-5" />
-                  Pohled Koordinátora
-                </h3>
+            {/* Fáze 3 */}
+            <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+              <div className="bg-emerald-50 px-8 py-6 border-b border-emerald-100 flex items-center justify-between">
+                <div>
+                  <h3 className="text-xl font-bold text-emerald-800 flex items-center gap-3">
+                    <span className="bg-emerald-200 text-emerald-800 rounded-full w-8 h-8 flex items-center justify-center text-sm">3</span>
+                    Fáze 3: Aktivní Praxe (Návrat Studenta)
+                  </h3>
+                  <p className="text-emerald-600 mt-1 ml-11 text-sm font-medium">Plnění úkolů a evaluace</p>
+                </div>
+                <PlayCircle className="w-8 h-8 text-emerald-300 hidden sm:block" />
               </div>
               <div className="p-8">
-                <ol className="space-y-4 list-decimal list-inside text-gray-700 marker:text-indigo-600 marker:font-bold">
-                  <li className="pl-2"><span className="ml-2">V Dashboardu sledujete <strong>graf postupu ročníku</strong> a řešíte nové žádosti o schválení firmy.</span></li>
-                  <li className="pl-2"><span className="ml-2">Schválíte nebo zamítnete firmu jedním kliknutím.</span></li>
-                  <li className="pl-2"><span className="ml-2">Finálně zkontrolujete a schválíte nahranou smlouvu.</span></li>
+                <ol className="space-y-6 list-decimal list-inside text-gray-700 marker:text-emerald-600 marker:font-bold">
+                  <li className="pl-2">
+                    <span className="font-semibold text-gray-900">Návrat k profilu:</span> Přihlaste se zpět jako testovací student.
+                  </li>
+                  <li className="pl-2">
+                    <span className="font-semibold text-gray-900">Ověření odemčení:</span> Zkontrolujte Dashboard – modul 3 pilířů (Náslechy, Výstupy, Reflexe) by měl být nyní <strong>odemčen</strong>.
+                  </li>
+                  <li className="pl-2">
+                    <span className="font-semibold text-gray-900">Záznam hodin:</span> Zapište si hodiny (využijte kategorizaci dle oboru nebo stopky).
+                  </li>
+                  <li className="pl-2">
+                    <span className="font-semibold text-gray-900">AI Reflexe:</span> Vyplňte a odešlete závěrečnou reflexi, kterou následně vyhodnotí AI.
+                  </li>
+                  <li className="pl-2">
+                    <span className="font-semibold text-gray-900">Ukončení a certifikát:</span> Klikněte na uzavření praxe a stáhněte si verifikovaný Skill Matrix PDF dokument.
+                  </li>
                 </ol>
-              </div>
-            </div>
-
-            {/* Pohled Firmy */}
-            <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
-              <div className="bg-green-50 px-8 py-4 border-b border-green-100">
-                <h3 className="text-xl font-bold text-green-800 flex items-center gap-3">
-                  <Building2 className="w-5 h-5" />
-                  Pohled Firmy
-                </h3>
-              </div>
-              <div className="p-8">
-                <ol className="space-y-4 list-decimal list-inside text-gray-700 marker:text-green-600 marker:font-bold">
-                  <li className="pl-2"><span className="ml-2">Nastavíte si profil a koho hledáte (Skills).</span></li>
-                  <li className="pl-2"><span className="ml-2">V přehledu si stáhnete smlouvu pro své HR/Účetní.</span></li>
-                  <li className="pl-2"><span className="ml-2">Na konci praxe vyplníte hodnocení studenta.</span></li>
-                </ol>
+                <div className="mt-6 bg-emerald-50 p-4 rounded-lg flex items-start gap-3 border border-emerald-200">
+                  <Unlock className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+                  <p className="text-sm text-emerald-800 font-medium">
+                    Tímto jste úspěšně prošli celým autentickým procesem tak, jak jej zažije každý nový uživatel systému PraxiHub!
+                  </p>
+                </div>
               </div>
             </div>
 
