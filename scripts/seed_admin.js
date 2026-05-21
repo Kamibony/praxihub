@@ -9,7 +9,7 @@ const auth = admin.auth();
 const db = admin.firestore();
 
 async function seedAdmin() {
-  const email = "praxihub@gmail.com";
+  const email = "admin@praxihub.cz";
   let user;
 
   try {
