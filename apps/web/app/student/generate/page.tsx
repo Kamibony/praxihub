@@ -31,10 +31,12 @@ export default function GenerateContractPage() {
   const [isReady, setIsReady] = useState(false);
   const [institutions, setInstitutions] = useState<any[]>([]);
   const [selectedInstitutionId, setSelectedInstitutionId] = useState<string | "NEW">("");
+  const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
+        setUser(currentUser);
         import("firebase/firestore").then(async ({ collection, query, where, getDocs, orderBy, limit }) => {
             const instQ = query(collection(db, "users"), where("role", "==", "institution"));
             const instSnap = await getDocs(instQ);
@@ -76,22 +78,22 @@ export default function GenerateContractPage() {
 
   // Load draft data
   useEffect(() => {
-    if (!isReady) return;
-    const draft = localStorage.getItem("generate_contract_draft");
+    if (!isReady || !user) return;
+    const draft = localStorage.getItem(`generate_contract_draft_${user.uid}`);
     if (draft && !placementId) { // Only load draft if we don't have pre-filled data from a placement
       try {
         const parsed = JSON.parse(draft);
         setFormData(prev => ({ ...prev, ...parsed }));
       } catch (e) {}
     }
-  }, [isReady, placementId]);
+  }, [isReady, placementId, user]);
 
   // Save draft data
   useEffect(() => {
-    if (isReady && !generatedUrl) {
-      localStorage.setItem("generate_contract_draft", JSON.stringify(formData));
+    if (isReady && !generatedUrl && user) {
+      localStorage.setItem(`generate_contract_draft_${user.uid}`, JSON.stringify(formData));
     }
-  }, [formData, isReady, generatedUrl]);
+  }, [formData, isReady, generatedUrl, user]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -167,7 +169,9 @@ export default function GenerateContractPage() {
       }
 
       setGeneratedUrl(downloadURL);
-      localStorage.removeItem("generate_contract_draft");
+      if (user) {
+        localStorage.removeItem(`generate_contract_draft_${user.uid}`);
+      }
       toast.success("Smlouva byla úspěšně vygenerována!");
 
     } catch (error) {

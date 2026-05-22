@@ -12,6 +12,7 @@ import { ArrowRight, ArrowLeft, Check, User } from "lucide-react";
 export default function OnboardingPage() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [major, setMajor] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [user, setUser] = useState<any>(null);
@@ -31,7 +32,7 @@ export default function OnboardingPage() {
       const userDoc = await getDoc(doc(db, "users", currentUser.uid));
       if (userDoc.exists()) {
         const data = userDoc.data();
-        if (data.firstName && data.lastName) {
+        if (data.firstName && data.lastName && data.major) {
           router.push("/dashboard");
         } else {
           // Pre-fill role if set
@@ -47,22 +48,25 @@ export default function OnboardingPage() {
 
   // Load draft data from localStorage
   useEffect(() => {
-    const draft = localStorage.getItem("onboarding_draft");
+    if (!user) return;
+    const draft = localStorage.getItem(`onboarding_draft_${user.uid}`);
     if (draft) {
       try {
         const parsed = JSON.parse(draft);
         if (parsed.firstName) setFirstName(parsed.firstName);
         if (parsed.lastName) setLastName(parsed.lastName);
+        if (parsed.major) setMajor(parsed.major);
       } catch (e) {
         // ignore
       }
     }
-  }, []);
+  }, [user]);
 
   // Save draft data to localStorage
   useEffect(() => {
-    localStorage.setItem("onboarding_draft", JSON.stringify({ firstName, lastName }));
-  }, [firstName, lastName]);
+    if (!user) return;
+    localStorage.setItem(`onboarding_draft_${user.uid}`, JSON.stringify({ firstName, lastName, major }));
+  }, [firstName, lastName, major, user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -81,10 +85,11 @@ export default function OnboardingPage() {
         firstName,
         lastName,
         displayName: `${firstName} ${lastName}`.trim(),
+        major,
         role,
         createdAt: new Date().toISOString(),
       });
-      localStorage.removeItem("onboarding_draft");
+      localStorage.removeItem(`onboarding_draft_${user.uid}`);
       toast.success("Profil úspěšně uložen!");
       router.push("/dashboard");
     } catch (err: any) {
@@ -97,8 +102,8 @@ export default function OnboardingPage() {
   };
 
   const nextStep = () => {
-    if (step === 1 && (!firstName || !lastName)) {
-      toast.error("Prosím vyplňte všechna pole.");
+    if (step === 1 && (!firstName || !lastName || !major)) {
+      toast.error("Prosím vyplňte všechna pole, včetně oboru.");
       return;
     }
     setStep(2);
@@ -171,6 +176,21 @@ export default function OnboardingPage() {
                       required
                     />
                   </div>
+                  <div>
+                    <label className="block mb-2 text-sm font-semibold text-slate-700">Studijní obor</label>
+                    <div className="grid grid-cols-2 gap-4">
+                      <label className={`cursor-pointer border rounded-xl p-4 text-center transition-all ${major === 'UPV' ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-500/20' : 'border-slate-200 bg-slate-50 hover:bg-slate-100'}`}>
+                        <input type="radio" name="major" value="UPV" className="hidden" onChange={() => setMajor('UPV')} checked={major === 'UPV'} />
+                        <span className="font-semibold text-slate-900">UPV</span>
+                        <p className="text-xs text-slate-500 mt-1">Učitelství praktického vyučování</p>
+                      </label>
+                      <label className={`cursor-pointer border rounded-xl p-4 text-center transition-all ${major === 'KPV' ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-500/20' : 'border-slate-200 bg-slate-50 hover:bg-slate-100'}`}>
+                        <input type="radio" name="major" value="KPV" className="hidden" onChange={() => setMajor('KPV')} checked={major === 'KPV'} />
+                        <span className="font-semibold text-slate-900">KPV</span>
+                        <p className="text-xs text-slate-500 mt-1">Klinická pedagogická praxe (OV)</p>
+                      </label>
+                    </div>
+                  </div>
                 </motion.div>
               )}
 
@@ -185,7 +205,9 @@ export default function OnboardingPage() {
                 >
                    <div className="bg-slate-50 rounded-xl p-6 border border-slate-100">
                      <p className="text-sm text-slate-500 font-medium mb-1">Vaše jméno</p>
-                     <p className="text-xl font-bold text-slate-900">{firstName} {lastName}</p>
+                     <p className="text-xl font-bold text-slate-900 mb-4">{firstName} {lastName}</p>
+                     <p className="text-sm text-slate-500 font-medium mb-1">Studijní obor</p>
+                     <p className="text-lg font-bold text-slate-900">{major}</p>
                    </div>
                    <p className="text-sm text-slate-600">Vše je připraveno! Kliknutím níže dokončíte registraci a vstoupíte do aplikace.</p>
                 </motion.div>
