@@ -3,7 +3,7 @@ import { toast } from "react-hot-toast";
 import React, { useState, useEffect, useRef } from "react";
 import { db, auth, functions, storage } from "../../../lib/firebase";
 import { httpsCallable } from "firebase/functions";
-import { onAuthStateChanged } from "firebase/auth";
+import { useAuth } from "../../../contexts/AuthContext";
 import {
   collection,
   query,
@@ -29,9 +29,7 @@ import SHA256 from "crypto-js/sha256";
 import UatGate from "@/components/UatGate";
 
 export default function StudentDashboard() {
-
-
-  const [user, setUser] = useState<any>(null);
+  const { user, loading: authLoading } = useAuth();
   const [placement, setPlacement] = useState<any>(null);
   const [uploading, setUploading] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
@@ -262,91 +260,69 @@ export default function StudentDashboard() {
     }
   };
 
-  // OPRAVA: Bezpečný useEffect s cleanup logikou
   useEffect(() => {
-    let unsubscribeFirestore: (() => void) | null = null;
+    if (authLoading) return;
 
-    const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
-      // 1. Vyčistiť predchádzajúci listener ak existuje
-      if (unsubscribeFirestore) {
-        unsubscribeFirestore();
-        unsubscribeFirestore = null;
-      }
+    if (!user) {
+      router.push("/login");
+      return;
+    }
 
-      if (!currentUser) {
-        router.push("/login");
-      } else {
-        setUser(currentUser);
+    if (!user.researchConsent) {
+      router.push("/consent");
+      return;
+    }
+    if (!user.major && !user.studentMajor) {
+      router.push("/onboarding");
+      return;
+    }
 
-        // Fetch user skills
-        try {
-          const userDocRef = doc(db, "users", currentUser.uid);
-          const userDoc = await getDoc(userDocRef);
-          if (userDoc.exists()) {
-            const data = userDoc.data();
-            if (!data.researchConsent) {
-              router.push("/consent");
-              return;
-            }
-            if (!data.major && !data.studentMajor) {
-              router.push("/onboarding");
-              return;
-            }
-            setSkills(userDoc.data().skills || []);
-          }
-        } catch (err) {
-          console.error("Error fetching skills:", err);
-        }
+    setSkills(user.skills || []);
 
-        import("firebase/firestore").then(({ collection, query, where, getDocs }) => {
-            const instQ = query(collection(db, "users"), where("role", "==", "institution"));
-            getDocs(instQ).then((snap) => {
-              setInstitutions(snap.docs.map(d => ({ id: d.id, ...d.data() as any })));
-            });
-        });
-
-        const q = query(
-          collection(db, "placements"),
-          where("studentId", "==", currentUser.uid),
-          orderBy("createdAt", "desc"),
-          limit(1),
-        );
-
-        // 2. Nastaviť nový listener a uložiť funkciu na odhlásenie
-        unsubscribeFirestore = onSnapshot(q, (snapshot) => {
-          if (!snapshot.empty) {
-            const data = snapshot.docs[0].data();
-            const id = snapshot.docs[0].id;
-            setPlacement({ id, ...data });
-
-            if (data.status === "NEEDS_REVIEW") {
-              setReviewData({
-                organization_name: data.organization_name || "",
-                organization_ico: data.organization_ico || "",
-                start_date: data.start_date || "",
-                end_date: data.end_date || "",
-              });
-            }
-            if (data.studentRating) {
-              setStudentRating(data.studentRating);
-            }
-            if (data.studentReview) {
-              setStudentReview(data.studentReview);
-            }
-          } else {
-            setPlacement(null);
-          }
-          setLoadingData(false);
-        });
-      }
+    import("firebase/firestore").then(({ collection, query, where, getDocs }) => {
+      const instQ = query(collection(db, "users"), where("role", "==", "institution"));
+      getDocs(instQ).then((snap) => {
+        setInstitutions(snap.docs.map(d => ({ id: d.id, ...d.data() as any })));
+      });
     });
 
-    // 3. Cleanup pri unmount
+    const q = query(
+      collection(db, "placements"),
+      where("studentId", "==", user.uid),
+      orderBy("createdAt", "desc"),
+      limit(1),
+    );
+
+    const unsubscribeFirestore = onSnapshot(q, (snapshot) => {
+      if (!snapshot.empty) {
+        const data = snapshot.docs[0].data();
+        const id = snapshot.docs[0].id;
+        setPlacement({ id, ...data });
+
+        if (data.status === "NEEDS_REVIEW") {
+          setReviewData({
+            organization_name: data.organization_name || "",
+            organization_ico: data.organization_ico || "",
+            start_date: data.start_date || "",
+            end_date: data.end_date || "",
+          });
+        }
+        if (data.studentRating) {
+          setStudentRating(data.studentRating);
+        }
+        if (data.studentReview) {
+          setStudentReview(data.studentReview);
+        }
+      } else {
+        setPlacement(null);
+      }
+      setLoadingData(false);
+    });
+
     return () => {
-      unsubscribeAuth();
       if (unsubscribeFirestore) unsubscribeFirestore();
     };
-  }, [router]);
+  }, [user, authLoading, router]);
 
   const handleOrgRequestSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

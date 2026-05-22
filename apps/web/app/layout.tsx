@@ -8,6 +8,7 @@ import ImpersonationBanner from "../components/ImpersonationBanner";
 import CommandPalette from "../components/CommandPalette";
 import { Toaster } from "react-hot-toast";
 import { ThemeProvider } from "next-themes";
+import { AuthProvider } from "../contexts/AuthContext";
 
 export const metadata: Metadata = {
   title: "PraxiHub",
@@ -23,14 +24,16 @@ export default function RootLayout({
     <html lang="cs" suppressHydrationWarning>
       <body>
         <ThemeProvider attribute="data-theme" defaultTheme="dark" enableSystem={false}>
-          <ImpersonationBanner />
-          <UatGate>
-            <Navbar />
-            <CommandPalette />
-            {children}
-            <Chatbot />
-          </UatGate>
-          <Toaster position="bottom-right" />
+          <AuthProvider>
+            <ImpersonationBanner />
+            <UatGate>
+              <Navbar />
+              <CommandPalette />
+              {children}
+              <Chatbot />
+            </UatGate>
+            <Toaster position="bottom-right" />
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>
