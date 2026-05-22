@@ -9,3 +9,4 @@ tests/service-account.json
 # Playwright
 playwright-report/
 test-results/
+*-debug.log
