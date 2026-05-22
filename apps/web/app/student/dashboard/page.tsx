@@ -50,6 +50,8 @@ export default function StudentDashboard() {
   });
 
   // State pre žiadosť o schválenie organizácie
+  const [institutions, setInstitutions] = useState<any[]>([]);
+  const [selectedInstitutionId, setSelectedInstitutionId] = useState<string | "NEW">("");
   const [orgRequest, setOrgRequest] = useState({
     name: "",
     ico: "",
@@ -292,6 +294,13 @@ export default function StudentDashboard() {
           console.error("Error fetching skills:", err);
         }
 
+        import("firebase/firestore").then(({ collection, query, where, getDocs }) => {
+            const instQ = query(collection(db, "users"), where("role", "==", "institution"));
+            getDocs(instQ).then((snap) => {
+              setInstitutions(snap.docs.map(d => ({ id: d.id, ...d.data() as any })));
+            });
+        });
+
         const q = query(
           collection(db, "placements"),
           where("studentId", "==", currentUser.uid),
@@ -337,13 +346,27 @@ export default function StudentDashboard() {
 
   const handleOrgRequestSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !orgRequest.name || !orgRequest.ico) {
-      toast.success("Vyplňte prosím povinné údaje (Název a IČO).");
+    if (!user || !orgRequest.name || !orgRequest.ico || (selectedInstitutionId === "NEW" && !orgRequest.web)) {
+      toast.success("Vyplňte prosím povinné údaje (Název, IČO a případně kontaktní email).");
       return;
     }
     setSubmittingOrg(true);
     try {
       const isKpv = user.major === 'KPV' || user.studentMajor === 'KPV';
+
+      let instId = selectedInstitutionId;
+
+      if (selectedInstitutionId === "NEW") {
+        const newInstRef = await addDoc(collection(db, "users"), {
+          role: "institution",
+          displayName: orgRequest.name,
+          email: orgRequest.web, // we stored email here
+          ico: orgRequest.ico,
+          status: "PENDING_INVITE",
+          createdAt: new Date().toISOString()
+        });
+        instId = newInstRef.id;
+      }
 
       const docRef = await addDoc(collection(db, "placements"), {
         studentId: user.uid,
@@ -351,6 +374,7 @@ export default function StudentDashboard() {
         studentName: user.displayName || user.email,
         status: "DRAFT", // Start as DRAFT
         createdAt: new Date().toISOString(),
+        institutionId: instId !== "NEW" ? instId : null,
         organization_name: orgRequest.name,
         organization_ico: orgRequest.ico,
         organization_web: orgRequest.web,
@@ -1027,48 +1051,83 @@ export default function StudentDashboard() {
                   >
                     <div>
                       <label className="block text-sm font-medium text-slate-200 mb-1">
-                        Název organizace *
+                        Vyberte organizaci *
                       </label>
-                      <input
-                        type="text"
-                        value={orgRequest.name}
-                        onChange={(e) =>
-                          setOrgRequest({ ...orgRequest, name: e.target.value })
-                        }
-                        className="w-full bg-slate-800/50 border border-slate-700/50 text-slate-100 rounded-2xl px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 placeholder-slate-500"
-                        placeholder="Např. Acme Corp s.r.o."
+                      <select
+                        value={selectedInstitutionId}
+                        onChange={(e) => {
+                          setSelectedInstitutionId(e.target.value);
+                          if (e.target.value !== "NEW" && e.target.value !== "") {
+                            const inst = institutions.find(i => i.id === e.target.value);
+                            if (inst) {
+                              setOrgRequest({ ...orgRequest, name: inst.displayName || inst.email, ico: inst.ico || "", web: inst.web || "" });
+                            }
+                          } else {
+                            setOrgRequest({ name: "", ico: "", web: "" });
+                          }
+                        }}
+                        className="w-full bg-slate-800/50 border border-slate-700/50 text-slate-100 rounded-2xl px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
                         required
-                      />
+                      >
+                        <option value="" disabled>-- Vyberte registrovanou organizaci --</option>
+                        {institutions.map(inst => (
+                          <option key={inst.id} value={inst.id}>
+                            {inst.displayName || inst.email} {inst.ico ? `(IČO: ${inst.ico})` : ''}
+                          </option>
+                        ))}
+                        <option value="NEW">+ Registrovat novou instituci</option>
+                      </select>
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-slate-200 mb-1">
-                        IČO *
-                      </label>
-                      <input
-                        type="text"
-                        value={orgRequest.ico}
-                        onChange={(e) =>
-                          setOrgRequest({ ...orgRequest, ico: e.target.value })
-                        }
-                        className="w-full bg-slate-800/50 border border-slate-700/50 text-slate-100 rounded-2xl px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 placeholder-slate-500"
-                        placeholder="12345678"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-slate-200 mb-1">
-                        Webové stránky (nepovinné)
-                      </label>
-                      <input
-                        type="text"
-                        value={orgRequest.web}
-                        onChange={(e) =>
-                          setOrgRequest({ ...orgRequest, web: e.target.value })
-                        }
-                        className="w-full bg-slate-800/50 border border-slate-700/50 text-slate-100 rounded-2xl px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 placeholder-slate-500"
-                        placeholder="www.example.com"
-                      />
-                    </div>
+
+                    {selectedInstitutionId === "NEW" && (
+                      <>
+                        <div>
+                          <label className="block text-sm font-medium text-slate-200 mb-1">
+                            Název organizace *
+                          </label>
+                          <input
+                            type="text"
+                            value={orgRequest.name}
+                            onChange={(e) =>
+                              setOrgRequest({ ...orgRequest, name: e.target.value })
+                            }
+                            className="w-full bg-slate-800/50 border border-slate-700/50 text-slate-100 rounded-2xl px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 placeholder-slate-500"
+                            placeholder="Např. Acme Corp s.r.o."
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-slate-200 mb-1">
+                            IČO *
+                          </label>
+                          <input
+                            type="text"
+                            value={orgRequest.ico}
+                            onChange={(e) =>
+                              setOrgRequest({ ...orgRequest, ico: e.target.value })
+                            }
+                            className="w-full bg-slate-800/50 border border-slate-700/50 text-slate-100 rounded-2xl px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 placeholder-slate-500"
+                            placeholder="12345678"
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-slate-200 mb-1">
+                            Kontaktní email společnosti *
+                          </label>
+                          <input
+                            type="email"
+                            value={orgRequest.web} // We reuse web as email for simplicity
+                            onChange={(e) =>
+                              setOrgRequest({ ...orgRequest, web: e.target.value })
+                            }
+                            className="w-full bg-slate-800/50 border border-slate-700/50 text-slate-100 rounded-2xl px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 placeholder-slate-500"
+                            placeholder="kontakt@firma.cz"
+                            required
+                          />
+                        </div>
+                      </>
+                    )}
                     <button
                       type="submit"
                       disabled={submittingOrg}
