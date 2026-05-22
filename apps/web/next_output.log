@@ -23,3 +23,11 @@ npm error A complete log of this run can be found in: /home/jules/.npm/_logs/202
  GET /student/generate 200 in 45ms
  ○ Compiling /login ...
  ✓ Compiled /login in 573ms (2143 modules)
+ ✓ Compiled in 9.9s (984 modules)
+ ✓ Compiled in 1696ms (984 modules)
+ ✓ Compiled in 985ms (984 modules)
+ ✓ Compiled in 1165ms (984 modules)
+ ✓ Compiled in 5.6s (984 modules)
+ ✓ Compiled in 940ms (984 modules)
+ ✓ Compiled in 704ms (984 modules)
+ ✓ Compiled in 868ms (984 modules)

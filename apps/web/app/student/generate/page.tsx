@@ -21,40 +21,50 @@ export default function GenerateContractPage() {
     ico: "",
     startDate: "",
     endDate: "",
-    position: ""
+    position: "",
+    contactEmail: ""
   });
   const [loading, setLoading] = useState(false);
   const [generatedUrl, setGeneratedUrl] = useState<string | null>(null);
   const [placementId, setPlacementId] = useState<string | null>(null);
   const [step, setStep] = useState(1);
   const [isReady, setIsReady] = useState(false);
+  const [institutions, setInstitutions] = useState<any[]>([]);
+  const [selectedInstitutionId, setSelectedInstitutionId] = useState<string | "NEW">("");
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
-        // Fetch existing approved placement
-        const q = query(
-            collection(db, "placements"),
-            where("studentId", "==", currentUser.uid),
-            where("status", "==", "ORG_APPROVED"),
-            orderBy("createdAt", "desc"),
-            limit(1)
-        );
-        const snapshot = await getDocs(q);
-        if (!snapshot.empty) {
-            const docData = snapshot.docs[0].data();
-            setPlacementId(snapshot.docs[0].id);
-            setFormData(prev => ({
-                ...prev,
-                companyName: docData.organization_name || "",
-                ico: docData.organization_ico || "",
-                studentName: currentUser.displayName || currentUser.email || ""
-            }));
-        }
+        import("firebase/firestore").then(async ({ collection, query, where, getDocs, orderBy, limit }) => {
+            const instQ = query(collection(db, "users"), where("role", "==", "institution"));
+            const instSnap = await getDocs(instQ);
+            setInstitutions(instSnap.docs.map(d => ({ id: d.id, ...d.data() as any })));
+
+            // Fetch existing approved placement
+            const q = query(
+                collection(db, "placements"),
+                where("studentId", "==", currentUser.uid),
+                where("status", "==", "ORG_APPROVED"),
+                orderBy("createdAt", "desc"),
+                limit(1)
+            );
+            const snapshot = await getDocs(q);
+            if (!snapshot.empty) {
+                const docData = snapshot.docs[0].data();
+                setPlacementId(snapshot.docs[0].id);
+                setFormData(prev => ({
+                    ...prev,
+                    companyName: docData.organization_name || "",
+                    ico: docData.organization_ico || "",
+                    studentName: currentUser.displayName || currentUser.email || ""
+                }));
+            }
+            setIsReady(true);
+        });
       } else {
         router.push("/login");
+        setIsReady(true);
       }
-      setIsReady(true);
     });
     return () => unsubscribe();
   }, [router]);
@@ -115,6 +125,20 @@ export default function GenerateContractPage() {
       const downloadURL = await getDownloadURL(storageRef);
 
       // 4. Update Firestore
+      let instId = selectedInstitutionId;
+
+      if (!placementId && selectedInstitutionId === "NEW") {
+        const newInstRef = await addDoc(collection(db, "users"), {
+          role: "institution",
+          displayName: formData.companyName,
+          email: formData.contactEmail,
+          ico: formData.ico,
+          status: "PENDING_INVITE",
+          createdAt: new Date().toISOString()
+        });
+        instId = newInstRef.id;
+      }
+
       if (placementId) {
           await updateDoc(doc(db, "placements", placementId), {
              contractUrl: downloadURL,
@@ -124,6 +148,7 @@ export default function GenerateContractPage() {
       } else {
          await addDoc(collection(db, "placements"), {
              studentId: auth.currentUser.uid,
+             institutionId: instId !== "NEW" && instId ? instId : null,
              organization_name: formData.companyName,
              organization_ico: formData.ico,
              position: formData.position,
@@ -212,30 +237,77 @@ export default function GenerateContractPage() {
                         required
                       />
                     </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-slate-700 mb-1">Název společnosti</label>
-                      <input
-                        type="text"
-                        name="companyName"
-                        value={formData.companyName}
-                        onChange={handleChange}
-                        className={`w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-900 transition ${placementId ? 'opacity-70 cursor-not-allowed' : ''}`}
-                        required
-                        readOnly={!!placementId}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-slate-700 mb-1">IČO</label>
-                      <input
-                        type="text"
-                        name="ico"
-                        value={formData.ico}
-                        onChange={handleChange}
-                        className={`w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-900 transition ${placementId ? 'opacity-70 cursor-not-allowed' : ''}`}
-                        required
-                        readOnly={!!placementId}
-                      />
-                    </div>
+                    {!placementId ? (
+                      <div>
+                        <label className="block text-sm font-semibold text-slate-700 mb-1">Vyberte společnost</label>
+                        <select
+                          value={selectedInstitutionId}
+                          onChange={(e) => {
+                            setSelectedInstitutionId(e.target.value);
+                            if (e.target.value !== "NEW" && e.target.value !== "") {
+                              const inst = institutions.find(i => i.id === e.target.value);
+                              if (inst) {
+                                setFormData({ ...formData, companyName: inst.displayName || inst.email, ico: inst.ico || "" });
+                              }
+                            } else {
+                              setFormData({ ...formData, companyName: "", ico: "", contactEmail: "" });
+                            }
+                          }}
+                          className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-900 transition"
+                          required
+                        >
+                          <option value="" disabled>-- Vyberte registrovanou organizaci --</option>
+                          {institutions.map(inst => (
+                            <option key={inst.id} value={inst.id}>
+                              {inst.displayName || inst.email} {inst.ico ? `(IČO: ${inst.ico})` : ''}
+                            </option>
+                          ))}
+                          <option value="NEW">+ Registrovat novou instituci</option>
+                        </select>
+                      </div>
+                    ) : null}
+
+                    {(!placementId && selectedInstitutionId === "NEW") || placementId ? (
+                      <>
+                        <div>
+                          <label className="block text-sm font-semibold text-slate-700 mb-1">Název společnosti</label>
+                          <input
+                            type="text"
+                            name="companyName"
+                            value={formData.companyName}
+                            onChange={handleChange}
+                            className={`w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-900 transition ${placementId ? 'opacity-70 cursor-not-allowed' : ''}`}
+                            required
+                            readOnly={!!placementId}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-slate-700 mb-1">IČO</label>
+                          <input
+                            type="text"
+                            name="ico"
+                            value={formData.ico}
+                            onChange={handleChange}
+                            className={`w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-900 transition ${placementId ? 'opacity-70 cursor-not-allowed' : ''}`}
+                            required
+                            readOnly={!!placementId}
+                          />
+                        </div>
+                        {!placementId && (
+                          <div>
+                            <label className="block text-sm font-semibold text-slate-700 mb-1">Kontaktní email společnosti *</label>
+                            <input
+                              type="email"
+                              name="contactEmail"
+                              value={formData.contactEmail}
+                              onChange={handleChange}
+                              className={`w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-900 transition`}
+                              required
+                            />
+                          </div>
+                        )}
+                      </>
+                    ) : null}
                   </motion.div>
                 )}
 
