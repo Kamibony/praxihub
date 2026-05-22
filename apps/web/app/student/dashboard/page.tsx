@@ -288,6 +288,10 @@ export default function StudentDashboard() {
               router.push("/consent");
               return;
             }
+            if (!data.major && !data.studentMajor) {
+              router.push("/onboarding");
+              return;
+            }
             setSkills(userDoc.data().skills || []);
           }
         } catch (err) {
@@ -984,6 +988,53 @@ export default function StudentDashboard() {
             </button>
           </div>
         </header>
+
+        {/* PROFILE SUMMARY COMPONENT */}
+        <div className="bg-slate-800/80 border border-slate-700/50 p-6 rounded-3xl shadow-lg mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 rounded-full bg-blue-900/50 flex items-center justify-center border-2 border-blue-500/30">
+              <span className="text-2xl font-bold text-blue-300">
+                {user?.displayName ? user.displayName.charAt(0).toUpperCase() : "S"}
+              </span>
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-white m-0">
+                {user?.displayName || "Student"}
+              </h2>
+              <div className="flex items-center gap-2 mt-1">
+                <span className="px-2 py-0.5 bg-blue-900/30 text-blue-300 text-xs font-bold rounded-full border border-blue-500/20">
+                  {user?.major || user?.studentMajor || "Chybí obor"}
+                </span>
+                <span className="text-slate-400 text-sm">
+                  {placement?.organization_name || (
+                    <span className="italic">Organizace nepřiřazena</span>
+                  )}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-col items-start md:items-end gap-1">
+            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+              Status Smlouvy
+            </span>
+            {placement?.contract_url ? (
+              <a
+                href={placement.contract_url}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-2 px-3 py-1.5 bg-green-900/20 text-green-400 text-sm font-medium rounded-xl border border-green-800/50 hover:bg-green-900/40 transition"
+              >
+                <span>📄 Stáhnout smlouvu</span>
+              </a>
+            ) : (
+              <span className="text-sm font-medium text-amber-400/80 bg-amber-900/10 px-3 py-1.5 rounded-xl border border-amber-800/30">
+                Není nahrána
+              </span>
+            )}
+          </div>
+        </div>
+
 
         <div className="grid gap-8 lg:grid-cols-3">
           {/* HLAVNÁ KARTA (STAV) */}
@@ -2183,104 +2234,104 @@ export default function StudentDashboard() {
               )}
             </div>
 
-            {/* Semaphore Stepper */}
-            {placement && (
-              <div className="card card-gradient">
-                <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-8">
-                  Průběh zpracování
-                </h3>
+            {/* Interactive Traffic Light (Semafor) & Contextual Manual */}
+            <div className="card card-gradient mb-6">
+              <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-6 text-center">
+                Stav praxe & Další kroky
+              </h3>
 
-                <div className="flex items-center justify-between relative px-2">
-                  <div className="absolute left-6 right-6 top-4 -translate-y-1/2 h-1 bg-slate-700 z-0 rounded-full"></div>
+              {(() => {
+                const hasMajor = user?.major || user?.studentMajor;
+                const pStatus = placement?.status;
 
-                  {(() => {
-                    const steps = [
-                      { id: "DRAFT", label: "Návrh" },
-                      { id: "CONTRACT", label: "Smlouva" },
-                      { id: "ACTIVE", label: "Probíhá" },
-                      { id: "EVALUATION", label: "Hodnocení" },
-                      { id: "CLOSED", label: "Uzavřeno" },
-                    ];
+                // Determine State
+                let lightState = "RED"; // Default fallback
+                if (!hasMajor || !placement || pStatus === "REJECTED") {
+                  lightState = "RED";
+                } else if (["PENDING_ORG_APPROVAL", "ORG_APPROVED", "ANALYZING", "NEEDS_REVIEW"].includes(pStatus)) {
+                  lightState = "YELLOW";
+                } else if (["APPROVED", "ACTIVE", "EVALUATION", "CLOSED"].includes(pStatus)) {
+                  lightState = "GREEN";
+                }
 
-                    let currentStepIndex = 0;
-                    if (
-                      ["ANALYZING", "NEEDS_REVIEW"].includes(placement.status)
-                    )
-                      currentStepIndex = 1;
-                    if (placement.status === "APPROVED" || placement.status === "ACTIVE") currentStepIndex = 2;
-                    if (placement.status === "EVALUATION") currentStepIndex = 3;
-                    if (placement.status === "CLOSED") currentStepIndex = 4;
-                    if (placement.status === "REJECTED") currentStepIndex = -1;
+                // Determine Manual Text
+                let manualText = "Vyberte si obor pro zahájení procesu.";
+                if (lightState === "RED" && hasMajor) {
+                  manualText = pStatus === "REJECTED" ? "Vaše praxe byla zamítnuta. Podat nový návrh." : "Vyplňte žádost o schválení firmy a začněte svou praxi.";
+                } else if (lightState === "YELLOW") {
+                   if (pStatus === "PENDING_ORG_APPROVAL") manualText = "Čeká se na schválení organizace firmou nebo koordinátorem.";
+                   if (pStatus === "ORG_APPROVED") manualText = "Organizace schválena! Vaším dalším krokem je vygenerovat a nahrát smlouvu.";
+                   if (["ANALYZING", "NEEDS_REVIEW"].includes(pStatus)) manualText = "Smlouva se kontroluje. Čeká se na finální schválení koordinátorem.";
+                } else if (lightState === "GREEN") {
+                   if (["APPROVED", "ACTIVE"].includes(pStatus)) manualText = "Praxe schválena! Nyní můžete začít logovat své hodiny a náslechy.";
+                   if (pStatus === "EVALUATION") manualText = "Vyplňte a vyhodnoťte svou závěrečnou reflexi.";
+                   if (pStatus === "CLOSED") manualText = "Praxe úspěšně ukončena. Skvělá práce!";
+                }
 
-                    return steps.map((step, index) => {
-                      const isCompleted =
-                        index < currentStepIndex ||
-                        placement.status === "CLOSED";
-                      const isActive =
-                        index === currentStepIndex &&
-                        placement.status !== "REJECTED";
-                      const isRejected =
-                        placement.status === "REJECTED" && index === 0;
+                // Click Actions
+                const handleLightClick = (color: string) => {
+                  if (color === "RED" && lightState === "RED") {
+                     if (!hasMajor) router.push("/onboarding");
+                     else document.getElementById("request-form")?.scrollIntoView({ behavior: "smooth" });
+                  } else if (color === "YELLOW" && lightState === "YELLOW") {
+                     document.getElementById("upload-section")?.scrollIntoView({ behavior: "smooth" });
+                  } else if (color === "GREEN" && lightState === "GREEN") {
+                     document.getElementById("hours-section")?.scrollIntoView({ behavior: "smooth" });
+                  }
+                };
 
-                      let bgColor = "bg-slate-800";
-                      let textColor = "text-slate-400";
-                      let borderColor = "border-slate-600";
+                return (
+                  <div className="flex flex-col items-center">
+                    {/* The Traffic Light Box */}
+                    <div className="bg-slate-900 border-4 border-slate-700 p-4 rounded-[40px] flex md:flex-row flex-col gap-4 shadow-[0_0_20px_rgba(0,0,0,0.5)]">
+                      {/* Red Light */}
+                      <button
+                        onClick={() => handleLightClick("RED")}
+                        className={`w-16 h-16 rounded-full border-4 transition-all duration-300 shadow-inner ${
+                          lightState === "RED"
+                            ? "bg-red-500 border-red-400 shadow-[0_0_30px_rgba(239,68,68,0.6)] cursor-pointer hover:scale-105"
+                            : "bg-red-950 border-red-900 opacity-50 cursor-default"
+                        }`}
+                        aria-label="Onboarding incomplete"
+                      />
+                      {/* Yellow Light */}
+                      <button
+                        onClick={() => handleLightClick("YELLOW")}
+                        className={`w-16 h-16 rounded-full border-4 transition-all duration-300 shadow-inner ${
+                          lightState === "YELLOW"
+                            ? "bg-yellow-400 border-yellow-300 shadow-[0_0_30px_rgba(250,204,21,0.6)] cursor-pointer hover:scale-105"
+                            : "bg-yellow-950 border-yellow-900 opacity-50 cursor-default"
+                        }`}
+                        aria-label="Pending approval"
+                      />
+                      {/* Green Light */}
+                      <button
+                        onClick={() => handleLightClick("GREEN")}
+                        className={`w-16 h-16 rounded-full border-4 transition-all duration-300 shadow-inner ${
+                          lightState === "GREEN"
+                            ? "bg-green-500 border-green-400 shadow-[0_0_30px_rgba(34,197,94,0.6)] cursor-pointer hover:scale-105"
+                            : "bg-green-950 border-green-900 opacity-50 cursor-default"
+                        }`}
+                        aria-label="Active"
+                      />
+                    </div>
 
-                      if (isCompleted) {
-                        bgColor = "bg-green-600";
-                        textColor = "text-green-400";
-                      } else if (isActive) {
-                        bgColor = "bg-indigo-500";
-                        textColor = "text-indigo-300";
-                      } else if (isRejected) {
-                        bgColor = "bg-red-900";
-                        textColor = "text-red-400";
-                      }
+                    {/* Contextual Manual (Next Step) */}
+                    <div className="mt-8 p-5 bg-slate-800/80 rounded-2xl border border-blue-500/30 text-center max-w-md w-full shadow-lg relative overflow-hidden">
+                      <div className="absolute top-0 left-0 w-1 h-full bg-blue-500"></div>
+                      <span className="text-xs font-bold text-blue-400 uppercase tracking-wider mb-2 flex items-center justify-center gap-1">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        Aktuální úkol
+                      </span>
+                      <p className="text-sm font-medium text-slate-200 mt-1">
+                        {manualText}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
 
-                      return (
-                        <div
-                          key={step.id}
-                          className="relative z-10 flex flex-col items-center gap-3 card-glass px-1"
-                        >
-                          <div
-                            className={`w-8 h-8 rounded-full border-4 flex items-center justify-center ${bgColor} ${borderColor} shadow-sm transition-all duration-300`}
-                          >
-                            {isCompleted && (
-                              <span className="text-sm">✨</span>
-                            )}
-                          </div>
-                          <span className={`text-xs font-bold ${textColor}`}>
-                            {step.label}
-                          </span>
-                        </div>
-                      );
-                    });
-                  })()}
-                </div>
-
-                <div className="mt-8 p-4 bg-slate-800/50 rounded-3xl border border-slate-700/50 text-center">
-                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                    Na tahu:
-                  </span>
-                  <p className="text-sm font-bold text-slate-200 mt-1">
-                    {placement.status === "PENDING_ORG_APPROVAL" &&
-                      "Firma (čeká se na schválení organizace)"}
-                    {placement.status === "ORG_APPROVED" &&
-                      "Student (čeká se na nahrání smlouvy)"}
-                    {["ANALYZING", "NEEDS_REVIEW"].includes(placement.status) &&
-                      "Koordinátor (kontrola smlouvy)"}
-                    {placement.status === "APPROVED" || placement.status === "ACTIVE" &&
-                      "Student (vykonává praxi)"}
-                    {placement.status === "EVALUATION" &&
-                      "Student / AI (vyplnění a vyhodnocení reflexe)"}
-                    {placement.status === "CLOSED" &&
-                      "Hotovo (praxe úspěšně ukončena)"}
-                    {placement.status === "REJECTED" &&
-                      "Student (nutno podat nový návrh)"}
-                  </p>
-                </div>
-              </div>
-            )}
           </div>
         </div>
       </div>
