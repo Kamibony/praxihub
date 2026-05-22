@@ -58,6 +58,11 @@ export default function GenerateContractPage() {
                     ico: docData.organization_ico || "",
                     studentName: currentUser.displayName || currentUser.email || ""
                 }));
+            } else {
+                setFormData(prev => ({
+                    ...prev,
+                    studentName: currentUser.displayName || currentUser.email || ""
+                }));
             }
             setIsReady(true);
         });
@@ -174,9 +179,18 @@ export default function GenerateContractPage() {
   };
 
   const nextStep = () => {
-    if (step === 1 && (!formData.studentName || !formData.companyName || !formData.ico)) {
-      toast.error("Prosím vyplňte všechna povinná pole v tomto kroku.");
-      return;
+    if (step === 1) {
+      if (!formData.studentName) {
+        toast.error("Prosím vyplňte všechna povinná pole v tomto kroku.");
+        return;
+      }
+
+      if (!placementId && (selectedInstitutionId === "NEW" || selectedInstitutionId === "")) {
+        if (!formData.companyName || !formData.ico || !formData.contactEmail) {
+          toast.error("Prosím vyplňte všechna povinná pole v tomto kroku.");
+          return;
+        }
+      }
     }
     if (step === 2 && (!formData.position || !formData.startDate || !formData.endDate)) {
         toast.error("Prosím vyplňte všechna povinná pole v tomto kroku.");
@@ -233,8 +247,9 @@ export default function GenerateContractPage() {
                         value={formData.studentName}
                         onChange={handleChange}
                         placeholder="Zadejte své jméno"
-                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-900 transition"
+                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-900 transition opacity-70 cursor-not-allowed"
                         required
+                        readOnly
                       />
                     </div>
                     {!placementId ? (
