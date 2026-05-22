@@ -4,47 +4,39 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { auth, db } from "../../lib/firebase";
 import { doc, setDoc, getDoc } from "firebase/firestore";
-import { onAuthStateChanged, updateProfile } from "firebase/auth";
+import { updateProfile } from "firebase/auth";
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
 import { ArrowRight, ArrowLeft, Check, User } from "lucide-react";
+import { useAuth } from "../../contexts/AuthContext";
 
 export default function OnboardingPage() {
+  const { user, firebaseUser, loading: authLoading } = useAuth();
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [major, setMajor] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [user, setUser] = useState<any>(null);
   const [role, setRole] = useState("student");
   const [step, setStep] = useState(1);
   const router = useRouter();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      if (!currentUser) {
-        router.push("/login");
-        return;
-      }
-      setUser(currentUser);
+    if (authLoading) return;
 
-      // Check if user already exists
-      const userDoc = await getDoc(doc(db, "users", currentUser.uid));
-      if (userDoc.exists()) {
-        const data = userDoc.data();
-        if (data.firstName && data.lastName && data.major) {
-          router.push("/dashboard");
-        } else {
-          // Pre-fill role if set
-          if (data.role) {
-            setRole(data.role);
-          }
-        }
-      }
-    });
+    if (!user) {
+      router.push("/login");
+      return;
+    }
 
-    return () => unsubscribe();
-  }, [router]);
+    if (user.firstName && user.lastName && user.major) {
+      router.push("/dashboard");
+    } else {
+      if (user.role) {
+        setRole(user.role);
+      }
+    }
+  }, [user, authLoading, router]);
 
   // Load draft data from localStorage
   useEffect(() => {
@@ -70,13 +62,13 @@ export default function OnboardingPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
+    if (!user || !firebaseUser) return;
 
     setLoading(true);
     setError("");
 
     try {
-      await updateProfile(user, {
+      await updateProfile(firebaseUser, {
         displayName: `${firstName} ${lastName}`.trim()
       });
 
@@ -88,10 +80,12 @@ export default function OnboardingPage() {
         major,
         role,
         createdAt: new Date().toISOString(),
-      });
+      }, { merge: true });
+
       localStorage.removeItem(`onboarding_draft_${user.uid}`);
       toast.success("Profil úspěšně uložen!");
-      router.push("/dashboard");
+      // Allow AuthContext to sync before router push
+      setTimeout(() => router.push("/dashboard"), 500);
     } catch (err: any) {
       console.error(err);
       setError("Nepodařilo se uložit profil.");

@@ -2,60 +2,47 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
-import { auth, db } from '../../lib/firebase';
+import { useAuth } from '../../contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
 
 export default function DashboardRouter() {
   const router = useRouter();
+  const { user, loading } = useAuth();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (!user) {
-        router.push('/login');
+    if (loading) return;
+
+    if (!user) {
+      router.push('/login');
+      return;
+    }
+
+    const role = user.role;
+
+    if (!role) {
+      // User document not found or missing role, need onboarding
+      router.push('/onboarding');
+      return;
+    }
+
+    if (role === 'student' || role === 'mentor') {
+      if (!user.researchConsent) {
+        router.push('/consent');
         return;
       }
+    }
 
-      try {
-        const userDocRef = doc(db, 'users', user.uid);
-        const userDoc = await getDoc(userDocRef);
-
-        if (userDoc.exists()) {
-          const userData = userDoc.data();
-          const role = userData.role;
-
-
-          if (role === 'student' || role === 'mentor') {
-            if (!userData.researchConsent) {
-              router.push('/consent');
-              return;
-            }
-          }
-
-          if (role === 'student') {
-
-            router.push('/student/dashboard');
-          } else if (role === 'institution' || role === 'company' || role === 'mentor') {
-            router.push('/institution/dashboard');
-          } else if (role === 'coordinator' || role === 'admin') {
-            router.push('/admin/dashboard');
-          } else {
-            console.error('Unknown role:', role);
-            router.push('/login');
-          }
-        } else {
-          // User document not found, need onboarding
-          router.push('/onboarding');
-        }
-      } catch (error) {
-        console.error('Error fetching user role:', error);
-        router.push('/login');
-      }
-    });
-
-    return () => unsubscribe();
-  }, [router]);
+    if (role === 'student') {
+      router.push('/student/dashboard');
+    } else if (role === 'institution' || role === 'company' || role === 'mentor') {
+      router.push('/institution/dashboard');
+    } else if (role === 'coordinator' || role === 'admin') {
+      router.push('/admin/dashboard');
+    } else {
+      console.error('Unknown role:', role);
+      router.push('/login');
+    }
+  }, [user, loading, router]);
 
   return (
     <div className="flex h-screen w-full items-center justify-center bg-gray-50">
