@@ -593,7 +593,14 @@ exports.transitionPlacementState = functions.https.onCall(
             );
           }
 
-          const major = currentData.studentMajor || currentData.major || "UPV";
+          const major = currentData.studentMajor || currentData.major;
+          if (!major) {
+            throw new functions.https.HttpsError(
+              "failed-precondition",
+              "Student nemá vyplněný obor (UPV/KPV)."
+            );
+          }
+
           if (major === "KPV") {
             const orgDoc = await transaction.get(
               db.collection("organizations").doc(currentData.organizationId),
@@ -1045,7 +1052,13 @@ exports.evaluateReflection = functions.runWith({ memory: "1GB", timeoutSeconds: 
     });
 
     // Fetch dynamic rules based on major
-    const major = placementData.studentMajor || "UPV";
+    const major = placementData.studentMajor || placementData.major;
+    if (!major) {
+      throw new functions.https.HttpsError(
+        "failed-precondition",
+        "Student nemá vyplněný obor (UPV/KPV)."
+      );
+    }
     const configDocId = major === "KPV" ? "ai_rules_kpv" : "ai_rules_upv";
 
     let krauDoc = await db.collection("system_configs").doc(configDocId).get();
@@ -1207,7 +1220,14 @@ exports.signContract = functions.https.onCall(async (data, context) => {
     }
 
     // Check if the placement requires tripartite signature
-    const major = placementData.studentMajor || placementData.major || "UPV";
+    const major = placementData.studentMajor || placementData.major;
+    if (!major) {
+      throw new functions.https.HttpsError(
+        "failed-precondition",
+        "Student nemá vyplněný obor (UPV/KPV)."
+      );
+    }
+
     if (major === "UPV") {
       throw new functions.https.HttpsError(
         "failed-precondition",

@@ -350,6 +350,13 @@ export default function StudentDashboard() {
       toast.success("Vyplňte prosím povinné údaje (Název, IČO a případně kontaktní email).");
       return;
     }
+
+    if (!user.major && !user.studentMajor) {
+      toast.error("Chybí studijní obor v profilu. Prosím aktualizujte si profil.");
+      router.push("/onboarding");
+      return;
+    }
+
     setSubmittingOrg(true);
     try {
       const isKpv = user.major === 'KPV' || user.studentMajor === 'KPV';
@@ -378,8 +385,8 @@ export default function StudentDashboard() {
         organization_name: orgRequest.name,
         organization_ico: orgRequest.ico,
         organization_web: orgRequest.web,
-        major: user.major || 'UPV',
-        studentMajor: user.major || 'UPV'
+        major: user.major || user.studentMajor,
+        studentMajor: user.studentMajor || user.major
       });
 
       if (isKpv) {
@@ -706,8 +713,8 @@ export default function StudentDashboard() {
           createdAt: new Date().toISOString(),
           organization_name: "UAT Demo Company",
           organization_ico: "12345678",
-          major: user.major || 'UPV',
-          studentMajor: user.major || 'UPV',
+          major: user.major || user.studentMajor,
+          studentMajor: user.studentMajor || user.major,
           targetHours: 80,
           migratedHours: 80
         };

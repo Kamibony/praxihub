@@ -49,7 +49,7 @@ export default function PayrollModule() {
                 };
             }
 
-            const major = placement.studentMajor || placement.major || "UNKNOWN";
+            const major = placement.studentMajor || placement.major;
 
             // To calculate approved hours, we must fetch time_logs.
             const timeLogsRef = collection(db, "placements", placement.id, "time_logs");
@@ -64,6 +64,8 @@ export default function PayrollModule() {
             } else if (major === "KPV") {
                 groupedData[orgId].approvedHoursKPV += placementApprovedHours;
                 groupedData[orgId].totalPayout += placementApprovedHours * currentRates.KPV;
+            } else {
+                console.warn(`Záznam praxe ${placement.id} nemá nastavený obor (UPV/KPV). Hodiny nebudou započítány do mzdy.`);
             }
 
             groupedData[orgId].placements.push({
