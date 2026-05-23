@@ -6,6 +6,10 @@ test.describe('Scenario 2: Student AI Evaluation', () => {
   test('Mission 1A: Student logs in, types reflection, and submits for AI Evaluation (UPV)', async ({ page }) => {
     test.setTimeout(60000);
 
+    const { clearFirestore, clearAuth } = require('./seed');
+    await clearFirestore();
+    await clearAuth();
+
     // Make sure we re-seed placement123 with EVALUATION state because maybe another test changed it
     const { db } = require('./setup-firebase-admin');
 
@@ -13,7 +17,8 @@ test.describe('Scenario 2: Student AI Evaluation', () => {
     const createdAtLog = new Date();
     createdAtLog.setHours(createdAtLog.getHours() + 1);
 
-    await db.collection('users').doc('student123').update({
+    await require('./setup-firebase-admin').auth.createUser({ uid: 'student123', email: 'test@praxihub.cz' }).catch(() => {});
+    await db.collection('users').doc('student123').set({ role: 'STUDENT', major: 'UPV', email: 'test@praxihub.cz',
       active_placement_id: 'placement123'
     });
 
@@ -82,6 +87,10 @@ test.describe('Scenario 2: Student AI Evaluation', () => {
 
   test('Mission 1B (OV): Student logs in, types reflection, and submits for AI Evaluation (KPV)', async ({ page }) => {
     test.setTimeout(60000);
+
+    const { clearFirestore, clearAuth } = require('./seed');
+    await clearFirestore();
+    await clearAuth();
 
     // Make sure we re-seed placement123 with EVALUATION state because maybe another test changed it
     const { db, auth } = require('./setup-firebase-admin');

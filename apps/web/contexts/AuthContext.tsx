@@ -61,12 +61,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           (docSnap) => {
             if (docSnap.exists()) {
               const data = docSnap.data();
-              setUser({
+
+              // Normalize SSOT fields dynamically to prevent state ghosting
+              const normalizedMajor = data.major || data.studentMajor || null;
+              const normalizedName = data.displayName || data.name || data.firstName || authUser.displayName || null;
+
+              const userObj = {
                 uid: authUser.uid,
-                email: authUser.email,
-                displayName: authUser.displayName,
-                ...data, // merge firestore data
-              });
+                email: authUser.email || data.email,
+                displayName: normalizedName,
+                role: data.role,
+                major: normalizedMajor,
+                targetHours: data.targetHours,
+                organizationId: data.organizationId,
+                skills: data.skills,
+                researchConsent: data.researchConsent,
+                ...data, // merge remaining firestore data
+              };
+              // ensure precedence
+              userObj.displayName = normalizedName;
+              userObj.major = normalizedMajor;
+              setUser(userObj as any);
             } else {
               // User document doesn't exist yet (e.g. just signed up, waiting for onboarding)
               setUser({

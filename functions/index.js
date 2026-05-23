@@ -108,8 +108,11 @@ exports.sendEmailNotification = functions.firestore
 
     // Ak sa zmenil status, pošleme mail
     if (newData.status !== previousData.status) {
+      const studentRef = await admin.firestore().collection("users").doc(newData.studentId).get();
+      const studentEmail = studentRef.exists ? studentRef.data().email : null;
+      if (!studentEmail) return null;
       const emailDoc = {
-        to: newData.studentEmail,
+        to: studentEmail,
         message: {
           subject: `PraxiHub: Zmena stavu zmluvy na ${newData.status}`,
           text: `Ahoj, stav tvojej zmluvy sa zmenil na: ${newData.status}. Skontroluj si dashboard.`,
@@ -120,7 +123,7 @@ exports.sendEmailNotification = functions.firestore
       // Zapíšeme do kolekcie 'mail', ktorú sleduje rozšírenie Trigger Email
       await admin.firestore().collection("mail").add(emailDoc);
       console.log(
-        `📧 E-mail požiadavka vytvorená pre: ${newData.studentEmail}`,
+        `📧 E-mail požiadavka vytvorená pre: ${studentEmail}`,
       );
     }
     return null;
@@ -593,7 +596,7 @@ exports.transitionPlacementState = functions.https.onCall(
             );
           }
 
-          const major = currentData.studentMajor || currentData.major;
+          const major = currentData.major;
           if (!major) {
             throw new functions.https.HttpsError(
               "failed-precondition",
@@ -886,9 +889,7 @@ exports.importRoster = functions
                 Number(userObj.targetHours) ||
                 existingPlacementDoc.data().targetHours ||
                 15,
-              studentMajor:
                 userObj.major ||
-                existingPlacementDoc.data().studentMajor ||
                 null,
               updatedAt: admin.firestore.FieldValue.serverTimestamp(),
             });
@@ -900,7 +901,7 @@ exports.importRoster = functions
               status: "DRAFT",
               migratedHours: Number(userObj.migratedHours) || 0,
               targetHours: Number(userObj.targetHours) || 15,
-              studentMajor: userObj.major || null,
+
               createdAt: admin.firestore.FieldValue.serverTimestamp(),
             });
           }
@@ -1052,7 +1053,7 @@ exports.evaluateReflection = functions.runWith({ memory: "1GB", timeoutSeconds: 
     });
 
     // Fetch dynamic rules based on major
-    const major = placementData.studentMajor || placementData.major;
+    const major = placementData.major;
     if (!major) {
       throw new functions.https.HttpsError(
         "failed-precondition",
@@ -1131,8 +1132,11 @@ Veškeré texty pro zpětnou vazbu (reasoning) musí být napsány v profesioná
 
       // 1. Create Snapshot Data
       const snapshotId = placementRef.id + "_" + Date.now();
+      const studentRef = await db.collection("users").doc(placementData.studentId).get();
+      const studentName = studentRef.exists ? studentRef.data().displayName : "Student";
       const snapshotData = {
         ...placementData,
+        studentName,
         evaluationResult: evaluationResult,
         status: "CLOSED",
         snapshotCreatedAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -1220,7 +1224,7 @@ exports.signContract = functions.https.onCall(async (data, context) => {
     }
 
     // Check if the placement requires tripartite signature
-    const major = placementData.studentMajor || placementData.major;
+    const major = placementData.major;
     if (!major) {
       throw new functions.https.HttpsError(
         "failed-precondition",
@@ -1566,9 +1570,7 @@ exports.generateCommissionDecree = functions.https.onCall(
       ]);
 
       const decreeData = {
-        studentName: studentDoc.exists
-          ? studentDoc.data().name
-          : "Neznámý student",
+        studentName: studentDoc.exists ? (studentDoc.data().displayName || studentDoc.data().email || "Neznámý student") : "Neznámý student",
         organizationName: orgDoc.exists
           ? orgDoc.data().name
           : "Neznámá organizace",
@@ -2345,7 +2347,9 @@ exports.generateSkillMatrixPDF = functions.runWith({ memory: "512MB" }).https.on
     const page = pdfDoc.addPage();
     const { width, height } = page.getSize();
 
-    const title = `KRAU Kompetenční matice: ${placementData.studentName || 'Student'}`;
+    const studentRef = await db.collection("users").doc(placementData.studentId).get();
+    const studentName = studentRef.exists ? studentRef.data().displayName : "Student";
+    const title = `KRAU Kompetenční matice: ${studentName}`;
     page.drawText(title, { x: 50, y: height - 50, size: 20 });
     page.drawText(`Praxe ID: ${placementId}`, { x: 50, y: height - 80, size: 12 });
     page.drawText(`Organizace: ${placementData.organization_name || 'Neznámá'}`, { x: 50, y: height - 100, size: 12 });

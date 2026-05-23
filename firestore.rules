@@ -29,14 +29,17 @@ service cloud.firestore {
         isCoordinator()
       );
 
+
+      // SSOT Zero-Trust Lock: Prevent denormalization of identity fields into placements
+      function hasNoDenormalizedFields() {
+        return !request.resource.data.keys().hasAny(['studentName', 'studentEmail', 'major', 'studentMajor', 'name', 'firstName', 'lastName']);
+      }
+
       // Allow creation
-      allow create: if request.auth != null;
+      allow create: if request.auth != null && hasNoDenormalizedFields();
 
       // Restrict update: do not allow the client to update the 'status' field directly.
-      // Any attempt to modify 'status' via client-side sdk updateDoc() will be rejected.
-      // (This forces them to use the callable transitionPlacementState function)
-      // Note: For UAT Bypass, we allow updates to specific fields if the user has admin role.
-      allow update: if request.auth != null
+      allow update: if request.auth != null && hasNoDenormalizedFields()
                     && (isAdmin() || !request.resource.data.diff(resource.data).affectedKeys().hasAny(['status']));
 
       allow delete: if request.auth != null && resource.data.studentId == request.auth.uid;

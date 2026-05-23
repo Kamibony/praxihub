@@ -21,6 +21,7 @@ test.describe('Epic 2: The 3-Pillar Practice UI', () => {
     await auth.createUser({ uid: 'student-3pillar', email: 'student-3pillar@praxihub.cz' });
     await db.collection('users').doc('student-3pillar').set({
       role: 'student',
+      major: 'UPV',
       researchConsent: true,
       email: 'student-3pillar@praxihub.cz',
       active_placement_id: 'placement-3pillar',

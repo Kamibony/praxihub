@@ -12,6 +12,7 @@ test.describe('Epic 4: PDF Skill Matrix', () => {
     await auth.createUser({ uid: 'student-pdf', email: 'student-pdf@praxihub.cz' });
     await db.collection('users').doc('student-pdf').set({
       role: 'student',
+      major: 'UPV',
       researchConsent: true,
       email: 'student-pdf@praxihub.cz',
       active_placement_id: 'placement-pdf',

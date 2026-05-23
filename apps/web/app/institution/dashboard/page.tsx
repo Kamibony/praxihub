@@ -53,9 +53,9 @@ export default function InstitutionDashboard() {
         }
         return {
           ...placement,
-          studentName: studentData.name || studentData.displayName || studentData.email || placement.studentName || 'Student neuveden',
+          studentName: studentData.displayName || studentData.email || "Student neuveden",
           studentEmail: studentData.email || 'Email neuveden',
-          studentMajor: studentData.major || placement.major || 'Zaměření neuvedeno'
+          major: studentData.major || 'Zaměření neuvedeno'
         };
       }));
 
@@ -120,7 +120,7 @@ export default function InstitutionDashboard() {
                 const logsData = logsSnapshot.docs.map(doc => ({
                   id: doc.id,
                   placementId: placement.id,
-                  studentName: placement.studentName || 'Student',
+                  studentName: placement.studentName || "Student",
                   organizationName: placement.companyData?.name || 'Firma',
                   ...doc.data() as any
                 }));
@@ -275,7 +275,7 @@ export default function InstitutionDashboard() {
                     </span>
                   </div>
                   <div className="text-xs text-slate-500">
-                    <div><span className="font-semibold">Zaměření:</span> {hydratedPlacements.length > 0 ? placement.studentMajor : (placement.major || 'Načítám...')} &bull; <span className="font-semibold">Organizace:</span> {placement.organization_name || placement.companyData?.name || 'Organizace neuvedena'}</div>
+                    <div><span className="font-semibold">Zaměření:</span> {placement.major || 'Načítám...'} &bull; <span className="font-semibold">Organizace:</span> {placement.organization_name || placement.companyData?.name || 'Organizace neuvedena'}</div>
                   </div>
                 </div>
               ))}

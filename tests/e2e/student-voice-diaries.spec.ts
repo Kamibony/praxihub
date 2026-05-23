@@ -12,6 +12,7 @@ test.describe('Student Dashboard - Zero-Cost Voice Diaries', () => {
       await auth.createUser({ uid: 'student-voice', email: 'student-voice@praxihub.cz' });
       await db.collection('users').doc('student-voice').set({
         role: 'student',
+      major: 'UPV',
         researchConsent: true,
         email: 'student-voice@praxihub.cz',
         active_placement_id: 'placement-voice',
