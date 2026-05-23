@@ -1,0 +1,29 @@
+name: Manual Production Database Audit
+
+on:
+  workflow_dispatch:
+
+jobs:
+  audit_database:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Run Integrity Auditor
+        run: |
+          echo "Creating temporary service account key..."
+          echo '${{ secrets.GCP_SA_KEY }}' > sa-key.json
+          export GOOGLE_APPLICATION_CREDENTIALS="${PWD}/sa-key.json"
+          echo "Running integrity auditor..."
+          node scripts/integrity_auditor.js
+          echo "Removing temporary service account key..."
+          rm sa-key.json
