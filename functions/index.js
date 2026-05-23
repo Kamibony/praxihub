@@ -596,7 +596,10 @@ exports.transitionPlacementState = functions.https.onCall(
             );
           }
 
-          const major = currentData.major;
+          // Fetch major from user collection per SSOT
+          const studentDocForMajor = await transaction.get(db.collection("users").doc(currentData.studentId));
+          const major = studentDocForMajor.exists ? studentDocForMajor.data().major : null;
+
           if (!major) {
             throw new functions.https.HttpsError(
               "failed-precondition",
@@ -889,8 +892,6 @@ exports.importRoster = functions
                 Number(userObj.targetHours) ||
                 existingPlacementDoc.data().targetHours ||
                 15,
-                userObj.major ||
-                null,
               updatedAt: admin.firestore.FieldValue.serverTimestamp(),
             });
           } else {
@@ -1052,8 +1053,10 @@ exports.evaluateReflection = functions.runWith({ memory: "1GB", timeoutSeconds: 
       },
     });
 
-    // Fetch dynamic rules based on major
-    const major = placementData.major;
+    // Fetch dynamic rules based on major from the user document as per SSOT
+    const studentRefForMajor = await db.collection("users").doc(placementData.studentId).get();
+    const major = studentRefForMajor.exists ? studentRefForMajor.data().major : null;
+
     if (!major) {
       throw new functions.https.HttpsError(
         "failed-precondition",
@@ -1134,9 +1137,11 @@ Veškeré texty pro zpětnou vazbu (reasoning) musí být napsány v profesioná
       const snapshotId = placementRef.id + "_" + Date.now();
       const studentRef = await db.collection("users").doc(placementData.studentId).get();
       const studentName = studentRef.exists ? studentRef.data().displayName : "Student";
+      const major = studentRef.exists ? studentRef.data().major : null;
       const snapshotData = {
         ...placementData,
         studentName,
+        major,
         evaluationResult: evaluationResult,
         status: "CLOSED",
         snapshotCreatedAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -1224,7 +1229,10 @@ exports.signContract = functions.https.onCall(async (data, context) => {
     }
 
     // Check if the placement requires tripartite signature
-    const major = placementData.major;
+    // Fetch major from user collection per SSOT
+    const userDocForMajor = await admin.firestore().collection("users").doc(placementData.studentId).get();
+    const major = userDocForMajor.exists ? userDocForMajor.data().major : null;
+
     if (!major) {
       throw new functions.https.HttpsError(
         "failed-precondition",
