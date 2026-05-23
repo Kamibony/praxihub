@@ -27,8 +27,19 @@ import ContractSignature from "@/components/ContractSignature";
 import QRCode from "react-qr-code";
 import SHA256 from "crypto-js/sha256";
 import UatGate from "@/components/UatGate";
+import ErrorBoundary from "@/components/ErrorBoundary";
+import DashboardSkeleton from "@/components/skeletons/DashboardSkeleton";
+import RoleBadge from "@/components/RoleBadge";
 
 export default function StudentDashboard() {
+  return (
+    <ErrorBoundary>
+      <StudentDashboardContent />
+    </ErrorBoundary>
+  );
+}
+
+function StudentDashboardContent() {
   const { user, loading: authLoading } = useAuth();
   const [placement, setPlacement] = useState<any>(null);
   const [uploading, setUploading] = useState(false);
@@ -852,8 +863,8 @@ export default function StudentDashboard() {
     );
   };
 
-  if (loadingData)
-    return <div className="p-8 text-center">Načítám data...</div>;
+  if (loadingData || authLoading)
+    return <DashboardSkeleton />;
 
   return (
     <div className="min-h-screen bg-slate-900 p-8 font-sans card-glass">
@@ -939,11 +950,15 @@ export default function StudentDashboard() {
 
         <header className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center border-b border-white/10 pb-4 gap-4">
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-white">
-              Můj přehled praxe
-            </h1>
-            <p className="text-slate-300 mt-1 text-sm md:text-base">
+            <div className="flex items-center gap-3">
+              <h1 className="text-2xl md:text-3xl font-bold text-white">
+                Můj přehled praxe
+              </h1>
+              <RoleBadge role={user?.role || "student"} className="hidden md:flex" />
+            </div>
+            <p className="text-slate-300 mt-1 text-sm md:text-base flex items-center gap-2">
               Vítej, {user?.displayName || user?.email}
+              <RoleBadge role={user?.role || "student"} className="md:hidden" />
             </p>
           </div>
           <div className="flex flex-col sm:flex-row gap-3 items-stretch w-full md:w-auto">
