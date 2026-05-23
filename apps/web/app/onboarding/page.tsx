@@ -38,7 +38,7 @@ export default function OnboardingPage() {
     }
   }, [user, authLoading, router]);
 
-  // Load draft data from localStorage
+  // Load draft data from localStorage or pre-fill from user displayName
   useEffect(() => {
     if (!user) return;
     const draft = localStorage.getItem(`onboarding_draft_${user.uid}`);
@@ -50,6 +50,15 @@ export default function OnboardingPage() {
         if (parsed.major) setMajor(parsed.major);
       } catch (e) {
         // ignore
+      }
+    } else if (user.displayName && !firstName && !lastName) {
+      // Auto-fill from displayName if no draft and names are empty
+      const parts = user.displayName.split(" ");
+      if (parts.length > 0) {
+        setFirstName(parts[0]);
+        if (parts.length > 1) {
+          setLastName(parts.slice(1).join(" "));
+        }
       }
     }
   }, [user]);

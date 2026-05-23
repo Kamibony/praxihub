@@ -1718,7 +1718,7 @@ export default function StudentDashboard() {
                                               onChange={(e) => setNewLogCategory(e.target.value)}
                                               className="w-full px-3 py-2 bg-slate-800/50 border border-slate-700/50 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 text-slate-100 placeholder-slate-500"
                                             >
-                                              {placement?.studentMajor === 'UPV' || placement?.major === 'UPV' ? (
+                                              {(placement?.studentMajor || placement?.major || user?.major || user?.studentMajor) === 'UPV' ? (
                                                 <>
                                                   <option value="theoretical_observations">Teoretické náslechy</option>
                                                   <option value="practical_observations">Praktické náslechy</option>
@@ -2076,7 +2076,7 @@ export default function StudentDashboard() {
                   Postup praxe
                 </h3>
                 {(() => {
-                  const isUPV = placement?.studentMajor === 'UPV' || placement?.major === 'UPV';
+                  const isUPV = (placement?.studentMajor || placement?.major || user?.major || user?.studentMajor) === 'UPV';
 
                   const renderCircle = (label: string, total: number, target: number) => {
                     const progressPercent = Math.min(100, Math.round((total / target) * 100));
@@ -2188,8 +2188,7 @@ export default function StudentDashboard() {
                   >
                     Stáhnout originál
                   </a>
-                  {(placement?.studentMajor === "KPV" ||
-                    placement?.major === "KPV") && (
+                  {((placement?.studentMajor || placement?.major || user?.major || user?.studentMajor) === "KPV") && (
                     <div className="mt-4 border-t pt-4">
                       <ContractSignature
                         placementId={placement.id}
