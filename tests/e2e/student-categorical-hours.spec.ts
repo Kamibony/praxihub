@@ -14,6 +14,7 @@ test.describe('Epic 1: Complex Methodology & Hours Tracking', () => {
     await auth.createUser({ uid: 'student-upv', email: 'student-upv@praxihub.cz' });
     await db.collection('users').doc('student-upv').set({
       role: 'student',
+      major: 'UPV',
       researchConsent: true,
       email: 'student-upv@praxihub.cz',
       active_placement_id: 'placement-upv',
@@ -54,6 +55,7 @@ test.describe('Epic 1: Complex Methodology & Hours Tracking', () => {
     await auth.createUser({ uid: 'student-kpv', email: 'student-kpv@praxihub.cz' });
     await db.collection('users').doc('student-kpv').set({
       role: 'student',
+      major: 'KPV',
       researchConsent: true,
       email: 'student-kpv@praxihub.cz',
       active_placement_id: 'placement-kpv',

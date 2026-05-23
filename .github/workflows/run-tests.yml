@@ -30,6 +30,14 @@ jobs:
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps chromium
 
+      - name: Audit Database Integrity
+        run: |
+          # Start emulator, seed it or allow it to be seeded, then run the auditor
+          npx firebase emulators:start --project demo-project --only firestore,auth &
+          sleep 10
+          FIRESTORE_EMULATOR_HOST="127.0.0.1:8080" FIREBASE_AUTH_EMULATOR_HOST="127.0.0.1:9099" GCLOUD_PROJECT="demo-project" node scripts/integrity_auditor.js
+          kill $(lsof -t -i :8080) 2>/dev/null || true
+
       - name: Clean up orphaned ports
         run: |
           kill $(lsof -t -i :3000) 2>/dev/null || true

@@ -1,27 +1,15 @@
 import re
 
-with open('apps/web/app/admin/documents/page.tsx', 'r') as f:
+with open('apps/web/app/admin/payroll/page.tsx', 'r') as f:
     content = f.read()
+content = re.sub(r'studentName: placement\.studentName \|\| placement\.studentId', r'studentName: userRef.exists() ? (userRef.data().displayName || userRef.data().email) : placement.studentId', content)
+with open('apps/web/app/admin/payroll/page.tsx', 'w') as f:
+    f.write(content)
 
-# Layout
-content = content.replace('min-h-screen bg-slate-50', 'min-h-screen bg-transparent')
-content = content.replace('text-slate-900', 'text-slate-100')
-content = content.replace('text-slate-600', 'text-slate-300')
-content = content.replace('text-slate-800', 'text-slate-100')
-content = content.replace('text-slate-700', 'text-slate-200')
-content = content.replace('text-slate-500', 'text-slate-400')
-
-# Containers
-content = content.replace('bg-white rounded-xl shadow-sm border border-slate-200', 'card-glass')
-content = content.replace('bg-white p-8 rounded-xl shadow-sm border border-slate-200', 'card-glass p-8')
-content = content.replace('bg-slate-50 p-4 rounded-xl border border-slate-200', 'bg-slate-800/50 p-4 rounded-xl border border-white/10')
-content = content.replace('bg-white border border-slate-200', 'bg-slate-800/50 border border-white/10')
-content = content.replace('border-slate-200', 'border-white/10')
-content = content.replace('border-slate-100', 'border-white/10')
-
-# Tabs
-content = content.replace("border-blue-600 text-blue-600", "border-indigo-400 text-indigo-300 bg-indigo-500/20 rounded-t-lg")
-content = content.replace("border-transparent text-slate-500 hover:text-slate-700", "border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 rounded-t-lg")
-
-with open('apps/web/app/admin/documents/page.tsx', 'w') as f:
+with open('apps/web/app/institution/dashboard/page.tsx', 'r') as f:
+    content = f.read()
+content = re.sub(r'studentName: studentData\.name \|\| studentData\.displayName \|\| studentData\.email \|\| placement\.studentName \|\| \'Student neuveden\'', r'studentName: studentData.displayName || studentData.email || \'Student neuveden\'', content)
+content = re.sub(r'studentName: placement\.studentName \|\| \'Student\'', r'studentName: placement.studentName || \'Student\' /* THIS SHOULD BE HYDRATED, check context */', content)
+content = re.sub(r'\{placement\.studentName \|\| \'Načítám\.\.\.\'\}', r'{placement.studentName || \'Načítám...\'}', content)
+with open('apps/web/app/institution/dashboard/page.tsx', 'w') as f:
     f.write(content)

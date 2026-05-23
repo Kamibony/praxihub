@@ -12,6 +12,7 @@ test.describe('Epic 3: Cognitive Telemetry', () => {
     await auth.createUser({ uid: 'student-telemetry', email: 'student-telemetry@praxihub.cz' });
     await db.collection('users').doc('student-telemetry').set({
       role: 'student',
+      major: 'UPV',
       researchConsent: true,
       email: 'student-telemetry@praxihub.cz',
       active_placement_id: 'placement-telemetry',

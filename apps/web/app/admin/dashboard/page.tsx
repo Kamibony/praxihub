@@ -1498,7 +1498,7 @@ export default function CoordinatorDashboard() {
                             </svg>
                             Stáhnout PDF
                           </a>
-                          {(selectedPlacement?.studentMajor === "KPV" ||
+                          {(
                             selectedPlacement?.major === "KPV") && (
                             <ContractSignature
                               placementId={selectedPlacement.id}

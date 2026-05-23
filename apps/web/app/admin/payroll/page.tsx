@@ -49,7 +49,8 @@ export default function PayrollModule() {
                 };
             }
 
-            const major = placement.studentMajor || placement.major;
+            const userRef = await getDoc(doc(db, "users", placement.studentId));
+            const major = userRef.exists() ? userRef.data().major : null;
 
             // To calculate approved hours, we must fetch time_logs.
             const timeLogsRef = collection(db, "placements", placement.id, "time_logs");
@@ -70,7 +71,7 @@ export default function PayrollModule() {
 
             groupedData[orgId].placements.push({
                placementId: placement.id,
-               studentName: placement.studentName || placement.studentId,
+               studentName: userRef.exists() ? (userRef.data().displayName || userRef.data().email) : placement.studentId,
                hours: placementApprovedHours,
                major: major
             });

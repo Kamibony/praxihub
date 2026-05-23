@@ -272,7 +272,7 @@ export default function StudentDashboard() {
       router.push("/consent");
       return;
     }
-    if (!user.major && !user.studentMajor) {
+    if (!user.major) {
       router.push("/onboarding");
       return;
     }
@@ -331,7 +331,7 @@ export default function StudentDashboard() {
       return;
     }
 
-    if (!user.major && !user.studentMajor) {
+    if (!user.major) {
       toast.error("Chybí studijní obor v profilu. Prosím aktualizujte si profil.");
       router.push("/onboarding");
       return;
@@ -339,7 +339,7 @@ export default function StudentDashboard() {
 
     setSubmittingOrg(true);
     try {
-      const isKpv = user.major === 'KPV' || user.studentMajor === 'KPV';
+      const isKpv = user.major === 'KPV';
 
       let instId = selectedInstitutionId;
 
@@ -365,8 +365,7 @@ export default function StudentDashboard() {
         organization_name: orgRequest.name,
         organization_ico: orgRequest.ico,
         organization_web: orgRequest.web,
-        major: user.major || user.studentMajor,
-        studentMajor: user.studentMajor || user.major
+        major: user.major
       });
 
       if (isKpv) {
@@ -595,7 +594,7 @@ export default function StudentDashboard() {
         await addDoc(telemetryRef, {
           anonymousId,
           textDraft: reflectionText,
-          major: placement?.studentMajor || placement?.major || "UNKNOWN",
+          major: user?.major || "UNKNOWN",
           timestamp: new Date().toISOString()
         });
       } catch (err) {
@@ -693,8 +692,7 @@ export default function StudentDashboard() {
           createdAt: new Date().toISOString(),
           organization_name: "UAT Demo Company",
           organization_ico: "12345678",
-          major: user.major || user.studentMajor,
-          studentMajor: user.studentMajor || user.major,
+          major: user.major,
           targetHours: 80,
           migratedHours: 80
         };
@@ -979,7 +977,7 @@ export default function StudentDashboard() {
               </h2>
               <div className="flex items-center gap-2 mt-1">
                 <span className="px-2 py-0.5 bg-blue-900/30 text-blue-300 text-xs font-bold rounded-full border border-blue-500/20">
-                  {user?.major || user?.studentMajor || "Chybí obor"}
+                  {user?.major || "Chybí obor"}
                 </span>
                 <span className="text-slate-400 text-sm">
                   {placement?.organization_name || (
@@ -1718,7 +1716,7 @@ export default function StudentDashboard() {
                                               onChange={(e) => setNewLogCategory(e.target.value)}
                                               className="w-full px-3 py-2 bg-slate-800/50 border border-slate-700/50 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 text-slate-100 placeholder-slate-500"
                                             >
-                                              {(placement?.studentMajor || placement?.major || user?.major || user?.studentMajor) === 'UPV' ? (
+                                              {(placement?.major || placement?.major || user?.major) === 'UPV' ? (
                                                 <>
                                                   <option value="theoretical_observations">Teoretické náslechy</option>
                                                   <option value="practical_observations">Praktické náslechy</option>
@@ -2076,7 +2074,7 @@ export default function StudentDashboard() {
                   Postup praxe
                 </h3>
                 {(() => {
-                  const isUPV = (placement?.studentMajor || placement?.major || user?.major || user?.studentMajor) === 'UPV';
+                  const isUPV = (placement?.major || placement?.major || user?.major) === 'UPV';
 
                   const renderCircle = (label: string, total: number, target: number) => {
                     const progressPercent = Math.min(100, Math.round((total / target) * 100));
@@ -2188,7 +2186,7 @@ export default function StudentDashboard() {
                   >
                     Stáhnout originál
                   </a>
-                  {((placement?.studentMajor || placement?.major || user?.major || user?.studentMajor) === "KPV") && (
+                  {((placement?.major || placement?.major || user?.major) === "KPV") && (
                     <div className="mt-4 border-t pt-4">
                       <ContractSignature
                         placementId={placement.id}
@@ -2216,7 +2214,7 @@ export default function StudentDashboard() {
               </h3>
 
               {(() => {
-                const hasMajor = user?.major || user?.studentMajor;
+                const hasMajor = user?.major || user?.major;
                 const pStatus = placement?.status;
 
                 // Determine State

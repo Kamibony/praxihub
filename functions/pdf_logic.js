@@ -27,7 +27,7 @@ async function createCertificatePdf(snapshotData, snapshotId) {
     color: rgb(0, 0, 0),
   });
 
-  page.drawText(`Student: ${snapshotData.studentName}`, {
+  page.drawText(`Student: ${snapshotData.studentName || "Student"}`, {
     x: 50,
     y: height - 160,
     size: 14,
@@ -45,9 +45,9 @@ async function createCertificatePdf(snapshotData, snapshotId) {
   }
 
   if (
-    snapshotData.studentMajor === "UPV" ||
+
     snapshotData.major === "UPV" ||
-    (!snapshotData.studentMajor && !snapshotData.major)
+    (!snapshotData.major)
   ) {
     page.drawText(`Hodnocení AI (MŠMT KRAU): Úspěšně splněno`, {
       x: 50,
@@ -119,7 +119,7 @@ async function createCommissionDecreePdf(decreeData, decreeId) {
     color: rgb(0, 0, 0),
   });
 
-  page.drawText(`Student: ${decreeData.studentName}`, {
+  page.drawText(`Student: ${decreeData.studentName || "Student"}`, {
     x: 50,
     y: height - 160,
     size: 14,

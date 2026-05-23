@@ -21,6 +21,11 @@ test.describe('Epic 5: Admin Payroll Module', () => {
       createdAt: new Date().toISOString()
     });
 
+
+    // Seed students for SSOT
+    await db.collection('users').doc('student1').set({ role: 'STUDENT', major: 'UPV' });
+    await db.collection('users').doc('student2').set({ role: 'STUDENT', major: 'KPV' });
+
     // Seed Placements and their time logs
     // Placement 1 (UPV)
     await db.collection('placements').doc('p-upv').set({
