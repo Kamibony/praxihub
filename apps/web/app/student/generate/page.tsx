@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from "next/navigation";
 import { db, auth, functions, storage } from "../../../lib/firebase";
 import { httpsCallable } from "firebase/functions";
-import { onAuthStateChanged } from "firebase/auth";
 import { collection, query, where, getDocs, orderBy, limit, doc, updateDoc, addDoc } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { PDFDocument, rgb } from 'pdf-lib';
@@ -12,9 +11,11 @@ import fontkit from '@pdf-lib/fontkit';
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
 import { ArrowRight, ArrowLeft, Check, FileText, Download } from "lucide-react";
+import { useAuth } from "../../../contexts/AuthContext";
 
 export default function GenerateContractPage() {
   const router = useRouter();
+  const { user: unifiedUser, loading: authLoading } = useAuth();
   const [formData, setFormData] = useState({
     studentName: "",
     companyName: "",
@@ -31,69 +32,74 @@ export default function GenerateContractPage() {
   const [isReady, setIsReady] = useState(false);
   const [institutions, setInstitutions] = useState<any[]>([]);
   const [selectedInstitutionId, setSelectedInstitutionId] = useState<string | "NEW">("");
-  const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      if (currentUser) {
-        setUser(currentUser);
-        import("firebase/firestore").then(async ({ collection, query, where, getDocs, orderBy, limit }) => {
-            const instQ = query(collection(db, "users"), where("role", "==", "institution"));
-            const instSnap = await getDocs(instQ);
-            setInstitutions(instSnap.docs.map(d => ({ id: d.id, ...d.data() as any })));
+    if (authLoading) return;
 
-            // Fetch existing approved placement
-            const q = query(
-                collection(db, "placements"),
-                where("studentId", "==", currentUser.uid),
-                where("status", "==", "ORG_APPROVED"),
-                orderBy("createdAt", "desc"),
-                limit(1)
-            );
-            const snapshot = await getDocs(q);
-            if (!snapshot.empty) {
-                const docData = snapshot.docs[0].data();
-                setPlacementId(snapshot.docs[0].id);
-                setFormData(prev => ({
-                    ...prev,
-                    companyName: docData.organization_name || "",
-                    ico: docData.organization_ico || "",
-                    studentName: currentUser.displayName || currentUser.email || ""
-                }));
-            } else {
-                setFormData(prev => ({
-                    ...prev,
-                    studentName: currentUser.displayName || currentUser.email || ""
-                }));
-            }
-            setIsReady(true);
-        });
-      } else {
-        router.push("/login");
+    if (!unifiedUser) {
+      router.push("/login");
+      setIsReady(true);
+      return;
+    }
+
+    const fetchData = async () => {
+      try {
+        const instQ = query(collection(db, "users"), where("role", "==", "institution"));
+        const instSnap = await getDocs(instQ);
+        setInstitutions(instSnap.docs.map(d => ({ id: d.id, ...d.data() as any })));
+
+        // Fetch existing approved placement
+        const q = query(
+            collection(db, "placements"),
+            where("studentId", "==", unifiedUser.uid),
+            where("status", "==", "ORG_APPROVED"),
+            orderBy("createdAt", "desc"),
+            limit(1)
+        );
+        const snapshot = await getDocs(q);
+        if (!snapshot.empty) {
+            const docData = snapshot.docs[0].data();
+            setPlacementId(snapshot.docs[0].id);
+            setFormData(prev => ({
+                ...prev,
+                companyName: docData.organization_name || "",
+                ico: docData.organization_ico || "",
+                studentName: unifiedUser.displayName || unifiedUser.email || ""
+            }));
+        } else {
+            setFormData(prev => ({
+                ...prev,
+                studentName: unifiedUser.displayName || unifiedUser.email || ""
+            }));
+        }
+      } catch (err) {
+        console.error("Error fetching data:", err);
+      } finally {
         setIsReady(true);
       }
-    });
-    return () => unsubscribe();
-  }, [router]);
+    };
+
+    fetchData();
+  }, [unifiedUser, authLoading, router]);
 
   // Load draft data
   useEffect(() => {
-    if (!isReady || !user) return;
-    const draft = localStorage.getItem(`generate_contract_draft_${user.uid}`);
+    if (!isReady || !unifiedUser) return;
+    const draft = localStorage.getItem(`generate_contract_draft_${unifiedUser.uid}`);
     if (draft && !placementId) { // Only load draft if we don't have pre-filled data from a placement
       try {
         const parsed = JSON.parse(draft);
         setFormData(prev => ({ ...prev, ...parsed }));
       } catch (e) {}
     }
-  }, [isReady, placementId, user]);
+  }, [isReady, placementId, unifiedUser]);
 
   // Save draft data
   useEffect(() => {
-    if (isReady && !generatedUrl && user) {
-      localStorage.setItem(`generate_contract_draft_${user.uid}`, JSON.stringify(formData));
+    if (isReady && !generatedUrl && unifiedUser) {
+      localStorage.setItem(`generate_contract_draft_${unifiedUser.uid}`, JSON.stringify(formData));
     }
-  }, [formData, isReady, generatedUrl, user]);
+  }, [formData, isReady, generatedUrl, unifiedUser]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -101,7 +107,7 @@ export default function GenerateContractPage() {
 
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!auth.currentUser) return;
+    if (!unifiedUser) return;
     setLoading(true);
 
     try {
@@ -126,7 +132,7 @@ export default function GenerateContractPage() {
       const pdfBytes = await pdfDoc.save();
 
       // 3. Upload to Storage
-      const fileName = `contracts/${auth.currentUser.uid}_${Date.now()}.pdf`;
+      const fileName = `contracts/${unifiedUser.uid}_${Date.now()}.pdf`;
       const storageRef = ref(storage, fileName);
       await uploadBytes(storageRef, pdfBytes);
       const downloadURL = await getDownloadURL(storageRef);
@@ -154,7 +160,7 @@ export default function GenerateContractPage() {
           });
       } else {
          await addDoc(collection(db, "placements"), {
-             studentId: auth.currentUser.uid,
+             studentId: unifiedUser.uid,
              institutionId: instId !== "NEW" && instId ? instId : null,
              organization_name: formData.companyName,
              organization_ico: formData.ico,
@@ -169,8 +175,8 @@ export default function GenerateContractPage() {
       }
 
       setGeneratedUrl(downloadURL);
-      if (user) {
-        localStorage.removeItem(`generate_contract_draft_${user.uid}`);
+      if (unifiedUser) {
+        localStorage.removeItem(`generate_contract_draft_${unifiedUser.uid}`);
       }
       toast.success("Smlouva byla úspěšně vygenerována!");
 
