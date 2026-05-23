@@ -327,16 +327,9 @@ exports.createContractPDF = functions
         // Make the file publicly accessible via a long-lived download URL (token based)
         // Using the uuid approach for client SDK compatibility
         // We generate a random string for the token.
-        const uuid =
-          Math.random().toString(36).substring(2) + Date.now().toString(36);
-
-        await file.setMetadata({
-          metadata: {
-            firebaseStorageDownloadTokens: uuid,
-          },
-        });
-
-        const downloadURL = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(filePath)}?alt=media&token=${uuid}`;
+        // Secure URL retrieval via signed URLs or just letting client use standard getDownloadURL with Firebase SDK later.
+        // For the function return, we can return the storage path and let the frontend use getDownloadURL.
+        const downloadURL = filePath;
         console.log("Download URL generated:", downloadURL);
 
         // Return data in a format similar to what httpsCallable expects if possible, or just JSON
@@ -345,9 +338,7 @@ exports.createContractPDF = functions
       } catch (error) {
         console.error("Error generating PDF:", error);
         return res.status(500).json({
-          error: "PDF Generation Failed",
-          details: error.message,
-          code: error.code, // helpful for storage errors
+          error: "Došlo k interní chybě při zpracování."
         });
       }
     });
@@ -521,7 +512,7 @@ exports.findMatches = functions.runWith({ memory: "1GB", timeoutSeconds: 300 }).
     console.error("Matchmaking Critical Fail:", error);
     throw new functions.https.HttpsError(
       "internal",
-      `System Error: ${error.message}`,
+      "Došlo k interní chybě při zpracování."
     );
   }
 });
@@ -574,6 +565,16 @@ exports.transitionPlacementState = functions.https.onCall(
         }
 
         const currentData = doc.data();
+
+        // Zero-Trust Hardening: Enforce ownership or admin
+        const isAdminOrCoordinator = context.auth.token.role === 'admin' || context.auth.token.role === 'coordinator';
+        if (!isAdminOrCoordinator && currentData.studentId !== context.auth.uid) {
+          throw new functions.https.HttpsError(
+            "permission-denied",
+            "Nemáte oprávnění měnit stav této praxe."
+          );
+        }
+
         const currentState = currentData.status || "DRAFT";
 
         // Strictly enforce the state machine matrix
@@ -724,6 +725,14 @@ exports.importRoster = functions
       throw new functions.https.HttpsError(
         "unauthenticated",
         "Must be logged in.",
+      );
+    }
+
+    // Zero-Trust Hardening
+    if (context.auth.token.role !== 'admin' && context.auth.token.role !== 'coordinator') {
+      throw new functions.https.HttpsError(
+        "permission-denied",
+        "Nemáte oprávnění pro import."
       );
     }
 
@@ -1266,7 +1275,6 @@ exports.signContract = functions.https.onCall(async (data, context) => {
 
     if (
       role === "company" &&
-      userData.role !== "company" &&
       placementData.organizationId !== context.auth.uid &&
       placementData.mentorId !== context.auth.uid
     ) {
@@ -1324,6 +1332,14 @@ exports.generatePayrollReport = functions.https.onCall(
       throw new functions.https.HttpsError(
         "unauthenticated",
         "Musíte být přihlášeni.",
+      );
+    }
+
+    // Zero-Trust Hardening
+    if (context.auth.token.role !== 'admin' && context.auth.token.role !== 'coordinator') {
+      throw new functions.https.HttpsError(
+        "permission-denied",
+        "Nemáte oprávnění."
       );
     }
 
@@ -1548,6 +1564,14 @@ exports.generateCommissionDecree = functions.https.onCall(
       );
     }
 
+    // Zero-Trust Hardening
+    if (context.auth.token.role !== 'admin' && context.auth.token.role !== 'coordinator') {
+      throw new functions.https.HttpsError(
+        "permission-denied",
+        "Nemáte oprávnění."
+      );
+    }
+
     const { commissionId, guarantorName, guarantorId } = data;
     if (!commissionId || !guarantorName) {
       throw new functions.https.HttpsError(
@@ -1638,7 +1662,7 @@ exports.generateCommissionDecree = functions.https.onCall(
       console.error("Decree Generation Error:", error);
       throw new functions.https.HttpsError(
         "internal",
-        `Error generating decree: ${error.message}`,
+        "Došlo k interní chybě při zpracování."
       );
     }
   },
@@ -1925,6 +1949,15 @@ exports.fetchAresAndLink = functions.https.onCall(async (data, context) => {
       throw new functions.https.HttpsError("not-found", "Placement not found.");
     }
 
+    // Zero-Trust Hardening
+    const isAdminOrCoordinator = context.auth.token.role === 'admin' || context.auth.token.role === 'coordinator';
+    if (!isAdminOrCoordinator && placementDoc.data().studentId !== context.auth.uid) {
+      throw new functions.https.HttpsError(
+        "permission-denied",
+        "Nemáte oprávnění."
+      );
+    }
+
     // Look up the organization by ICO in the Firestore
     const orgQuery = await db
       .collection("organizations")
@@ -1994,7 +2027,7 @@ exports.fetchAresAndLink = functions.https.onCall(async (data, context) => {
     console.error("fetchAresAndLink Error:", error);
     throw new functions.https.HttpsError(
       "internal",
-      `Error linking ARES data: ${error.message}`,
+      "Došlo k interní chybě při zpracování."
     );
   }
 });
@@ -2211,7 +2244,7 @@ ${textToParse.substring(0, 80000)}
 
   } catch (error) {
     console.error("routeDocument Error:", error);
-    throw new functions.https.HttpsError("internal", "Chyba při komunikaci s AI: " + error.message);
+    throw new functions.https.HttpsError("internal", "Došlo k interní chybě při zpracování.");
   }
 });
 
@@ -2321,7 +2354,7 @@ ${textToParse.substring(0, 80000)} // Increased limit leveraging Gemini 2.5 Pro 
 
   } catch (error) {
      console.error("parseDocumentForAI Error:", error);
-     throw new functions.https.HttpsError("internal", "Nepodařilo se zpracovat dokument pomocí AI: " + error.message);
+     throw new functions.https.HttpsError("internal", "Došlo k interní chybě při zpracování.");
   }
 });
 
@@ -2423,5 +2456,35 @@ exports.generateSkillMatrixPDF = functions.runWith({ memory: "512MB" }).https.on
   } catch (error) {
     console.error("PDF Generation Error:", error);
     throw new functions.https.HttpsError("internal", "Chyba při generování PDF: " + error.message);
+  }
+});
+
+// Backend endpoint for Mobile App Upload to replace client-side addDoc
+exports.submitMobileContract = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError("unauthenticated", "Musíte být přihlášeni.");
+  }
+
+  const { contract_url, fileName, source } = data;
+  if (!contract_url) {
+    throw new functions.https.HttpsError("invalid-argument", "Chybí URL smlouvy.");
+  }
+
+  try {
+    const db = admin.firestore();
+    await db.collection("placements").add({
+      studentId: context.auth.uid,
+      studentEmail: context.auth.token.email || "",
+      contract_url: contract_url,
+      status: "ANALYZING",
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      fileName: fileName || "mobile_upload.jpg",
+      source: source || "mobile_app"
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error("submitMobileContract Error:", error);
+    throw new functions.https.HttpsError("internal", "Došlo k interní chybě při zpracování.");
   }
 });

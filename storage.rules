@@ -2,8 +2,8 @@ rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
     match /contracts/{userId}/{fileName} {
-      allow read: if request.auth != null && (request.auth.uid == userId || request.auth.token.role in ['admin', 'coordinator'] || request.auth.token.impersonatorUid != null);
-      allow create: if request.auth != null && (request.auth.uid == userId || request.auth.token.role in ['admin', 'coordinator'] || request.auth.token.impersonatorUid != null);
+      allow read: if request.auth != null && (request.auth.uid == userId || request.auth.token.role in ['admin', 'coordinator']);
+      allow create: if request.auth != null && (request.auth.uid == userId || request.auth.token.role in ['admin', 'coordinator']);
       allow update, delete: if false; // WORM compliance
     }
     match /certificates/{fileName} {
