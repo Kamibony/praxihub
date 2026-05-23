@@ -3,27 +3,58 @@ import { StyleSheet, Text, View, Button, TextInput, ActivityIndicator, Alert } f
 import { useState, useEffect } from 'react';
 import * as ImagePicker from 'expo-image-picker';
 import { initializeApp, getApps } from 'firebase/app';
-import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from 'firebase/auth';
+import { signInWithEmailAndPassword, onAuthStateChanged, signOut, initializeAuth } from 'firebase/auth';
+// @ts-ignore
+import { getReactNativePersistence } from 'firebase/auth';
+import * as SecureStore from 'expo-secure-store';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { getFirestore, collection, addDoc } from 'firebase/firestore';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 
 // --- CONFIGURATION ---
 // Vaša konfigurácia z Firebase Console
 const firebaseConfig = {
-  apiKey: "AIzaSyDyTuAJwecFtMovWS-452rsgvC5IdweWGk",
-  authDomain: "praxihub-app.firebaseapp.com",
-  projectId: "praxihub-app",
-  storageBucket: "praxihub-app.firebasestorage.app",
-  messagingSenderId: "365164154200",
-  appId: "1:365164154200:web:943c3cdaa99ba8002b692d",
-  measurementId: "G-H3MKYYH1ZH"
+  apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY || "",
+  authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN || "",
+  projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID || "",
+  storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET || "",
+  messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "",
+  appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID || "",
+  measurementId: process.env.EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID || ""
 };
 
 // Initialize Firebase (Singleton pattern to avoid re-initialization warnings)
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
-const auth = getAuth(app);
+
+
+const secureStorePersistence = {
+  getItem: async (key: string) => {
+    try {
+      return await SecureStore.getItemAsync(key);
+    } catch (e) {
+      return null;
+    }
+  },
+  setItem: async (key: string, value: string) => {
+    try {
+      await SecureStore.setItemAsync(key, value);
+    } catch (e) {
+      console.error(e);
+    }
+  },
+  removeItem: async (key: string) => {
+    try {
+      await SecureStore.deleteItemAsync(key);
+    } catch (e) {
+      console.error(e);
+    }
+  }
+};
+
+const auth = initializeAuth(app, {
+  persistence: getReactNativePersistence(secureStorePersistence)
+});
 const storage = getStorage(app);
-const db = getFirestore(app);
+const functions = getFunctions(app, 'us-central1');
 
 export default function App() {
   const [user, setUser] = useState<any>(null);
@@ -42,7 +73,7 @@ export default function App() {
     try {
       await signInWithEmailAndPassword(auth, email, password);
     } catch (e: any) {
-      Alert.alert("Chyba prihlásenia", e.message);
+      Alert.alert("Chyba přihlášení", "Nepodařilo se přihlásit.");
     }
   };
 
@@ -51,7 +82,7 @@ export default function App() {
     // 1. Žiadosť o povolenie k fotoaparátu
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert('Chyba', 'Potrebujeme prístup k fotoaparátu na odfotenie zmluvy!');
+      Alert.alert('Chyba', 'Potřebujeme přístup k fotoaparátu pro vyfocení smlouvy!');
       return;
     }
 
@@ -81,21 +112,18 @@ export default function App() {
       await uploadBytes(storageRef, blob);
       const downloadURL = await getDownloadURL(storageRef);
 
-      // 3. Vytvorenie dokumentu vo Firestore (spustí AI analýzu na backende)
-      await addDoc(collection(db, "placements"), {
-        studentId: user.uid,
-        studentEmail: user.email,
+      // 3. Volání backend funkce pro bezpečné uložení
+      const submitMobileContract = httpsCallable(functions, 'submitMobileContract');
+      await submitMobileContract({
         contract_url: downloadURL,
-        status: "ANALYZING", // Toto spustí Cloud Function
-        createdAt: new Date().toISOString(),
         fileName: filename,
         source: "mobile_app"
       });
 
-      Alert.alert("Úspech", "Zmluva bola nahraná a odoslaná na AI analýzu!");
+      Alert.alert("Úspěch", "Smlouva byla nahrána a odeslána na AI analýzu!");
     } catch (e: any) {
       console.error(e);
-      Alert.alert("Chyba nahrávania", e.message);
+      Alert.alert("Chyba nahrávání", "Došlo k chybě při nahrávání.");
     } finally {
       setUploading(false);
     }
@@ -121,7 +149,7 @@ export default function App() {
           onChangeText={setPassword} 
           secureTextEntry 
         />
-        <Button title="Prihlásiť sa" onPress={handleLogin} />
+        <Button title="Přihlásit se" onPress={handleLogin} />
         <StatusBar style="auto" />
       </View>
     );
@@ -130,26 +158,26 @@ export default function App() {
   // --- UI: Hlavná obrazovka (po prihlásení) ---
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Vitaj, {user.email}</Text>
+      <Text style={styles.title}>Vítejte, {user.email}</Text>
       
       <View style={styles.card}>
         <Text style={styles.subtitle}>Nahrát novou smlouvu</Text>
-        <Text style={styles.infoText}>Odfotťe zmluvu a my automaticky vyplníme údaje pomocou AI.</Text>
+        <Text style={styles.infoText}>Vyfoťte smlouvu a my automaticky vyplníme údaje pomocí AI.</Text>
         
         <View style={styles.spacer} />
         
-        <Button title="Vyfotiť zmluvu" onPress={pickImage} disabled={uploading} />
+        <Button title="Vyfotit smlouvu" onPress={pickImage} disabled={uploading} />
         
         {uploading && (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color="#0000ff" />
-            <Text>Nahrávam...</Text>
+            <Text>Nahrávám...</Text>
           </View>
         )}
       </View>
 
       <View style={{marginTop: 50}}>
-        <Button title="Odhlásiť sa" color="red" onPress={() => signOut(auth)} />
+        <Button title="Odhlásit se" color="red" onPress={() => signOut(auth)} />
       </View>
       <StatusBar style="auto" />
     </View>

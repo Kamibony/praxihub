@@ -85,3 +85,24 @@ This document provides a comprehensive gap analysis between the original Busines
         *   **Reasoning:** To optimize AI speed and minimize token costs, PraxiHub intentionally avoids dynamic RAG directly from Firebase Storage. Instead, Admins use the `parseDocumentForAI` (or `routeDocument`) Cloud Function to extract rules from uploaded files, which append to UI text areas for manual review before saving to `system_configs`. This "Human-in-the-loop" pattern guarantees deterministic AI behavior, prevents hallucinations based on poorly formatted uploads, and drastically reduces API costs per user interaction.
 *   **Cost Warning: Architecture must minimize operational costs (Hosting + DB + AI). No paid SMS, no paid speech-to-text APIs.**
     *   [✅ IMPLEMENTED] By pivoting to a fully serverless Firebase architecture with a static Next.js frontend export, hosting and database costs are inherently minimized, scaling efficiently with usage and keeping baseline costs extremely low. The human-in-the-loop RAG strategy specifically addresses the AI cost optimization requirement.
+### Phase 2: Zero-Trust Backend & Mobile Hardening
+
+**Backend Cloud Functions Hardening:**
+- Re-architected callable functions (`importRoster`, `generatePayrollReport`, `generateCommissionDecree`, `fetchAresAndLink`, `transitionPlacementState`) to aggressively enforce Zero-Trust contextual verification (`context.auth.uid` validation and role checks `admin/coordinator`).
+- Addressed `signContract` logical vulnerability allowing global `company` impersonation, restricting signing to authorized mentors and organizations.
+- Purged public token logic (`firebaseStorageDownloadTokens`) from `createContractPDF` to avoid Firebase Storage Rules bypass.
+- Masked detailed error messages (data leakage) in public-facing exceptions across integration-heavy endpoints.
+
+**Storage Rules Security:**
+- Removed the dangerous wildcard `impersonatorUid != null` bypass condition from `storage.rules`, successfully trusting native token `uid` injection natively supported during the impersonation token exchange.
+
+**Mobile Application (`apps/mobile/App.tsx`):**
+- Migrated legacy `signInWithEmailAndPassword` pattern to native Magic Links (`sendSignInLinkToEmail`).
+- Replaced direct `addDoc` database mutation with a dedicated secure backend function `submitMobileContract`.
+- Replaced naive storage logic with a `SecureStore`-backed persistence integration layer (`getReactNativePersistence(secureStorePersistence)`).
+- Remediated localization drift by establishing strict cs-CZ hardcoded strings.
+- Eradicated hardcoded credentials substituting standard `.env` variables (`EXPO_PUBLIC_...`).
+
+**Revisions Post Code-Review:**
+- Reverted mobile app authentication back to `signInWithEmailAndPassword` to preserve functionality, as true Magic Links demand full deep linking which breaks the MVP constraints.
+- Removed unused dependencies and cleaned up execution scripts.
