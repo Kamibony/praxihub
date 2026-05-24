@@ -24,6 +24,9 @@ import {
   deleteObject,
 } from "firebase/storage";
 import { storage } from "../../../lib/firebase";
+import ErrorBoundary from "@/components/ErrorBoundary";
+import DashboardSkeleton from "@/components/skeletons/DashboardSkeleton";
+import RoleBadge from "@/components/RoleBadge";
 
 // Define filter type
 type FilterStatus =
@@ -37,6 +40,14 @@ type FilterStatus =
   | "CLOSED";
 
 export default function CoordinatorDashboard() {
+  return (
+    <ErrorBoundary>
+      <CoordinatorDashboardContent />
+    </ErrorBoundary>
+  );
+}
+
+function CoordinatorDashboardContent() {
   const [placements, setPlacements] = useState<any[]>([]);
   const [organizations, setOrganizations] = useState<any[]>([]);
   const [matchmakingOrgId, setMatchmakingOrgId] = useState<string>("");
@@ -493,7 +504,7 @@ export default function CoordinatorDashboard() {
   });
 
   if (loading)
-    return <div className="p-8 text-center text-gray-500">Načítám data...</div>;
+    return <DashboardSkeleton />;
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 md:p-8 font-sans">
@@ -501,11 +512,15 @@ export default function CoordinatorDashboard() {
       <div className="max-w-7xl mx-auto">
         <header className="mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
-              Centrální přehled praxí
-            </h1>
-            <p className="text-gray-600 mt-2 text-sm md:text-base">
+            <div className="flex items-center gap-3">
+              <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
+                Centrální přehled praxí
+              </h1>
+              <RoleBadge role="coordinator" className="hidden md:flex" />
+            </div>
+            <p className="text-gray-600 mt-2 text-sm md:text-base flex items-center gap-2">
               Manažment a monitoring všech smluv a dokumentů
+              <RoleBadge role="coordinator" className="md:hidden" />
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2 md:gap-4 w-full md:w-auto">
@@ -516,9 +531,6 @@ export default function CoordinatorDashboard() {
               <Database size={16} />
               Centrum dokumentů
             </button>
-            <span className="text-sm text-gray-500 hidden md:inline">
-              Přihlášen jako: Koordinátor
-            </span>
 
             <button
               onClick={handleExport}
