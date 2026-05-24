@@ -262,10 +262,10 @@ export default function InstitutionDashboard() {
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {(hydratedPlacements.length > 0 ? hydratedPlacements : placements).map((placement: any) => (
-                <div key={placement.id} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col gap-2">
+                <div key={placement.id} data-testid="assigned-student-card" className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col gap-2">
                   <div className="flex justify-between items-start">
                     <div>
-                      <div className="font-medium text-slate-900">{placement.studentName || 'Načítám...'}</div>
+                      <div className="font-medium text-slate-900" data-testid="student-name">{placement.studentName || 'Načítám...'}</div>
                       <div className="text-xs text-slate-500 font-normal">
                         {hydratedPlacements.length > 0 ? placement.studentEmail : 'Načítám...'}
                       </div>
@@ -275,7 +275,7 @@ export default function InstitutionDashboard() {
                     </span>
                   </div>
                   <div className="text-xs text-slate-500">
-                    <div><span className="font-semibold">Zaměření:</span> {placement.major || 'Načítám...'} &bull; <span className="font-semibold">Organizace:</span> {placement.organization_name || placement.companyData?.name || 'Organizace neuvedena'}</div>
+                    <div><span className="font-semibold">Zaměření:</span> <span data-testid="student-major">{placement.major || 'Načítám...'}</span> &bull; <span className="font-semibold">Organizace:</span> {placement.organization_name || placement.companyData?.name || 'Organizace neuvedena'}</div>
                   </div>
                 </div>
               ))}

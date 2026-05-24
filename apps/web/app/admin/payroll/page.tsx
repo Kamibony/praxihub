@@ -169,8 +169,8 @@ export default function PayrollModule() {
                     <tr><td colSpan={5} className="px-6 py-8 text-center text-slate-500 italic">Žádné schválené praxe k vyúčtování.</td></tr>
                 ) : (
                     payrollData.map((row, idx) => (
-                    <tr key={idx} className="hover:bg-slate-800/30 transition">
-                        <td className="px-6 py-4 font-bold text-slate-200">{row.institutionName}</td>
+                    <tr key={idx} data-testid="payroll-row" className="hover:bg-slate-800/30 transition">
+                        <td className="px-6 py-4 font-bold text-slate-200" data-testid="institution-name">{row.institutionName}</td>
                         <td className="px-6 py-4 font-mono text-slate-400">{row.institutionIco}</td>
                         <td className="px-6 py-4"><span className="px-2 py-1 bg-blue-900/30 text-blue-300 rounded-md font-mono">{row.approvedHoursUPV} h</span></td>
                         <td className="px-6 py-4"><span className="px-2 py-1 bg-indigo-900/30 text-indigo-300 rounded-md font-mono">{row.approvedHoursKPV} h</span></td>
