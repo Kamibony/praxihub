@@ -785,7 +785,7 @@ function StudentDashboardContent() {
             </h4>
 
             <div className="flex-1 flex flex-col gap-3">
-              <Link href="/student/generate" className="block">
+              <Link href="/student/generate" data-testid="generate-contract-link-main" className="block">
                 <div className="w-full h-full p-4 bg-blue-900/20 card-glass border-2 border-blue-800/30 rounded-3xl hover:border-blue-500/50 hover:bg-blue-800/40 transition group cursor-pointer text-center flex flex-col items-center justify-center gap-2">
                   <div className="p-2 card-glass rounded-full text-blue-400 shadow-sm group-hover:scale-110 transition">
                     <span className="text-2xl">📄</span>
@@ -964,6 +964,7 @@ function StudentDashboardContent() {
           <div className="flex flex-col sm:flex-row gap-3 items-stretch w-full md:w-auto">
             <Link
               href="/student/generate"
+              data-testid="generate-contract-link"
               className="text-blue-400 border border-blue-800/50 card-glass px-4 py-3 md:py-2 rounded-2xl font-medium hover:bg-blue-900/40 transition block text-center"
             >
               + Nová smlouva / Opravit
@@ -987,11 +988,11 @@ function StudentDashboardContent() {
               </span>
             </div>
             <div>
-              <h2 className="text-xl font-bold text-white m-0">
+              <h2 className="text-xl font-bold text-white m-0" data-testid="student-name">
                 {user?.displayName || "Student"}
               </h2>
               <div className="flex items-center gap-2 mt-1">
-                <span className="px-2 py-0.5 bg-blue-900/30 text-blue-300 text-xs font-bold rounded-full border border-blue-500/20">
+                <span data-testid="student-major" className="px-2 py-0.5 bg-blue-900/30 text-blue-300 text-xs font-bold rounded-full border border-blue-500/20">
                   {user?.major || "Chybí obor"}
                 </span>
                 <span className="text-slate-400 text-sm">
