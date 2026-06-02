@@ -4,7 +4,7 @@ import { toast } from "react-hot-toast";
 import React, { useState, useEffect } from 'react';
 import { db, functions } from "../../../lib/firebase";
 import { doc, getDoc, serverTimestamp } from "firebase/firestore";
-import { ref, uploadBytes } from "firebase/storage";
+import { ref, uploadBytes, deleteObject } from "firebase/storage";
 import { storage } from "../../../lib/firebase";
 import { httpsCallable } from "firebase/functions";
 
@@ -312,6 +312,23 @@ ${currentRulesObj.kompetencni_ramec}
 
   const [docsList, setDocsList] = useState<{name: string, url: string}[]>([]);
   const [loadingDocs, setLoadingDocs] = useState(false);
+  const [deletingDoc, setDeletingDoc] = useState<string | null>(null);
+
+  const handleDeleteDoc = async (fileName: string, pathPrefix: string) => {
+    if (!confirm(`Opravdu chcete smazat soubor "${fileName}"?`)) return;
+    setDeletingDoc(fileName);
+    try {
+      const storageRef = ref(storage, `global_documents/${pathPrefix}/${activeDept}/${fileName}`);
+      await deleteObject(storageRef);
+      toast.success('Soubor úspěšně smazán.');
+      fetchDocs(pathPrefix);
+    } catch (err: any) {
+      console.error(err);
+      toast.error(`Chyba při mazání souboru: ${err.message}`);
+    } finally {
+      setDeletingDoc(null);
+    }
+  };
 
   const handleMigration = async () => {
     if (!confirm("Are you sure you want to run the institutions migration? This will create users and update placements.")) return;
@@ -763,6 +780,9 @@ ${currentRulesObj.kompetencni_ramec}
                  <p className="text-slate-400 mt-2 pointer-events-none">
                    {uploadingTemplate ? 'Nahrávám...' : 'Klikněte pro nahrání šablony (.pdf, .docx, .pptx) do Firebase Storage.'}
                  </p>
+                 <p className="text-slate-500 text-xs mt-2 pointer-events-none">
+                   Tip: Přehrání existujícího souboru provedete nahráním souboru se stejným názvem.
+                 </p>
               </div>
               <div className="bg-slate-800/50 p-6 rounded-xl border border-white/10 overflow-y-auto h-64">
                 <h3 className="text-sm font-semibold text-slate-300 mb-4 uppercase tracking-wider">Nahrané šablony</h3>
@@ -774,8 +794,18 @@ ${currentRulesObj.kompetencni_ramec}
                   <ul className="space-y-3">
                     {docsList.map((doc) => (
                       <li key={doc.name} className="flex items-center justify-between p-3 bg-slate-900/50 rounded-lg border border-white/5">
-                        <span className="text-sm text-slate-200 truncate pr-4" title={doc.name}>{doc.name}</span>
-                        <a href={doc.url} target="_blank" rel="noopener noreferrer" className="text-indigo-400 hover:text-indigo-300 text-sm font-medium whitespace-nowrap">Stáhnout &rarr;</a>
+                        <span className="text-sm text-slate-200 truncate pr-4 flex-1" title={doc.name}>{doc.name}</span>
+                        <div className="flex items-center gap-3">
+                            <a href={doc.url} target="_blank" rel="noopener noreferrer" className="text-indigo-400 hover:text-indigo-300 text-sm font-medium whitespace-nowrap">Stáhnout</a>
+                            <button
+                                onClick={() => handleDeleteDoc(doc.name, 'templates')}
+                                disabled={deletingDoc === doc.name}
+                                data-testid={`delete-doc-button-${doc.name}`}
+                                className="text-red-400 hover:text-red-300 text-sm font-medium whitespace-nowrap disabled:opacity-50"
+                            >
+                                {deletingDoc === doc.name ? 'Mažu...' : 'Smazat'}
+                            </button>
+                        </div>
                       </li>
                     ))}
                   </ul>
@@ -817,6 +847,9 @@ ${currentRulesObj.kompetencni_ramec}
                  <p className="text-slate-400 mt-2 pointer-events-none">
                    {uploadingCompliance ? 'Nahrávám...' : 'Klikněte pro nahrání rámcové smlouvy (.pdf, .docx, .pptx) do Firebase Storage.'}
                  </p>
+                 <p className="text-slate-500 text-xs mt-2 pointer-events-none">
+                   Tip: Přehrání existujícího souboru provedete nahráním souboru se stejným názvem.
+                 </p>
               </div>
               <div className="bg-slate-800/50 p-6 rounded-xl border border-white/10 overflow-y-auto h-64">
                 <h3 className="text-sm font-semibold text-slate-300 mb-4 uppercase tracking-wider">Nahrané smlouvy</h3>
@@ -828,8 +861,18 @@ ${currentRulesObj.kompetencni_ramec}
                   <ul className="space-y-3">
                     {docsList.map((doc) => (
                       <li key={doc.name} className="flex items-center justify-between p-3 bg-slate-900/50 rounded-lg border border-white/5">
-                        <span className="text-sm text-slate-200 truncate pr-4" title={doc.name}>{doc.name}</span>
-                        <a href={doc.url} target="_blank" rel="noopener noreferrer" className="text-indigo-400 hover:text-indigo-300 text-sm font-medium whitespace-nowrap">Stáhnout &rarr;</a>
+                        <span className="text-sm text-slate-200 truncate pr-4 flex-1" title={doc.name}>{doc.name}</span>
+                        <div className="flex items-center gap-3">
+                            <a href={doc.url} target="_blank" rel="noopener noreferrer" className="text-indigo-400 hover:text-indigo-300 text-sm font-medium whitespace-nowrap">Stáhnout</a>
+                            <button
+                                onClick={() => handleDeleteDoc(doc.name, 'compliance')}
+                                disabled={deletingDoc === doc.name}
+                                data-testid={`delete-doc-button-${doc.name}`}
+                                className="text-red-400 hover:text-red-300 text-sm font-medium whitespace-nowrap disabled:opacity-50"
+                            >
+                                {deletingDoc === doc.name ? 'Mažu...' : 'Smazat'}
+                            </button>
+                        </div>
                       </li>
                     ))}
                   </ul>
