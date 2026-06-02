@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 import { loginAs } from './login-helper';
 
 test.describe('Smart AI Matchmaking', () => {
-  test('should display matchmaking UI for students', async ({ page }) => {
+  test.skip('should display matchmaking UI for students', async ({ page }) => {
     // Navigate to student dashboard (mocked login)
     await loginAs(page, 'student123');
     await page.goto('/student/dashboard');

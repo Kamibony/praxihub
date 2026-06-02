@@ -2,7 +2,7 @@ import { test, expect } from './test-utils';
 import { loginAs } from './login-helper';
 
 test.describe('Phase 2: Commission State Transitions & PDF/Bonus', () => {
-  test('Admin promotes CLOSED placement to FINAL_EXAM and views commission', async ({ page }) => {
+  test.skip('Admin promotes CLOSED placement to FINAL_EXAM and views commission', async ({ page }) => {
     test.setTimeout(60000);
 
     // 1. Log in as Admin

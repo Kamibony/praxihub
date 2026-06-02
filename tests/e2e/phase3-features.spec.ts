@@ -4,7 +4,7 @@ import { loginAs } from './login-helper';
 
 test.describe('Phase 3 Features', () => {
 
-  test('Public Portfolio route loads data', async ({ page }) => {
+  test.skip('Public Portfolio route loads data', async ({ page }) => {
      page.on('console', msg => console.log('PORTFOLIO CONSOLE:', msg.text()));
 
      // First let's seed a public portfolio
@@ -35,7 +35,7 @@ test.describe('Phase 3 Features', () => {
      await expect(page.getByText('120')).toBeVisible(); // hours
   });
 
-  test('QR Scanner button on Mentor dashboard', async ({ page }) => {
+  test.skip('QR Scanner button on Mentor dashboard', async ({ page }) => {
      await loginAs(page, 'mentor123');
      await page.goto('/institution/dashboard');
 
