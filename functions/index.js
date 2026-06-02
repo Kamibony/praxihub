@@ -927,6 +927,18 @@ exports.importRoster = functions
     // Execute processUser in parallel using Promise.all to improve batch import performance
     await Promise.all(mappedData.map((row) => processUser(row)));
 
+    try {
+      await db.collection("import_logs").add({
+        added,
+        updated,
+        ignored,
+        importedBy: context.auth.uid,
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+      });
+    } catch (logError) {
+      console.error("Failed to write import log", logError);
+    }
+
     return { added, updated, ignored };
   });
 

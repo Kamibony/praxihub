@@ -3,7 +3,7 @@ import { toast } from "react-hot-toast";
 
 import React, { useState, useEffect } from 'react';
 import { db, functions } from "../../../lib/firebase";
-import { doc, getDoc, serverTimestamp } from "firebase/firestore";
+import { doc, getDoc, serverTimestamp, collection, query, orderBy, limit, getDocs } from "firebase/firestore";
 import { ref, uploadBytes, deleteObject } from "firebase/storage";
 import { storage } from "../../../lib/firebase";
 import { httpsCallable } from "firebase/functions";
@@ -30,6 +30,9 @@ export default function DocumentCenter() {
   const [importFormat, setImportFormat] = useState('UPV');
   const [importing, setImporting] = useState(false);
   const [importStats, setImportStats] = useState<any>(null);
+
+  const [importLogs, setImportLogs] = useState<any[]>([]);
+  const [loadingLogs, setLoadingLogs] = useState(false);
 
   const [uploadingTemplate, setUploadingTemplate] = useState(false);
   const [uploadingCompliance, setUploadingCompliance] = useState(false);
@@ -228,6 +231,16 @@ ${currentRulesObj.kompetencni_ramec}
 
     if (category === 'AI_RULE') {
       setActiveTab('AI');
+
+      // Upload the document to Storage so it's persisted in the AI Knowledge Base
+      try {
+        const storageRef = ref(storage, `global_documents/ai_rules/${dept}/${droppedFile.name}`);
+        await uploadBytes(storageRef, droppedFile);
+        fetchDocs('ai_rules');
+      } catch (err) {
+        console.error("Failed to upload AI Rule document to storage", err);
+      }
+
       if (routingResult?.extractedRules) {
         const parsedData = routingResult.extractedRules;
         const updateRules = (prev: Snippets) => {
@@ -357,6 +370,15 @@ ${currentRulesObj.kompetencni_ramec}
 
     setParsingPdf(true);
     try {
+      // Upload the document to Storage so it's persisted in the AI Knowledge Base
+      try {
+        const storageRef = ref(storage, `global_documents/ai_rules/${activeDept}/${file.name}`);
+        await uploadBytes(storageRef, file);
+        fetchDocs('ai_rules');
+      } catch (err) {
+        console.error("Failed to upload AI Rule document to storage", err);
+      }
+
       const reader = new FileReader();
       reader.onload = async (event) => {
         const base64String = (event.target?.result as string).split(',')[1];
@@ -427,11 +449,33 @@ ${currentRulesObj.kompetencni_ramec}
     }
   };
 
+  const fetchImportLogs = async () => {
+    setLoadingLogs(true);
+    try {
+      const logsQuery = query(
+        collection(db, 'import_logs'),
+        orderBy('timestamp', 'desc'),
+        limit(10)
+      );
+      const snapshot = await getDocs(logsQuery);
+      const logs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setImportLogs(logs);
+    } catch (e) {
+      console.error("Error fetching import logs", e);
+    } finally {
+      setLoadingLogs(false);
+    }
+  };
+
   useEffect(() => {
     if (activeTab === 'TEMPLATES') {
       fetchDocs('templates');
     } else if (activeTab === 'COMPLIANCE') {
       fetchDocs('compliance');
+    } else if (activeTab === 'AI') {
+      fetchDocs('ai_rules');
+    } else if (activeTab === 'IMPORT') {
+      fetchImportLogs();
     }
   }, [activeTab, activeDept]);
 
@@ -611,6 +655,33 @@ ${currentRulesObj.kompetencni_ramec}
           <div className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Editor */}
             <div className="flex flex-col h-[600px]">
+              <div className="bg-slate-800/50 p-4 rounded-xl border border-white/10 mb-6 overflow-y-auto max-h-48">
+                <h3 className="text-sm font-semibold text-slate-300 mb-4 uppercase tracking-wider">Zdrojové dokumenty (AI Rules)</h3>
+                {loadingDocs ? (
+                  <p className="text-sm text-slate-400">Načítám soubory...</p>
+                ) : docsList.length === 0 ? (
+                  <p className="text-sm text-slate-400 italic">Zatím nebyly nahrány žádné dokumenty pro {activeDept}.</p>
+                ) : (
+                  <ul className="space-y-2">
+                    {docsList.map((doc) => (
+                      <li key={doc.name} className="flex items-center justify-between p-2 bg-slate-900/50 rounded-lg border border-white/5">
+                        <span className="text-sm text-slate-200 truncate pr-4 flex-1" title={doc.name}>{doc.name}</span>
+                        <div className="flex items-center gap-3">
+                            <a href={doc.url} target="_blank" rel="noopener noreferrer" className="text-indigo-400 hover:text-indigo-300 text-sm font-medium whitespace-nowrap">Stáhnout</a>
+                            <button
+                                onClick={() => handleDeleteDoc(doc.name, 'ai_rules')}
+                                disabled={deletingDoc === doc.name}
+                                data-testid={`delete-doc-button-${doc.name}`}
+                                className="text-red-400 hover:text-red-300 text-sm font-medium whitespace-nowrap disabled:opacity-50"
+                            >
+                                {deletingDoc === doc.name ? 'Mažu...' : 'Smazat'}
+                            </button>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
               <div className="flex items-center justify-between mb-4">
                  <h3 className="font-bold font-sans text-slate-100 flex items-center gap-2">
                     🧠 Upravit pravidla pro {activeDept}
@@ -737,7 +808,10 @@ ${currentRulesObj.kompetencni_ramec}
                     Přejít na Správu uživatelů
                   </Link>
                   <button
-                    onClick={() => setImportStats(null)}
+                    onClick={() => {
+                        setImportStats(null);
+                        fetchImportLogs(); // refresh logs after dismiss
+                    }}
                     className="inline-flex items-center gap-2 text-sm font-semibold bg-slate-800/50 px-4 py-2 border border-slate-700 rounded-lg text-slate-200 hover:bg-slate-700 transition"
                   >
                     Nahrát další soubor
@@ -745,6 +819,42 @@ ${currentRulesObj.kompetencni_ramec}
                 </div>
               </div>
             )}
+
+            <div className="mt-12">
+                <h3 className="text-lg font-bold text-slate-200 mb-4 border-b border-white/10 pb-2">Historie importů</h3>
+                {loadingLogs ? (
+                    <p className="text-sm text-slate-400">Načítám historii...</p>
+                ) : importLogs.length === 0 ? (
+                    <p className="text-sm text-slate-400 italic">Zatím nebyly provedeny žádné importy.</p>
+                ) : (
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left text-sm text-slate-300">
+                            <thead className="text-xs text-slate-400 uppercase bg-slate-900/50">
+                                <tr>
+                                    <th className="px-4 py-3 rounded-tl-lg">Datum</th>
+                                    <th className="px-4 py-3">Přidáno</th>
+                                    <th className="px-4 py-3">Aktualizováno</th>
+                                    <th className="px-4 py-3">Ignorováno</th>
+                                    <th className="px-4 py-3 rounded-tr-lg">Provedl (UID)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {importLogs.map((log) => (
+                                    <tr key={log.id} className="border-b border-white/5 bg-slate-800/30 hover:bg-slate-800/50 transition">
+                                        <td className="px-4 py-3 font-medium whitespace-nowrap">
+                                            {log.timestamp ? new Date(log.timestamp.seconds * 1000).toLocaleString('cs-CZ') : 'Neznámé'}
+                                        </td>
+                                        <td className="px-4 py-3 text-green-400">+{log.added}</td>
+                                        <td className="px-4 py-3 text-blue-400">~{log.updated}</td>
+                                        <td className="px-4 py-3 text-slate-500">{log.ignored}</td>
+                                        <td className="px-4 py-3 font-mono text-xs">{log.importedBy}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+            </div>
           </div>
         )}
 
