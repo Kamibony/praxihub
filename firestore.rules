@@ -40,13 +40,13 @@ service cloud.firestore {
 
       // Restrict update: do not allow the client to update the 'status' field directly.
       allow update: if request.auth != null && hasNoDenormalizedFields()
-                    && (isAdmin() || !request.resource.data.diff(resource.data).affectedKeys().hasAny(['status']));
+                    && (isAdmin() || isCoordinator() || !request.resource.data.diff(resource.data).affectedKeys().hasAny(['status']));
 
-      allow delete: if request.auth != null && resource.data.studentId == request.auth.uid;
+      allow delete: if request.auth != null && (resource.data.studentId == request.auth.uid || isAdmin() || isCoordinator());
 
       match /time_logs/{logId} {
-        allow create, read: if request.auth != null && request.auth.uid == get(/databases/$(database)/documents/placements/$(placementId)).data.studentId;
-        allow read, update: if request.auth != null && request.auth.uid == get(/databases/$(database)/documents/placements/$(placementId)).data.mentorId;
+        allow create, read: if request.auth != null && (request.auth.uid == get(/databases/$(database)/documents/placements/$(placementId)).data.studentId || isAdmin() || isCoordinator());
+        allow read, update: if request.auth != null && (request.auth.uid == get(/databases/$(database)/documents/placements/$(placementId)).data.mentorId || isAdmin() || isCoordinator());
       }
     }
 

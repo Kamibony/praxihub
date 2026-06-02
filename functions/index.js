@@ -221,8 +221,10 @@ exports.createContractPDF = functions
       const uid = decodedToken.uid;
 
       const data = req.body.data || req.body;
-      const { studentName, companyName, ico, startDate, endDate, position } =
+      const { studentName, companyName, ico, startDate, endDate, position, targetUserId } =
         data;
+
+      const targetUid = (targetUserId && (decodedToken.role === 'admin' || decodedToken.role === 'coordinator')) ? targetUserId : uid;
       if (
         !studentName ||
         !companyName ||
@@ -314,7 +316,7 @@ exports.createContractPDF = functions
         console.log("Bucket name:", bucket.name); // Debug log as requested
 
         const fileName = `generated_contract_${Date.now()}.pdf`;
-        const filePath = `contracts/${uid}/${fileName}`;
+        const filePath = `contracts/${targetUid}/${fileName}`;
         const file = bucket.file(filePath);
 
         await file.save(pdfBytes, {
@@ -955,7 +957,9 @@ exports.evaluateReflection = functions.runWith({ memory: "1GB", timeoutSeconds: 
 
   const placementData = placementDoc.data();
 
-  if (placementData.studentId !== context.auth.uid) {
+  const isAdminOrCoordinator = context.auth.token.role === 'admin' || context.auth.token.role === 'coordinator';
+
+  if (placementData.studentId !== context.auth.uid && !isAdminOrCoordinator) {
     throw new functions.https.HttpsError(
       "permission-denied",
       "Nemáte oprávnění hodnotit tuto praxi.",
@@ -1229,8 +1233,10 @@ exports.signContract = functions.https.onCall(async (data, context) => {
 
     const placementData = doc.data();
 
+    const isAdminOrCoordinator = context.auth.token.role === 'admin' || context.auth.token.role === 'coordinator';
+
     // Check permissions
-    if (role === "student" && placementData.studentId !== context.auth.uid) {
+    if (role === "student" && placementData.studentId !== context.auth.uid && !isAdminOrCoordinator) {
       throw new functions.https.HttpsError(
         "permission-denied",
         "Nemáte oprávnění podepsat za studenta.",
@@ -1276,7 +1282,8 @@ exports.signContract = functions.https.onCall(async (data, context) => {
     if (
       role === "company" &&
       placementData.organizationId !== context.auth.uid &&
-      placementData.mentorId !== context.auth.uid
+      placementData.mentorId !== context.auth.uid &&
+      !isAdminOrCoordinator
     ) {
       throw new functions.https.HttpsError(
         "permission-denied",

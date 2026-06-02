@@ -1,10 +1,27 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
+    function isAdminOrCoordinator() {
+      return request.auth != null && request.auth.token.role in ['admin', 'coordinator'];
+    }
+
     match /contracts/{userId}/{fileName} {
-      allow read: if request.auth != null && (request.auth.uid == userId || request.auth.token.role in ['admin', 'coordinator']);
-      allow create: if request.auth != null && (request.auth.uid == userId || request.auth.token.role in ['admin', 'coordinator']);
+      allow read, create: if request.auth != null && (request.auth.uid == userId || isAdminOrCoordinator());
       allow update, delete: if false; // WORM compliance
+    }
+
+    match /users/{userId}/{allPaths=**} {
+      allow read, write: if request.auth != null && (request.auth.uid == userId || isAdminOrCoordinator());
+    }
+
+    match /methodologies/{fileName} {
+      allow read: if request.auth != null;
+      allow write: if isAdminOrCoordinator();
+    }
+
+    match /templates/{fileName} {
+      allow read: if request.auth != null;
+      allow write: if isAdminOrCoordinator();
     }
     match /certificates/{fileName} {
       allow get: if true; // Public access to certificates so the verify page works
