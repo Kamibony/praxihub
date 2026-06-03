@@ -1861,6 +1861,67 @@ exports.sanitizeProductionDatabase = sanitizeDb.sanitizeProductionDatabase;
 const usersModule = require("./users");
 exports.createUserManually = usersModule.createUserManually;
 
+exports.migrateStorage = functions
+  .runWith({ timeoutSeconds: 540, memory: "1GB" })
+  .https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError("unauthenticated", "Must be logged in.");
+  }
+  const userDoc = await admin.firestore().collection("users").doc(context.auth.uid).get();
+  if (!userDoc.exists || (userDoc.data().role !== "admin" && userDoc.data().role !== "coordinator")) {
+    throw new functions.https.HttpsError("permission-denied", "Nemáte oprávnění.");
+  }
+
+  const bucket = admin.storage().bucket();
+  console.log("Starting storage migration via Cloud Function...");
+
+  try {
+      const [files] = await bucket.getFiles();
+      console.log(`Found ${files.length} total files in bucket.`);
+
+      let migratedCount = 0;
+
+      for (const file of files) {
+          const path = file.name;
+          let newPath = null;
+
+          if (path.startsWith('templates/')) {
+              const fileName = path.replace('templates/', '');
+              if (fileName && !fileName.includes('/')) {
+                   newPath = `global_documents/templates/UPV/${fileName}`;
+              }
+          } else if (path.startsWith('compliance/')) {
+              const fileName = path.replace('compliance/', '');
+              if (fileName && !fileName.includes('/')) {
+                   newPath = `global_documents/compliance/UPV/${fileName}`;
+              }
+          } else if (path.startsWith('methodologies/')) {
+              const fileName = path.replace('methodologies/', '');
+              if (fileName && !fileName.includes('/')) {
+                   newPath = `global_documents/ai_rules/UPV/${fileName}`;
+              }
+          } else if (path.startsWith('global_documents/') && path.split('/').length === 2) {
+              const fileName = path.replace('global_documents/', '');
+              if (fileName && !fileName.includes('/')) {
+                   newPath = `global_documents/templates/UPV/${fileName}`;
+              }
+          }
+
+          if (newPath) {
+              console.log(`Moving: ${path} -> ${newPath}`);
+              await file.move(newPath);
+              migratedCount++;
+          }
+      }
+
+      console.log(`Migration complete. Moved ${migratedCount} files.`);
+      return { success: true, migratedCount };
+  } catch (e) {
+      console.error("Migration error:", e);
+      throw new functions.https.HttpsError("internal", e.message);
+  }
+});
+
 exports.migrateInstitutions = functions
   .runWith({ timeoutSeconds: 540, memory: "1GB" })
   .https.onCall(async (data, context) => {
