@@ -344,16 +344,20 @@ ${currentRulesObj.kompetencni_ramec}
   };
 
   const handleMigration = async () => {
-    if (!confirm("Are you sure you want to run the institutions migration? This will create users and update placements.")) return;
+    if (!confirm("Are you sure you want to run the document storage migration? This will migrate all legacy documents to the new secure global storage and permanently delete legacy paths.")) return;
     setRunningMigration(true);
     try {
-      const migrateFn = httpsCallable(functions, 'migrateInstitutions');
+      const migrateFn = httpsCallable(functions, 'migrateStorage');
       const res = await migrateFn();
-      const data = res.data as { success: boolean; createdCount: number; updatedCount: number };
-      toast.success(`Migrace úspěšná! Vytvořeno institucí: ${data.createdCount}, Aktualizováno smluv: ${data.updatedCount}`);
+      const data = res.data as { success: boolean; migratedCount: number };
+      toast.success(`Migrace úspěšná! Přesunuto souborů: ${data.migratedCount}`);
+      // Also refetch docs to update UI if they are on current tab
+      if (activeTab === 'TEMPLATES') fetchDocs('templates');
+      if (activeTab === 'COMPLIANCE') fetchDocs('compliance');
+      if (activeTab === 'AI') fetchDocs('ai_rules');
     } catch (e: any) {
       console.error(e);
-      toast.success(`Chyba při migraci: ${e.message}`);
+      toast.error(`Chyba při migraci: ${e.message}`);
     }
     setRunningMigration(false);
   };
