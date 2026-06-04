@@ -10,13 +10,15 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+        sans: ['"Poppins"', 'sans-serif'],
       },
       colors: {
+        brand: {
+          500: '#6366f1',
+        },
         slate: {
           900: '#0f172a',
           800: '#1e293b',
-          900: '#0f172a',
         },
         indigo: {
           900: '#312e81',

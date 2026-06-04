@@ -5,7 +5,7 @@ import { db } from "../../../lib/firebase";
 import { collection, query, where, getDocs, doc, getDoc } from "firebase/firestore";
 import Navbar from "@/components/Navbar";
 import Link from 'next/link';
-import UatGate from '@/components/UatGate';
+
 
 export default function PayrollModule() {
   const [loading, setLoading] = useState(true);
@@ -114,7 +114,7 @@ export default function PayrollModule() {
   if (loading) return <div className="p-8 text-white">Načítám výkaz...</div>;
 
   return (
-    <UatGate>
+
     <div className="min-h-screen bg-transparent">
       <Navbar />
       <div className="pt-24 pb-12 px-6 max-w-7xl mx-auto">
@@ -185,6 +185,6 @@ export default function PayrollModule() {
 
       </div>
     </div>
-    </UatGate>
+
   );
 }

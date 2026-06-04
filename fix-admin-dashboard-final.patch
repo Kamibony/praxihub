@@ -1,0 +1,206 @@
+--- apps/web/app/admin/dashboard/page.tsx
++++ apps/web/app/admin/dashboard/page.tsx
+@@ -107,31 +107,6 @@
+     }
+   }, [viewMode]);
+
+-  // Global Documents state
+-  const [globalDocs, setGlobalDocs] = useState<
+-    { name: string; url: string; path: string; size: string }[]
+-  >([]);
+-  const [loadingDocs, setLoadingDocs] = useState(false);
+-
+-  useEffect(() => {
+-    if (activeTab === "documents") {
+-      fetchGlobalDocs();
+-    }
+-  }, [activeTab]);
+-
+-  const fetchGlobalDocs = async () => {
+-    setLoadingDocs(true);
+-    try {
+-      const listRef = ref(storage, "global_documents");
+-      const res = await listAll(listRef);
+-      const docs = await Promise.all(
+-        res.items.map(async (itemRef) => {
+-          const url = await getDownloadURL(itemRef);
+-          const metadata = await getMetadata(itemRef);
+-          const size = (metadata.size / 1024 / 1024).toFixed(2) + " MB";
+-          return { name: itemRef.name, url, path: itemRef.fullPath, size };
+-        }),
+-      );
+-      setGlobalDocs(docs);
+-    } catch (error) {
+-      console.error("Error fetching global docs:", error);
+-    } finally {
+-      setLoadingDocs(false);
+-    }
+-  };
+-
+-  const handleGlobalDocUpload = async (
+-    e: React.ChangeEvent<HTMLInputElement>,
+-  ) => {
+-    const file = e.target.files?.[0];
+-    if (!file) return;
+-    try {
+-      const storageRef = ref(storage, `global_documents/${file.name}`);
+-      await uploadBytes(storageRef, file);
+-      fetchGlobalDocs();
+-    } catch (error) {
+-      console.error("Error uploading doc:", error);
+-      alert("Chyba při nahrávání dokumentu.");
+-    }
+-  };
+-
+-  const handleGlobalDocDelete = async (path: string) => {
+-    if (!confirm("Opravdu chcete tento dokument smazat?")) return;
+-    try {
+-      const docRef = ref(storage, path);
+-      await deleteObject(docRef);
+-      fetchGlobalDocs();
+-    } catch (error) {
+-      console.error("Error deleting doc:", error);
+-      alert("Chyba při mazání dokumentu.");
+-    }
+-  };
+-
+   const getCompanyAverageRating = (ico: string) => {
+     if (!ico) return null;
+@@ -494,15 +469,6 @@
+             </button>
+-            <button
+-              onClick={() => setActiveTab("documents")}
+-              className={`px-4 py-2 font-medium border-b-2 transition-colors ${
+-                activeTab === "documents"
+-                  ? "border-blue-600 text-blue-600"
+-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+-              }`}
+-            >
+-              Globální dokumenty
+-            </button>
+           </div>
+
+           {/* Tab Content */}
+@@ -1072,106 +1038,6 @@
+             </div>
+           )}
+-
+-          {activeTab === "documents" && (
+-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+-              <div className="flex items-center justify-between mb-6">
+-                <h2 className="text-xl font-bold text-gray-900">
+-                  Globální šablony a dokumenty
+-                </h2>
+-                <label className="cursor-pointer bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors inline-flex items-center gap-2">
+-                  <svg
+-                    className="w-5 h-5"
+-                    fill="none"
+-                    stroke="currentColor"
+-                    viewBox="0 0 24 24"
+-                  >
+-                    <path
+-                      strokeLinecap="round"
+-                      strokeLinejoin="round"
+-                      strokeWidth={2}
+-                      d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+-                    />
+-                  </svg>
+-                  Nahrát dokument
+-                  <input
+-                    type="file"
+-                    className="hidden"
+-                    onChange={handleGlobalDocUpload}
+-                  />
+-                </label>
+-              </div>
+-
+-              {loadingDocs ? (
+-                <div className="py-8 flex justify-center">
+-                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-600"></div>
+-                </div>
+-              ) : globalDocs.length === 0 ? (
+-                <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
+-                  <svg
+-                    className="mx-auto h-12 w-12 text-gray-400"
+-                    fill="none"
+-                    stroke="currentColor"
+-                    viewBox="0 0 24 24"
+-                  >
+-                    <path
+-                      strokeLinecap="round"
+-                      strokeLinejoin="round"
+-                      strokeWidth={1}
+-                      d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+-                    />
+-                  </svg>
+-                  <h3 className="mt-2 text-sm font-medium text-gray-900">
+-                    Žádné dokumenty
+-                  </h3>
+-                  <p className="mt-1 text-sm text-gray-500">
+-                    Zatím nebyly nahrány žádné globální šablony.
+-                  </p>
+-                </div>
+-              ) : (
+-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+-                  {globalDocs.map((doc, idx) => (
+-                    <div
+-                      key={idx}
+-                      className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-sm transition-all bg-gray-50"
+-                    >
+-                      <div className="flex items-center gap-3 overflow-hidden">
+-                        <div className="p-2 bg-blue-100 text-blue-600 rounded-lg shrink-0">
+-                          <svg
+-                            className="w-6 h-6"
+-                            fill="none"
+-                            stroke="currentColor"
+-                            viewBox="0 0 24 24"
+-                          >
+-                            <path
+-                              strokeLinecap="round"
+-                              strokeLinejoin="round"
+-                              strokeWidth={2}
+-                              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+-                            />
+-                          </svg>
+-                        </div>
+-                        <div className="min-w-0">
+-                          <a
+-                            href={doc.url}
+-                            target="_blank"
+-                            rel="noreferrer"
+-                            className="text-sm font-medium text-gray-900 hover:text-blue-600 truncate block"
+-                          >
+-                            {doc.name}
+-                          </a>
+-                          <p className="text-xs text-gray-500">
+-                            {doc.size}
+-                          </p>
+-                        </div>
+-                      </div>
+-                      <button
+-                        onClick={() => handleGlobalDocDelete(doc.path)}
+-                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors shrink-0"
+-                        title="Smazat dokument"
+-                      >
+-                        <svg
+-                          className="w-5 h-5"
+-                          fill="none"
+-                          stroke="currentColor"
+-                          viewBox="0 0 24 24"
+-                        >
+-                          <path
+-                            strokeLinecap="round"
+-                            strokeLinejoin="round"
+-                            strokeWidth={2}
+-                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+-                          />
+-                        </svg>
+-                      </button>
+-                    </div>
+-                  ))}
+-                </div>
+-              )}
+-            </div>
+-          )}
+         </div>
+       </div>

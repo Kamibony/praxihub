@@ -487,7 +487,7 @@ ${currentRulesObj.kompetencni_ramec}
   if (loading) return <div className="p-8">Načítám...</div>;
 
   return (
-    <div className="min-h-screen bg-transparent">
+    <div className="min-h-screen bg-[var(--bg-color)]">
       <Navbar />
       <div className="pt-24 pb-12 px-6 max-w-7xl mx-auto">
         <div className="flex justify-between items-start mb-2">
