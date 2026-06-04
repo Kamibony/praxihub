@@ -58,7 +58,7 @@ function CoordinatorDashboardContent() {
 
   // View mode state
   const [viewMode, setViewMode] = useState<
-    "PLACEMENTS" | "DOCUMENTS" | "COMPLIANCE" | "PAYROLL" | "COMMISSIONS"
+    "PLACEMENTS" | "COMPLIANCE" | "PAYROLL" | "COMMISSIONS"
   >("PLACEMENTS");
 
   // Commissions state
@@ -71,13 +71,6 @@ function CoordinatorDashboardContent() {
 
   // Institutions (Compliance) state
   const [institutions, setInstitutions] = useState<any[]>([]);
-
-  // Global Documents state
-  const [globalDocs, setGlobalDocs] = useState<
-    { name: string; url: string; path: string }[]
-  >([]);
-  const [loadingDocs, setLoadingDocs] = useState(false);
-  const [uploadingDoc, setUploadingDoc] = useState(false);
 
   const router = useRouter();
 
@@ -123,11 +116,8 @@ function CoordinatorDashboardContent() {
     };
   }, [router]);
 
-  // Load Global Documents and Institutions
+  // Load Institutions
   useEffect(() => {
-    if (viewMode === "DOCUMENTS") {
-      fetchGlobalDocs();
-    }
     if (viewMode === "COMPLIANCE") {
       // Setup listener for institutions
       const q = query(collection(db, "users"), orderBy("createdAt", "desc"));
@@ -166,63 +156,6 @@ function CoordinatorDashboardContent() {
       };
     }
   }, [viewMode]);
-
-  const fetchGlobalDocs = async () => {
-    setLoadingDocs(true);
-    try {
-      const listRef = ref(storage, "global_documents");
-      const res = await listAll(listRef);
-      const docs = await Promise.all(
-        res.items.map(async (itemRef) => {
-          const url = await getDownloadURL(itemRef);
-          return {
-            name: itemRef.name,
-            url,
-            path: itemRef.fullPath,
-          };
-        }),
-      );
-      setGlobalDocs(docs);
-    } catch (error) {
-      console.error("Error fetching global docs:", error);
-    } finally {
-      setLoadingDocs(false);
-    }
-  };
-
-  const handleGlobalDocUpload = async (
-    e: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setUploadingDoc(true);
-    try {
-      const storageRef = ref(storage, `global_documents/${file.name}`);
-      await uploadBytes(storageRef, file);
-      toast.success("Dokument úspěšně nahrán.");
-      fetchGlobalDocs();
-    } catch (error) {
-      console.error("Upload failed", error);
-      toast.error("Chyba při nahrávání dokumentu.");
-    } finally {
-      setUploadingDoc(false);
-      e.target.value = "";
-    }
-  };
-
-  const handleGlobalDocDelete = async (path: string) => {
-    if (!confirm("Opravdu chcete smazat tento dokument?")) return;
-    try {
-      const docRef = ref(storage, path);
-      await deleteObject(docRef);
-      toast.success("Dokument byl smazán.");
-      fetchGlobalDocs();
-    } catch (error) {
-      console.error("Delete failed", error);
-      toast.error("Chyba při mazání dokumentu.");
-    }
-  };
 
   const getCompanyAverageRating = (ico: string) => {
     if (!ico) return null;
@@ -557,13 +490,6 @@ function CoordinatorDashboardContent() {
             Přehled praxí
           </button>
           <button
-            onClick={() => setViewMode("DOCUMENTS")}
-            className={`py-3 px-6 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 whitespace-nowrap ${viewMode === "DOCUMENTS" ? "border-blue-600 text-blue-600" : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"}`}
-          >
-            <FileText size={16} />
-            Globální Dokumenty
-          </button>
-          <button
             onClick={() => setViewMode("COMPLIANCE")}
             className={`py-3 px-6 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 whitespace-nowrap ${viewMode === "COMPLIANCE" ? "border-blue-600 text-blue-600" : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"}`}
           >
@@ -631,80 +557,7 @@ function CoordinatorDashboardContent() {
           </div>
         )}
 
-        {viewMode === "DOCUMENTS" ? (
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-              <div>
-                <h2 className="text-xl font-bold text-gray-900">
-                  Správa Globálních Dokumentů
-                </h2>
-                <p className="text-gray-500 text-sm mt-1">
-                  Zde můžete nahrát šablony, KRAU metodiky a další veřejné
-                  soubory pro studenty.
-                </p>
-              </div>
-              <label
-                className={`flex items-center gap-2 text-sm px-4 py-3 md:py-2 border rounded-lg cursor-pointer transition-colors w-full md:w-auto justify-center ${uploadingDoc ? "bg-gray-100 text-gray-400 border-gray-200" : "bg-blue-600 border-blue-700 text-white hover:bg-blue-700"}`}
-              >
-                <Upload size={16} />
-                {uploadingDoc ? "Nahrávám..." : "Nahrát dokument"}
-                <input
-                  type="file"
-                  className="hidden"
-                  onChange={handleGlobalDocUpload}
-                  disabled={uploadingDoc}
-                />
-              </label>
-            </div>
-
-            {loadingDocs ? (
-              <div className="text-center py-8 text-gray-500">
-                Načítám dokumenty...
-              </div>
-            ) : globalDocs.length === 0 ? (
-              <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
-                <FileText className="mx-auto h-12 w-12 text-gray-400 mb-3" />
-                <h3 className="text-sm font-medium text-gray-900">
-                  Žádné dokumenty
-                </h3>
-                <p className="mt-1 text-sm text-gray-500">
-                  Zatím nebyly nahrány žádné globální dokumenty.
-                </p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {globalDocs.map((doc, idx) => (
-                  <div
-                    key={idx}
-                    className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-sm transition-all bg-gray-50"
-                  >
-                    <div className="flex items-center gap-3 overflow-hidden">
-                      <div className="p-2 bg-blue-100 text-blue-600 rounded-lg shrink-0">
-                        <FileText size={20} />
-                      </div>
-                      <a
-                        href={doc.url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-sm font-medium text-gray-900 truncate hover:text-blue-600 hover:underline block"
-                        title={doc.name}
-                      >
-                        {doc.name}
-                      </a>
-                    </div>
-                    <button
-                      onClick={() => handleGlobalDocDelete(doc.path)}
-                      className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors shrink-0"
-                      title="Smazat dokument"
-                    >
-                      <Trash2 size={18} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        ) : viewMode === "PAYROLL" ? (
+        {viewMode === "PAYROLL" ? (
           <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
               <div>
