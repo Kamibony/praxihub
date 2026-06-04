@@ -335,14 +335,14 @@ export default function UserManagementPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="min-h-screen bg-transparent flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 p-8">
+    <div className="min-h-screen bg-transparent p-8">
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-8">
           <div>
@@ -379,7 +379,7 @@ export default function UserManagementPage() {
              )}
             <Link
               href="/admin/dashboard"
-              className="px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 transition"
+              className="px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg hover:bg-transparent transition"
             >
               Zpět na Dashboard
             </Link>
@@ -446,7 +446,7 @@ export default function UserManagementPage() {
                         <button
                             type="button"
                             onClick={() => setShowNewUserModal(false)}
-                            className="flex-1 py-2 px-4 border border-slate-300 rounded-lg text-slate-700 font-semibold hover:bg-slate-50 transition"
+                            className="flex-1 py-2 px-4 border border-slate-300 rounded-lg text-slate-700 font-semibold hover:bg-transparent transition"
                             disabled={isCreatingUser}
                         >
                             Zrušit
@@ -572,7 +572,7 @@ export default function UserManagementPage() {
                         <button
                             type="button"
                             onClick={() => setShowEditUserModal(false)}
-                            className="flex-1 py-2 px-4 border border-slate-300 rounded-lg text-slate-700 font-semibold hover:bg-slate-50 transition"
+                            className="flex-1 py-2 px-4 border border-slate-300 rounded-lg text-slate-700 font-semibold hover:bg-transparent transition"
                             disabled={isEditingUser}
                         >
                             Zrušit
@@ -622,7 +622,7 @@ export default function UserManagementPage() {
                 <div className="flex gap-4">
                     <button
                         onClick={() => setShowWipeModal(false)}
-                        className="flex-1 py-2 px-4 border border-slate-300 rounded-lg text-slate-700 font-semibold hover:bg-slate-50 transition"
+                        className="flex-1 py-2 px-4 border border-slate-300 rounded-lg text-slate-700 font-semibold hover:bg-transparent transition"
                         disabled={wipingDb}
                     >
                         Zrušit
@@ -642,7 +642,7 @@ export default function UserManagementPage() {
         )}
 
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-          <div className="p-4 border-b border-slate-200 bg-slate-50 flex flex-col md:flex-row gap-4 justify-between items-center">
+          <div className="p-4 border-b border-slate-200 bg-transparent flex flex-col md:flex-row gap-4 justify-between items-center">
             <div className="relative w-full md:w-96">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
               <input
@@ -671,7 +671,7 @@ export default function UserManagementPage() {
 
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
-              <thead className="bg-slate-50 text-slate-600 font-medium border-b border-slate-200">
+              <thead className="bg-transparent text-slate-600 font-medium border-b border-slate-200">
                 <tr>
                   <th className="px-6 py-4">Jméno / E-mail</th>
                   <th className="px-6 py-4">Role</th>
@@ -686,7 +686,7 @@ export default function UserManagementPage() {
                   filteredUsers.map((u) => (
                     <tr
                       key={u.id}
-                      className="hover:bg-slate-50 transition cursor-pointer"
+                      className="hover:bg-transparent transition cursor-pointer"
                       onClick={() => setSelectedUser(u)}
                     >
                       <td className="px-6 py-4">
@@ -721,7 +721,7 @@ export default function UserManagementPage() {
             </table>
           </div>
 
-          <div className="p-4 border-t border-slate-200 bg-slate-50 text-xs text-slate-500 flex justify-between items-center">
+          <div className="p-4 border-t border-slate-200 bg-transparent text-xs text-slate-500 flex justify-between items-center">
             <span>Celkem zobrazeno: {filteredUsers.length}</span>
             <span>Systémový modul správy uživatelů</span>
           </div>
@@ -736,7 +736,7 @@ export default function UserManagementPage() {
             onClick={() => setSelectedUser(null)}
           ></div>
           <div className="fixed inset-y-0 right-0 w-full max-w-md bg-white shadow-2xl z-50 transform transition-transform duration-300 overflow-y-auto border-l border-slate-200 flex flex-col">
-            <div className="p-6 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+            <div className="p-6 border-b border-slate-200 flex items-center justify-between bg-transparent">
               <h2 className="text-xl font-bold text-slate-900">Detail uživatele</h2>
               <button
                 onClick={() => setSelectedUser(null)}
@@ -758,7 +758,7 @@ export default function UserManagementPage() {
                   </div>
                </div>
 
-               <div className="bg-slate-50 rounded-xl p-5 border border-slate-200 space-y-4">
+               <div className="bg-transparent rounded-xl p-5 border border-slate-200 space-y-4">
                   <h4 className="text-sm font-semibold text-slate-900 uppercase tracking-wider mb-2">Informace</h4>
                   <div className="grid grid-cols-2 gap-y-4 text-sm">
                     <div>
@@ -803,7 +803,7 @@ export default function UserManagementPage() {
                </div>
             </div>
 
-            <div className="p-6 border-t border-slate-200 bg-slate-50 space-y-3">
+            <div className="p-6 border-t border-slate-200 bg-transparent space-y-3">
                <button
                   onClick={() => {
                     handleImpersonate(selectedUser.id, selectedUser.name || selectedUser.displayName);

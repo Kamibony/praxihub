@@ -1,0 +1,16 @@
+
+> web@0.1.0 dev
+> next dev
+
+ ⚠ Port 3000 is in use, trying 3001 instead.
+ ⚠ Port 3001 is in use, trying 3002 instead.
+ ⚠ Port 3002 is in use, trying 3003 instead.
+ ⚠ Port 3003 is in use, trying 3004 instead.
+  ▲ Next.js 14.2.3
+  - Local:        http://localhost:3004
+
+ ✓ Starting...
+npm error code ENOWORKSPACES
+npm error This command does not support workspaces.
+npm error A complete log of this run can be found in: /home/jules/.npm/_logs/2026-06-04T12_51_44_164Z-debug-0.log
+ ✓ Ready in 3.9s

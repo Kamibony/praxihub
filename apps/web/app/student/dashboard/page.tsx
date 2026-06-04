@@ -26,7 +26,7 @@ import ContractSignature from "@/components/ContractSignature";
 
 import QRCode from "react-qr-code";
 import SHA256 from "crypto-js/sha256";
-import UatGate from "@/components/UatGate";
+
 import ErrorBoundary from "@/components/ErrorBoundary";
 import DashboardSkeleton from "@/components/skeletons/DashboardSkeleton";
 import RoleBadge from "@/components/RoleBadge";
@@ -1388,7 +1388,7 @@ function StudentDashboardContent() {
 
                           {/* 3-PILLAR PRACTICE UI (Náslechy, Výstupy, Reflexe) */}
                           {(placement.status === "APPROVED" || placement.status === "ACTIVE" || placement.status === "EVALUATION" || placement.status === "CLOSED") && (
-                            <UatGate>
+
                             <div className="mt-8 bg-slate-900/50 card-glass rounded-3xl overflow-hidden border border-white/10">
                                <div className="flex border-b border-white/10">
                                   <button onClick={() => setActiveTab('náslechy')} className={`flex-1 py-4 text-sm font-bold tracking-wider uppercase transition-colors ${activeTab === 'náslechy' ? 'bg-blue-600/20 text-blue-400 border-b-2 border-blue-500' : 'text-slate-400 hover:bg-white/5'}`}>Náslechy</button>
@@ -1717,7 +1717,7 @@ function StudentDashboardContent() {
                                   )}
                                </div>
                             </div>
-                            </UatGate>
+
                           )}
 
                           {/* HODNOCENÍ PRAXE (Dostupné pro APPROVED, EVALUATION, CLOSED) */}
@@ -1801,7 +1801,7 @@ function StudentDashboardContent() {
           <div className="space-y-6">
             {/* Circular Progress Component */}
             {placement && ["APPROVED", "ACTIVE", "EVALUATION", "CLOSED"].includes(placement.status) && (
-              <UatGate>
+
               <div className="card-glass p-6 rounded-3xl shadow-sm border border-white/5 text-center">
                 <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4">
                   Postup praxe
@@ -1875,7 +1875,7 @@ function StudentDashboardContent() {
                   }
                 })()}
               </div>
-              </UatGate>
+
             )}
 
             {/* QR Kód pro mentora */}

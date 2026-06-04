@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
-import "@fontsource/plus-jakarta-sans";
+import "@fontsource/poppins";
 import "./globals.css";
 import Chatbot from "../components/Chatbot";
 import Navbar from "../components/Navbar";
-import UatGate from "../components/UatGate";
 import ImpersonationBanner from "../components/ImpersonationBanner";
 import CommandPalette from "../components/CommandPalette";
 import { Toaster } from "react-hot-toast";
 import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "../contexts/AuthContext";
+import AppShell from "../components/AppShell";
 
 export const metadata: Metadata = {
   title: "PraxiHub",
@@ -26,13 +26,9 @@ export default function RootLayout({
         <ThemeProvider attribute="data-theme" defaultTheme="dark" enableSystem={false}>
           <AuthProvider>
             <ImpersonationBanner />
-            <UatGate>
-              <Navbar />
-              <CommandPalette />
-              {children}
+                                                      <AppShell><Navbar /><CommandPalette />{children}</AppShell>
               <Chatbot />
-            </UatGate>
-            <Toaster position="bottom-right" />
+                        <Toaster position="bottom-right" />
           </AuthProvider>
         </ThemeProvider>
       </body>

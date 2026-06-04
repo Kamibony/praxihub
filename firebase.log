@@ -1,18 +1,63 @@
-(node:167092) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(node:115280) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
 (Use `node --trace-deprecation ...` to show where the warning was created)
 i  emulators: Starting emulators: auth, functions, firestore, storage
 i  emulators: Detected demo project ID "demo-project", emulated services will use a demo configuration and attempts to access non-emulated services for this project will fail.
-⚠  firestore: Port 8080 is not open on localhost (127.0.0.1), could not start Firestore Emulator.
-⚠  firestore: To select a different host/port, specify that host/port in a firebase.json config file:
-      {
-        // ...
-        "emulators": {
-          "firestore": {
-            "host": "HOST",
-            "port": "PORT"
-          }
-        }
-      }
-i  emulators: Shutting down emulators.
+i  firestore: Firestore Emulator logging to firestore-debug.log
+✔  firestore: Firestore Emulator was started in standard edition.
+✔  firestore: Firestore Emulator UI websocket is running on 9150.
+i  functions: Watching "/app/functions" for Cloud Functions...
+⚠  functions: package.json indicates an outdated version of firebase-functions. Please upgrade using npm install --save firebase-functions@latest in your functions directory.
+⚠  functions: Your requested "node" version "20" doesn't match your global version "22". Using node@22 from host.
+Serving at port 8290
 
-Error: Could not start Firestore Emulator, port taken.
+✔  functions: Loaded functions definitions from source: analyzeContract, sendEmailNotification, chatWithAI, createContractPDF, findMatches, transitionPlacementState, importRoster, evaluateReflection, signContract, generatePayrollReport, testEvaluateReflection, generateCommissionDecree, resolveLoginIdentifier, updateSystemConfig, correctReflectionGrammar, updatePublicPortfolio, pingMentorsScheduled, getImpersonationToken, stopImpersonating, sanitizeProductionDatabase, createUserManually, migrateStorage, migrateInstitutions, fetchAresAndLink, generateShowcaseNarration, routeDocument, parseDocumentForAI, generateSkillMatrixPDF, submitMobileContract.
+✔  functions[us-central1-analyzeContract]: firestore function initialized.
+✔  functions[us-central1-sendEmailNotification]: firestore function initialized.
+✔  functions[us-central1-chatWithAI]: http function initialized (http://127.0.0.1:5001/demo-project/us-central1/chatWithAI).
+✔  functions[us-central1-createContractPDF]: http function initialized (http://127.0.0.1:5001/demo-project/us-central1/createContractPDF).
+✔  functions[us-central1-findMatches]: http function initialized (http://127.0.0.1:5001/demo-project/us-central1/findMatches).
+✔  functions[us-central1-transitionPlacementState]: http function initialized (http://127.0.0.1:5001/demo-project/us-central1/transitionPlacementState).
+✔  functions[us-central1-importRoster]: http function initialized (http://127.0.0.1:5001/demo-project/us-central1/importRoster).
+✔  functions[us-central1-evaluateReflection]: http function initialized (http://127.0.0.1:5001/demo-project/us-central1/evaluateReflection).
+✔  functions[us-central1-signContract]: http function initialized (http://127.0.0.1:5001/demo-project/us-central1/signContract).
+✔  functions[us-central1-generatePayrollReport]: http function initialized (http://127.0.0.1:5001/demo-project/us-central1/generatePayrollReport).
+✔  functions[us-central1-testEvaluateReflection]: http function initialized (http://127.0.0.1:5001/demo-project/us-central1/testEvaluateReflection).
+✔  functions[us-central1-generateCommissionDecree]: http function initialized (http://127.0.0.1:5001/demo-project/us-central1/generateCommissionDecree).
+✔  functions[us-central1-resolveLoginIdentifier]: http function initialized (http://127.0.0.1:5001/demo-project/us-central1/resolveLoginIdentifier).
+✔  functions[us-central1-updateSystemConfig]: http function initialized (http://127.0.0.1:5001/demo-project/us-central1/updateSystemConfig).
+✔  functions[us-central1-correctReflectionGrammar]: http function initialized (http://127.0.0.1:5001/demo-project/us-central1/correctReflectionGrammar).
+✔  functions[us-central1-updatePublicPortfolio]: firestore function initialized.
+i  functions[us-central1-pingMentorsScheduled]: function ignored because the pubsub emulator does not exist or is not running.
+✔  functions[us-central1-getImpersonationToken]: http function initialized (http://127.0.0.1:5001/demo-project/us-central1/getImpersonationToken).
+✔  functions[us-central1-stopImpersonating]: http function initialized (http://127.0.0.1:5001/demo-project/us-central1/stopImpersonating).
+✔  functions[us-central1-sanitizeProductionDatabase]: http function initialized (http://127.0.0.1:5001/demo-project/us-central1/sanitizeProductionDatabase).
+✔  functions[us-central1-createUserManually]: http function initialized (http://127.0.0.1:5001/demo-project/us-central1/createUserManually).
+✔  functions[us-central1-migrateStorage]: http function initialized (http://127.0.0.1:5001/demo-project/us-central1/migrateStorage).
+✔  functions[us-central1-migrateInstitutions]: http function initialized (http://127.0.0.1:5001/demo-project/us-central1/migrateInstitutions).
+✔  functions[us-central1-fetchAresAndLink]: http function initialized (http://127.0.0.1:5001/demo-project/us-central1/fetchAresAndLink).
+✔  functions[us-central1-generateShowcaseNarration]: http function initialized (http://127.0.0.1:5001/demo-project/us-central1/generateShowcaseNarration).
+✔  functions[us-central1-routeDocument]: http function initialized (http://127.0.0.1:5001/demo-project/us-central1/routeDocument).
+✔  functions[us-central1-parseDocumentForAI]: http function initialized (http://127.0.0.1:5001/demo-project/us-central1/parseDocumentForAI).
+✔  functions[us-central1-generateSkillMatrixPDF]: http function initialized (http://127.0.0.1:5001/demo-project/us-central1/generateSkillMatrixPDF).
+✔  functions[us-central1-submitMobileContract]: http function initialized (http://127.0.0.1:5001/demo-project/us-central1/submitMobileContract).
+
+[90m┌─────────────────────────────────────────────────────────────┐[39m
+[90m│[39m ✔  All emulators ready! It is now safe to connect your app. [90m│[39m
+[90m│[39m i  View Emulator UI at http://127.0.0.1:4000/               [90m│[39m
+[90m└─────────────────────────────────────────────────────────────┘[39m
+
+[90m┌────────────────[39m[90m┬────────────────[39m[90m┬─────────────────────────────────┐[39m
+[90m│[39m[33m Emulator       [39m[90m│[39m[33m Host:Port      [39m[90m│[39m[33m View in Emulator UI             [39m[90m│[39m
+[90m├────────────────[39m[90m┼────────────────[39m[90m┼─────────────────────────────────┤[39m
+[90m│[39m Authentication [90m│[39m 127.0.0.1:9099 [90m│[39m http://127.0.0.1:4000/auth      [90m│[39m
+[90m├────────────────[39m[90m┼────────────────[39m[90m┼─────────────────────────────────┤[39m
+[90m│[39m Functions      [90m│[39m 127.0.0.1:5001 [90m│[39m http://127.0.0.1:4000/functions [90m│[39m
+[90m├────────────────[39m[90m┼────────────────[39m[90m┼─────────────────────────────────┤[39m
+[90m│[39m Firestore      [90m│[39m 127.0.0.1:8080 [90m│[39m http://127.0.0.1:4000/firestore [90m│[39m
+[90m├────────────────[39m[90m┼────────────────[39m[90m┼─────────────────────────────────┤[39m
+[90m│[39m Storage        [90m│[39m 127.0.0.1:9199 [90m│[39m http://127.0.0.1:4000/storage   [90m│[39m
+[90m└────────────────[39m[90m┴────────────────[39m[90m┴─────────────────────────────────┘[39m
+  Emulator Hub host: 127.0.0.1 port: 4400
+  Other reserved ports: 4500, 9150
+
+Issues? Report them at https://github.com/firebase/firebase-tools/issues and attach the *-debug.log files.
