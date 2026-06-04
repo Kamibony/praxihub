@@ -24,10 +24,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex min-h-screen bg-[#f8fafc] text-slate-900 font-sans">
+    <div className="flex min-h-screen bg-[#f8fafc] text-slate-900 font-sans overflow-x-hidden">
       <Sidebar />
-      <main className="flex-1 ml-0 md:ml-[300px] flex flex-col transition-all duration-300">
-        <div className="flex-1 w-full p-4 md:p-8">
+      <main className="flex-1 ml-0 md:ml-[300px] flex flex-col transition-all duration-300 min-w-0 max-w-full overflow-hidden">
+        <div className="flex-1 w-full p-4 md:p-8 overflow-hidden">
           {children}
         </div>
       </main>

@@ -750,8 +750,8 @@ function StudentDashboardContent() {
     // Ak užívateľ nemá schválenú organizáciu, zobrazíme pôvodnú správu (defenzívne, hoci rodič to kontroluje)
     if (placement?.status !== "ORG_APPROVED") {
       return (
-        <div className="text-center py-10 bg-slate-800/50 rounded-2xl border-2 border-dashed border-white/10">
-          <p className="text-slate-400">Zatím nemáš žádnou aktivní praxi.</p>
+        <div className="text-center py-10 bg-white rounded-2xl border-2 border-dashed border-slate-200">
+          <p className="text-slate-600">Zatím nemáš žádnou aktivní praxi.</p>
         </div>
       );
     }
@@ -776,8 +776,8 @@ function StudentDashboardContent() {
         {/* Steps Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Step 1 */}
-          <div className="card-glass p-5 rounded-3xl border border-white/5 shadow-sm flex flex-col h-full">
-            <h4 className="font-bold text-slate-100 mb-4 flex items-center gap-2">
+          <div className="card-glass p-5 rounded-3xl border border-slate-200 shadow-sm flex flex-col h-full">
+            <h4 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
               <span className="bg-blue-800/40 text-blue-300 w-6 h-6 flex items-center justify-center rounded-full text-xs">
                 1
               </span>
@@ -804,7 +804,7 @@ function StudentDashboardContent() {
                   href="https://moodle.czu.cz"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-sm text-slate-400 hover:text-blue-400 hover:underline flex items-center justify-center gap-1"
+                  className="text-sm text-slate-600 hover:text-blue-400 hover:underline flex items-center justify-center gap-1"
                 >
                   <span className="text-2xl">✨</span>
                   Stáhnout šablonu z Moodle
@@ -814,8 +814,8 @@ function StudentDashboardContent() {
           </div>
 
           {/* Step 2 */}
-          <div className="card-glass p-5 rounded-3xl border border-white/5 shadow-sm flex flex-col h-full">
-            <h4 className="font-bold text-slate-100 mb-4 flex items-center gap-2">
+          <div className="card-glass p-5 rounded-3xl border border-slate-200 shadow-sm flex flex-col h-full">
+            <h4 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
               <span className="bg-blue-800/40 text-blue-300 w-6 h-6 flex items-center justify-center rounded-full text-xs">
                 2
               </span>
@@ -832,7 +832,7 @@ function StudentDashboardContent() {
                   className="hidden"
                 />
                 <div
-                  className={`w-full h-full border-2 border-dashed rounded-3xl flex flex-col items-center justify-center p-4 transition ${uploading ? "bg-slate-800/50 border-slate-700/50 cursor-not-allowed" : "border-slate-700/50 hover:border-blue-400 hover:bg-blue-900/40"}`}
+                  className={`w-full h-full border-2 border-dashed rounded-3xl flex flex-col items-center justify-center p-4 transition ${uploading ? "bg-white border-slate-200 cursor-not-allowed" : "border-slate-200 hover:border-blue-400 hover:bg-blue-900/40"}`}
                 >
                   {uploading ? (
                     <div className="text-center">
@@ -846,7 +846,7 @@ function StudentDashboardContent() {
                       <div className="p-3 bg-slate-700/50 rounded-full text-slate-500 mb-3 group-hover:bg-blue-800/40 group-hover:text-blue-500 transition">
                         <span className="text-2xl">✨</span>
                       </div>
-                      <span className="font-medium text-slate-200 group-hover:text-blue-300">
+                      <span className="font-medium text-slate-800 group-hover:text-blue-300">
                         Vybrat soubor
                       </span>
                       <span className="text-xs text-slate-500 mt-1">
@@ -867,7 +867,7 @@ function StudentDashboardContent() {
     return <DashboardSkeleton />;
 
   return (
-    <div className="min-h-screen bg-slate-900 p-8 font-sans card-glass">
+    <div className="min-h-screen bg-[#f8fafc] p-8 font-sans card-glass">
       <Chatbot initialMessage={getChatbotMessage()} />
 
       {/* SKILLS MODAL */}
@@ -875,18 +875,18 @@ function StudentDashboardContent() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="card-glass rounded-3xl shadow-2xl max-w-md w-full p-6">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold text-white">
+              <h3 className="text-xl font-bold text-slate-900">
                 Moje dovednosti
               </h3>
               <button
                 onClick={() => setIsSkillsModalOpen(false)}
-                className="text-slate-500 hover:text-slate-300"
+                className="text-slate-500 hover:text-slate-700"
               >
                 ✕
               </button>
             </div>
 
-            <p className="text-sm text-slate-300 mb-4">
+            <p className="text-sm text-slate-700 mb-4">
               Přidej technologie a nástroje, které ovládáš (např. React, Python,
               Marketing...). Pomůže nám to najít ti lepší praxi.
             </p>
@@ -897,12 +897,12 @@ function StudentDashboardContent() {
                 value={newSkill}
                 onChange={(e) => setNewSkill(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && addSkill()}
-                className="flex-1 bg-slate-800/50 border border-slate-700/50 text-slate-100 rounded-2xl px-3 py-2 outline-none focus:border-blue-500 placeholder-slate-500"
+                className="flex-1 bg-white border border-slate-200 text-slate-900 rounded-2xl px-3 py-2 outline-none focus:border-blue-500 placeholder-slate-500"
                 placeholder="Např. JavaScript"
               />
               <button
                 onClick={addSkill}
-                className="px-4 py-2 bg-blue-600 text-white font-medium rounded-2xl hover:bg-blue-700"
+                className="px-4 py-2 bg-blue-600 text-slate-900 font-medium rounded-2xl hover:bg-blue-700"
               >
                 Přidat
               </button>
@@ -942,21 +942,21 @@ function StudentDashboardContent() {
           </div>
           <button
             onClick={handleDemoBypass}
-            className="w-full sm:w-auto bg-orange-600 hover:bg-orange-700 text-white font-bold py-2 px-6 rounded-2xl transition shadow-lg whitespace-nowrap"
+            className="w-full sm:w-auto bg-orange-600 hover:bg-orange-700 text-slate-900 font-bold py-2 px-6 rounded-2xl transition shadow-lg whitespace-nowrap"
           >
             🚀 UAT: Jump to Final Reflection
           </button>
         </div>
 
-        <header className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center border-b border-white/10 pb-4 gap-4">
+        <header className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center border-b border-slate-200 pb-4 gap-4">
           <div>
             <div className="flex items-center gap-3">
-              <h1 className="text-2xl md:text-3xl font-bold text-white">
+              <h1 className="text-2xl md:text-3xl font-bold text-slate-900">
                 Můj přehled praxe
               </h1>
               <RoleBadge role={user?.role || "student"} className="hidden md:flex" />
             </div>
-            <p className="text-slate-300 mt-1 text-sm md:text-base flex items-center gap-2">
+            <p className="text-slate-700 mt-1 text-sm md:text-base flex items-center gap-2">
               Vítej, {user?.displayName || user?.email}
               <RoleBadge role={user?.role || "student"} className="md:hidden" />
             </p>
@@ -972,7 +972,7 @@ function StudentDashboardContent() {
 
             <button
               onClick={() => auth.signOut()}
-              className="text-sm px-4 py-3 md:py-2 border border-slate-700/50 rounded-2xl hover:bg-slate-700/50 transition"
+              className="text-sm px-4 py-3 md:py-2 border border-slate-200 rounded-2xl hover:bg-slate-700/50 transition"
             >
               Odhlásit se
             </button>
@@ -980,7 +980,7 @@ function StudentDashboardContent() {
         </header>
 
         {/* PROFILE SUMMARY COMPONENT */}
-        <div className="bg-slate-800/80 border border-slate-700/50 p-6 rounded-3xl shadow-lg mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="bg-white border border-slate-200 p-6 rounded-3xl shadow-lg mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 rounded-full bg-blue-900/50 flex items-center justify-center border-2 border-blue-500/30">
               <span className="text-2xl font-bold text-blue-300">
@@ -988,14 +988,14 @@ function StudentDashboardContent() {
               </span>
             </div>
             <div>
-              <h2 className="text-xl font-bold text-white m-0" data-testid="student-name">
+              <h2 className="text-xl font-bold text-slate-900 m-0" data-testid="student-name">
                 {user?.displayName || "Student"}
               </h2>
               <div className="flex items-center gap-2 mt-1">
                 <span data-testid="student-major" className="px-2 py-0.5 bg-blue-900/30 text-blue-300 text-xs font-bold rounded-full border border-blue-500/20">
                   {user?.major || "Chybí obor"}
                 </span>
-                <span className="text-slate-400 text-sm">
+                <span className="text-slate-600 text-sm">
                   {placement?.organization_name || (
                     <span className="italic">Organizace nepřiřazena</span>
                   )}
@@ -1030,7 +1030,7 @@ function StudentDashboardContent() {
           {/* HLAVNÁ KARTA (STAV) */}
           <div className="lg:col-span-2 space-y-6">
             {/* AI MATCHMAKING & SKILLS TEASER */}
-            <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-3xl p-6 text-white shadow-lg relative overflow-hidden">
+            <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-3xl p-6 text-slate-900 shadow-lg relative overflow-hidden">
               <div className="relative z-10">
                 <h2 className="text-2xl font-bold mb-2">
                   Hledáš ideální praxi?
@@ -1060,19 +1060,19 @@ function StudentDashboardContent() {
               <div className="absolute -right-10 -bottom-20 w-64 h-64 card-glass opacity-10 rounded-full blur-3xl"></div>
             </div>
 
-            <div className="card-glass p-6 rounded-3xl shadow-sm border border-white/5">
-              <h2 className="text-xl font-semibold text-slate-100 mb-6 flex items-center gap-2">
+            <div className="card-glass p-6 rounded-3xl shadow-sm border border-slate-200">
+              <h2 className="text-xl font-semibold text-slate-900 mb-6 flex items-center gap-2">
                 <span className="text-2xl">✨</span>
                 Aktuální stav
               </h2>
 
               {/* LOGIC FLOW */}
               {!placement || placement.status === "REJECTED" ? (
-                <div className="card-glass p-6 rounded-2xl border border-white/10 shadow-sm">
-                  <h3 className="text-lg font-bold text-slate-100 mb-4">
+                <div className="card-glass p-6 rounded-2xl border border-slate-200 shadow-sm">
+                  <h3 className="text-lg font-bold text-slate-900 mb-4">
                     Žádost o schválení organizace
                   </h3>
-                  <p className="text-slate-300 text-sm mb-6">
+                  <p className="text-slate-700 text-sm mb-6">
                     Než začnete s generováním smlouvy, koordinátor musí schválit
                     vámi vybranou organizaci.
                   </p>
@@ -1098,7 +1098,7 @@ function StudentDashboardContent() {
                     className="space-y-4 max-w-lg"
                   >
                     <div>
-                      <label className="block text-sm font-medium text-slate-200 mb-1">
+                      <label className="block text-sm font-medium text-slate-800 mb-1">
                         Vyberte organizaci *
                       </label>
                       <select
@@ -1114,7 +1114,7 @@ function StudentDashboardContent() {
                             setOrgRequest({ name: "", ico: "", web: "" });
                           }
                         }}
-                        className="w-full bg-slate-800/50 border border-slate-700/50 text-slate-100 rounded-2xl px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full bg-white border border-slate-200 text-slate-900 rounded-2xl px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
                         required
                       >
                         <option value="" disabled>-- Vyberte registrovanou organizaci --</option>
@@ -1130,7 +1130,7 @@ function StudentDashboardContent() {
                     {selectedInstitutionId === "NEW" && (
                       <>
                         <div>
-                          <label className="block text-sm font-medium text-slate-200 mb-1">
+                          <label className="block text-sm font-medium text-slate-800 mb-1">
                             Název organizace *
                           </label>
                           <input
@@ -1139,13 +1139,13 @@ function StudentDashboardContent() {
                             onChange={(e) =>
                               setOrgRequest({ ...orgRequest, name: e.target.value })
                             }
-                            className="w-full bg-slate-800/50 border border-slate-700/50 text-slate-100 rounded-2xl px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 placeholder-slate-500"
+                            className="w-full bg-white border border-slate-200 text-slate-900 rounded-2xl px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 placeholder-slate-500"
                             placeholder="Např. Acme Corp s.r.o."
                             required
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-slate-200 mb-1">
+                          <label className="block text-sm font-medium text-slate-800 mb-1">
                             IČO *
                           </label>
                           <input
@@ -1154,13 +1154,13 @@ function StudentDashboardContent() {
                             onChange={(e) =>
                               setOrgRequest({ ...orgRequest, ico: e.target.value })
                             }
-                            className="w-full bg-slate-800/50 border border-slate-700/50 text-slate-100 rounded-2xl px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 placeholder-slate-500"
+                            className="w-full bg-white border border-slate-200 text-slate-900 rounded-2xl px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 placeholder-slate-500"
                             placeholder="12345678"
                             required
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-slate-200 mb-1">
+                          <label className="block text-sm font-medium text-slate-800 mb-1">
                             Kontaktní email společnosti *
                           </label>
                           <input
@@ -1169,7 +1169,7 @@ function StudentDashboardContent() {
                             onChange={(e) =>
                               setOrgRequest({ ...orgRequest, web: e.target.value })
                             }
-                            className="w-full bg-slate-800/50 border border-slate-700/50 text-slate-100 rounded-2xl px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 placeholder-slate-500"
+                            className="w-full bg-white border border-slate-200 text-slate-900 rounded-2xl px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 placeholder-slate-500"
                             placeholder="kontakt@firma.cz"
                             required
                           />
@@ -1179,7 +1179,7 @@ function StudentDashboardContent() {
                     <button
                       type="submit"
                       disabled={submittingOrg}
-                      className="w-full py-2 bg-blue-600 text-white font-bold rounded-2xl hover:bg-blue-700 disabled:opacity-50 transition"
+                      className="w-full py-2 bg-blue-600 text-slate-900 font-bold rounded-2xl hover:bg-blue-700 disabled:opacity-50 transition"
                     >
                       {submittingOrg ? "Odesílám..." : "Odeslat žádost"}
                     </button>
@@ -1193,10 +1193,10 @@ function StudentDashboardContent() {
                       <div className="mx-auto w-16 h-16 bg-blue-800/40 rounded-full flex items-center justify-center mb-4">
                         <span className="text-xl">⏱️</span>
                       </div>
-                      <h3 className="text-xl font-bold text-white mb-2">
+                      <h3 className="text-xl font-bold text-slate-900 mb-2">
                         Čeká se na schválení organizace
                       </h3>
-                      <p className="text-slate-300 max-w-md mx-auto">
+                      <p className="text-slate-700 max-w-md mx-auto">
                         Váš požadavek na praxi v{" "}
                         <strong>{placement.organization_name}</strong> čeká na
                         schválení koordinátorem. O výsledku budete informováni.
@@ -1215,7 +1215,7 @@ function StudentDashboardContent() {
                     placement.status === "CLOSED") && (
                     <div className="space-y-6">
                       {/* STATUS BAR */}
-                      <div className="flex items-center gap-4 p-4 bg-slate-800/50 rounded-2xl border border-white/5">
+                      <div className="flex items-center gap-4 p-4 bg-white rounded-2xl border border-slate-200">
                         <div
                           className={`p-3 rounded-full ${
                             placement.status === "ANALYZING"
@@ -1224,7 +1224,7 @@ function StudentDashboardContent() {
                                 ? "bg-green-800/40 text-green-400"
                                 : placement.status === "NEEDS_REVIEW"
                                   ? "bg-yellow-800/40 text-yellow-400"
-                                  : "bg-slate-700/50 text-slate-300"
+                                  : "bg-slate-700/50 text-slate-700"
                           }`}
                         >
                           {placement.status === "ANALYZING" && (
@@ -1242,7 +1242,7 @@ function StudentDashboardContent() {
                           )}
                         </div>
                         <div>
-                          <h3 className="font-bold text-lg text-white">
+                          <h3 className="font-bold text-lg text-slate-900">
                             {placement.status === "ANALYZING" &&
                               "AI zpracovává dokument..."}
                             {placement.status === "NEEDS_REVIEW" &&
@@ -1253,7 +1253,7 @@ function StudentDashboardContent() {
                               "Čeká se na hodnocení"}
                             {placement.status === "CLOSED" && "Praxe uzavřena"}
                           </h3>
-                          <p className="text-sm text-slate-400">
+                          <p className="text-sm text-slate-600">
                             {placement.status === "ANALYZING" &&
                               "Čekejte prosím, čtu data ze smlouvy."}
                             {placement.status === "NEEDS_REVIEW" &&
@@ -1276,7 +1276,7 @@ function StudentDashboardContent() {
                           </h4>
                           <div className="grid md:grid-cols-2 gap-4">
                             <div>
-                              <label className="block text-xs font-medium text-slate-400 mb-1 uppercase">
+                              <label className="block text-xs font-medium text-slate-600 mb-1 uppercase">
                                 Název Firmy
                               </label>
                               <input
@@ -1288,11 +1288,11 @@ function StudentDashboardContent() {
                                     organization_name: e.target.value,
                                   })
                                 }
-                                className="w-full bg-slate-800/50 border border-yellow-700/50 text-slate-100 rounded p-2 focus:ring-2 focus:ring-yellow-500 outline-none placeholder-slate-500"
+                                className="w-full bg-white border border-yellow-700/50 text-slate-900 rounded p-2 focus:ring-2 focus:ring-yellow-500 outline-none placeholder-slate-500"
                               />
                             </div>
                             <div>
-                              <label className="block text-xs font-medium text-slate-400 mb-1 uppercase">
+                              <label className="block text-xs font-medium text-slate-600 mb-1 uppercase">
                                 IČO
                               </label>
                               <input
@@ -1304,11 +1304,11 @@ function StudentDashboardContent() {
                                     organization_ico: e.target.value,
                                   })
                                 }
-                                className="w-full bg-slate-800/50 border border-yellow-700/50 text-slate-100 rounded p-2 focus:ring-2 focus:ring-yellow-500 outline-none placeholder-slate-500"
+                                className="w-full bg-white border border-yellow-700/50 text-slate-900 rounded p-2 focus:ring-2 focus:ring-yellow-500 outline-none placeholder-slate-500"
                               />
                             </div>
                             <div>
-                              <label className="block text-xs font-medium text-slate-400 mb-1 uppercase">
+                              <label className="block text-xs font-medium text-slate-600 mb-1 uppercase">
                                 Datum od
                               </label>
                               <input
@@ -1320,11 +1320,11 @@ function StudentDashboardContent() {
                                     start_date: e.target.value,
                                   })
                                 }
-                                className="w-full bg-slate-800/50 border border-yellow-700/50 text-slate-100 rounded p-2 focus:ring-2 focus:ring-yellow-500 outline-none placeholder-slate-500"
+                                className="w-full bg-white border border-yellow-700/50 text-slate-900 rounded p-2 focus:ring-2 focus:ring-yellow-500 outline-none placeholder-slate-500"
                               />
                             </div>
                             <div>
-                              <label className="block text-xs font-medium text-slate-400 mb-1 uppercase">
+                              <label className="block text-xs font-medium text-slate-600 mb-1 uppercase">
                                 Datum do
                               </label>
                               <input
@@ -1336,13 +1336,13 @@ function StudentDashboardContent() {
                                     end_date: e.target.value,
                                   })
                                 }
-                                className="w-full bg-slate-800/50 border border-yellow-700/50 text-slate-100 rounded p-2 focus:ring-2 focus:ring-yellow-500 outline-none placeholder-slate-500"
+                                className="w-full bg-white border border-yellow-700/50 text-slate-900 rounded p-2 focus:ring-2 focus:ring-yellow-500 outline-none placeholder-slate-500"
                               />
                             </div>
                           </div>
                           <button
                             onClick={confirmData}
-                            className="w-full mt-4 bg-yellow-900/20 card-glass hover:bg-yellow-600 text-white py-3 rounded-2xl font-bold shadow-sm transition"
+                            className="w-full mt-4 bg-yellow-900/20 card-glass hover:bg-yellow-600 text-slate-900 py-3 rounded-2xl font-bold shadow-sm transition"
                           >
                             Potvrdit správnost údajů
                           </button>
@@ -1354,30 +1354,30 @@ function StudentDashboardContent() {
                         placement.status === "EVALUATION" ||
                         placement.status === "CLOSED") && (
                         <div className="space-y-6">
-                          <div className="card-glass rounded-2xl border border-white/5 overflow-hidden">
+                          <div className="card-glass rounded-2xl border border-slate-200 overflow-hidden">
                             <table className="min-w-full divide-y divide-gray-200 text-sm">
                               <tbody className="divide-y divide-gray-200">
                                 <tr>
-                                  <td className="px-4 py-3 bg-slate-800/50 font-medium text-slate-400 w-1/3">
+                                  <td className="px-4 py-3 bg-white font-medium text-slate-600 w-1/3">
                                     Firma
                                   </td>
-                                  <td className="px-4 py-3 text-white font-bold">
+                                  <td className="px-4 py-3 text-slate-900 font-bold">
                                     {placement.organization_name}
                                   </td>
                                 </tr>
                                 <tr>
-                                  <td className="px-4 py-3 bg-slate-800/50 font-medium text-slate-400">
+                                  <td className="px-4 py-3 bg-white font-medium text-slate-600">
                                     IČO
                                   </td>
-                                  <td className="px-4 py-3 text-white font-mono">
+                                  <td className="px-4 py-3 text-slate-900 font-mono">
                                     {placement.organization_ico}
                                   </td>
                                 </tr>
                                 <tr>
-                                  <td className="px-4 py-3 bg-slate-800/50 font-medium text-slate-400">
+                                  <td className="px-4 py-3 bg-white font-medium text-slate-600">
                                     Termín
                                   </td>
-                                  <td className="px-4 py-3 text-white">
+                                  <td className="px-4 py-3 text-slate-900">
                                     {placement.start_date} —{" "}
                                     {placement.end_date}
                                   </td>
@@ -1389,11 +1389,11 @@ function StudentDashboardContent() {
                           {/* 3-PILLAR PRACTICE UI (Náslechy, Výstupy, Reflexe) */}
                           {(placement.status === "APPROVED" || placement.status === "ACTIVE" || placement.status === "EVALUATION" || placement.status === "CLOSED") && (
 
-                            <div className="mt-8 bg-slate-900/50 card-glass rounded-3xl overflow-hidden border border-white/10">
-                               <div className="flex border-b border-white/10">
-                                  <button onClick={() => setActiveTab('náslechy')} className={`flex-1 py-4 text-sm font-bold tracking-wider uppercase transition-colors ${activeTab === 'náslechy' ? 'bg-blue-600/20 text-blue-400 border-b-2 border-blue-500' : 'text-slate-400 hover:bg-white/5'}`}>Náslechy</button>
-                                  <button onClick={() => setActiveTab('výstupy')} className={`flex-1 py-4 text-sm font-bold tracking-wider uppercase transition-colors ${activeTab === 'výstupy' ? 'bg-indigo-600/20 text-indigo-400 border-b-2 border-indigo-500' : 'text-slate-400 hover:bg-white/5'}`}>Výstupy</button>
-                                  <button onClick={() => setActiveTab('reflexe')} className={`flex-1 py-4 text-sm font-bold tracking-wider uppercase transition-colors ${activeTab === 'reflexe' ? 'bg-purple-600/20 text-purple-400 border-b-2 border-purple-500' : 'text-slate-400 hover:bg-white/5'}`}>Reflexe</button>
+                            <div className="mt-8 bg-white card-glass rounded-3xl overflow-hidden border border-slate-200">
+                               <div className="flex border-b border-slate-200">
+                                  <button onClick={() => setActiveTab('náslechy')} className={`flex-1 py-4 text-sm font-bold tracking-wider uppercase transition-colors ${activeTab === 'náslechy' ? 'bg-blue-600/20 text-blue-400 border-b-2 border-blue-500' : 'text-slate-600 hover:bg-white/5'}`}>Náslechy</button>
+                                  <button onClick={() => setActiveTab('výstupy')} className={`flex-1 py-4 text-sm font-bold tracking-wider uppercase transition-colors ${activeTab === 'výstupy' ? 'bg-indigo-600/20 text-indigo-400 border-b-2 border-indigo-500' : 'text-slate-600 hover:bg-white/5'}`}>Výstupy</button>
+                                  <button onClick={() => setActiveTab('reflexe')} className={`flex-1 py-4 text-sm font-bold tracking-wider uppercase transition-colors ${activeTab === 'reflexe' ? 'bg-purple-600/20 text-purple-400 border-b-2 border-purple-500' : 'text-slate-600 hover:bg-white/5'}`}>Reflexe</button>
                                </div>
 
                                <div className="p-6">
@@ -1420,7 +1420,7 @@ function StudentDashboardContent() {
                                               onChange={(e) =>
                                                 setNewLogDate(e.target.value)
                                               }
-                                              className="w-full px-3 py-2 bg-slate-800/50 border border-slate-700/50 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 text-slate-100 placeholder-slate-500"
+                                              className="w-full px-3 py-2 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 text-slate-900 placeholder-slate-500"
                                             />
                                           </div>
                                           <div>
@@ -1436,7 +1436,7 @@ function StudentDashboardContent() {
                                               onChange={(e) =>
                                                 setNewLogHours(e.target.value)
                                               }
-                                              className="w-full px-3 py-2 bg-slate-800/50 border border-slate-700/50 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 text-slate-100 placeholder-slate-500"
+                                              className="w-full px-3 py-2 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 text-slate-900 placeholder-slate-500"
                                             />
                                           </div>
                                           <div>
@@ -1447,7 +1447,7 @@ function StudentDashboardContent() {
                                               required
                                               value={newLogCategory}
                                               onChange={(e) => setNewLogCategory(e.target.value)}
-                                              className="w-full px-3 py-2 bg-slate-800/50 border border-slate-700/50 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 text-slate-100 placeholder-slate-500"
+                                              className="w-full px-3 py-2 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 text-slate-900 placeholder-slate-500"
                                             >
                                               {(placement?.major || placement?.major || user?.major) === 'UPV' ? (
                                                 <>
@@ -1476,7 +1476,7 @@ function StudentDashboardContent() {
                                                   setNewLogDescription(e.target.value)
                                                 }
                                                 placeholder="Např.: Práce na backendu v Node.js..."
-                                                className="w-full px-3 py-2 pr-12 bg-slate-800/50 border border-slate-700/50 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 text-slate-100 placeholder-slate-500"
+                                                className="w-full px-3 py-2 pr-12 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 text-slate-900 placeholder-slate-500"
                                               />
                                               <button
                                                 type="button"
@@ -1486,7 +1486,7 @@ function StudentDashboardContent() {
                                                 className={`absolute right-2 bottom-2 p-2 rounded-xl transition-all ${
                                                     isDictating ? 'bg-red-500/20 text-red-400 animate-pulse' :
                                                     isEnhancing ? 'bg-blue-500/20 text-blue-400' :
-                                                    'bg-slate-700/50 text-slate-300 hover:bg-slate-600/50'
+                                                    'bg-slate-700/50 text-slate-700 hover:bg-slate-600/50'
                                                 }`}
                                               >
                                                 {isEnhancing ? '✨' : '🎙️'}
@@ -1499,7 +1499,7 @@ function StudentDashboardContent() {
                                         <button
                                           type="submit"
                                           disabled={submittingLog}
-                                          className="px-4 py-2 bg-blue-600 text-white rounded-2xl font-bold hover:bg-blue-700 disabled:opacity-50 transition"
+                                          className="px-4 py-2 bg-blue-600 text-slate-900 rounded-2xl font-bold hover:bg-blue-700 disabled:opacity-50 transition"
                                         >
                                           {submittingLog
                                             ? "Ukládám..."
@@ -1522,7 +1522,7 @@ function StudentDashboardContent() {
                                               className="card-glass p-4 rounded-2xl border border-blue-800/30 flex flex-col sm:flex-row justify-between sm:items-center gap-2 shadow-sm"
                                             >
                                               <div>
-                                                <p className="font-bold text-slate-100">
+                                                <p className="font-bold text-slate-900">
                                                   {new Date(
                                                     log.date,
                                                   ).toLocaleDateString("cs-CZ")}{" "}
@@ -1570,13 +1570,13 @@ function StudentDashboardContent() {
                                       <h3 className="font-bold text-indigo-400 text-lg flex items-center gap-2">
                                         <span className="text-xl">📊</span> Kompetenční rámec (MŠMT KRAU)
                                       </h3>
-                                      <p className="text-sm text-slate-400">
+                                      <p className="text-sm text-slate-600">
                                          Hodnotící matice vychází přímo z předpisů MŠMT KRAU. Změny se ukládají automaticky.
                                       </p>
 
                                       <div className="space-y-4 mt-4">
                                         {systemRubricConfig ? (
-                                           <div className="text-sm text-slate-300 bg-slate-800/40 p-4 rounded-xl mb-4 border border-white/5">
+                                           <div className="text-sm text-slate-700 bg-slate-800/40 p-4 rounded-xl mb-4 border border-slate-200">
                                               <p className="font-bold mb-2 text-indigo-300">{systemRubricConfig.title}</p>
                                               <div className="prose prose-sm prose-invert" dangerouslySetInnerHTML={{ __html: systemRubricConfig.content?.substring(0, 300) + '...' }} />
                                            </div>
@@ -1595,7 +1595,7 @@ function StudentDashboardContent() {
                                                   onChange={(e) => handleRubricChange(domainId, e.target.value)}
                                                   rows={3}
                                                   placeholder="Důkazy a hodnocení studenta v této oblasti..."
-                                                  className="w-full p-3 bg-slate-900/50 text-slate-100 border border-indigo-800/50 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm placeholder-slate-600 transition"
+                                                  className="w-full p-3 bg-white text-slate-900 border border-indigo-800/50 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm placeholder-slate-600 transition"
                                                />
                                                <div className="flex justify-end mt-1">
                                                  <span className="text-[10px] text-slate-500">Automaticky se ukládá...</span>
@@ -1642,12 +1642,12 @@ function StudentDashboardContent() {
                                                 value={reflectionText}
                                                 onChange={(e) => setReflectionText(e.target.value)}
                                                 rows={8}
-                                                className="w-full p-4 pr-14 bg-slate-900/60 text-slate-100 border border-purple-800/50 rounded-2xl focus:ring-2 focus:ring-purple-500 outline-none text-sm placeholder-slate-500"
+                                                className="w-full p-4 pr-14 bg-white text-slate-900 border border-purple-800/50 rounded-2xl focus:ring-2 focus:ring-purple-500 outline-none text-sm placeholder-slate-500"
                                                 placeholder="Zde napište nebo nadiktujte svou závěrečnou reflexi..."
                                               />
                                               <button
                                                 onClick={toggleRecording}
-                                                className={`absolute bottom-4 right-4 p-3 rounded-full transition-all shadow-lg ${isRecording ? "bg-red-600 text-white animate-pulse" : "bg-purple-600 text-white hover:bg-purple-500"}`}
+                                                className={`absolute bottom-4 right-4 p-3 rounded-full transition-all shadow-lg ${isRecording ? "bg-red-600 text-slate-900 animate-pulse" : "bg-purple-600 text-slate-900 hover:bg-purple-500"}`}
                                                 title="Diktovat hlasem"
                                               >
                                                 {isRecording ? <span className="text-xl">🛑</span> : <span className="text-xl">🎙️</span>}
@@ -1665,7 +1665,7 @@ function StudentDashboardContent() {
                                               <button
                                                 onClick={handleEvaluateReflection}
                                                 disabled={evaluating || isCorrectingGrammar || reflectionText.trim().length === 0 || placement.status === "CLOSED"}
-                                                className="flex-1 py-3 bg-purple-600 text-white rounded-xl font-bold hover:bg-purple-700 disabled:opacity-50 transition"
+                                                className="flex-1 py-3 bg-purple-600 text-slate-900 rounded-xl font-bold hover:bg-purple-700 disabled:opacity-50 transition"
                                               >
                                                 {evaluating ? "Hodnocení..." : "Odeslat k hodnocení AI"}
                                               </button>
@@ -1697,7 +1697,7 @@ function StudentDashboardContent() {
                                                         href={placement.skillMatrixUrl}
                                                         target="_blank"
                                                         rel="noopener noreferrer"
-                                                        className="inline-flex justify-center items-center gap-2 px-6 py-3 bg-green-700 text-white rounded-2xl font-bold shadow-md hover:bg-green-600 transition"
+                                                        className="inline-flex justify-center items-center gap-2 px-6 py-3 bg-green-700 text-slate-900 rounded-2xl font-bold shadow-md hover:bg-green-600 transition"
                                                       >
                                                         <span className="text-xl">📄</span> Stáhnout KRAU Matrix
                                                       </a>
@@ -1705,7 +1705,7 @@ function StudentDashboardContent() {
                                                       <button
                                                         onClick={handleGenerateKraumMatrix}
                                                         disabled={isGeneratingMatrix}
-                                                        className="inline-flex justify-center items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-2xl font-bold shadow-md hover:bg-indigo-700 disabled:opacity-50 transition"
+                                                        className="inline-flex justify-center items-center gap-2 px-6 py-3 bg-indigo-600 text-slate-900 rounded-2xl font-bold shadow-md hover:bg-indigo-700 disabled:opacity-50 transition"
                                                       >
                                                         <span className="text-xl">⚙️</span> {isGeneratingMatrix ? 'Generuji PDF...' : 'Generovat KRAU Matrix'}
                                                       </button>
@@ -1742,7 +1742,7 @@ function StudentDashboardContent() {
                                   </span>
                                 </div>
                                 {placement.studentReview && (
-                                  <div className="card-glass p-3 rounded border border-purple-100 text-slate-200 text-sm italic">
+                                  <div className="card-glass p-3 rounded border border-purple-100 text-slate-800 text-sm italic">
                                     "{placement.studentReview}"
                                   </div>
                                 )}
@@ -1772,7 +1772,7 @@ function StudentDashboardContent() {
                                       onChange={(e) =>
                                         setStudentReview(e.target.value)
                                       }
-                                      className="w-full p-3 bg-slate-800/50 text-slate-100 border border-purple-800/50 rounded-2xl focus:ring-2 focus:ring-purple-500 outline-none text-sm placeholder-slate-500"
+                                      className="w-full p-3 bg-white text-slate-900 border border-purple-800/50 rounded-2xl focus:ring-2 focus:ring-purple-500 outline-none text-sm placeholder-slate-500"
                                       rows={3}
                                       placeholder="Popište svou zkušenost..."
                                     ></textarea>
@@ -1780,7 +1780,7 @@ function StudentDashboardContent() {
                                   <button
                                     onClick={handleRateCompany}
                                     disabled={studentRating === 0}
-                                    className="px-6 py-2 bg-purple-600 text-white rounded-2xl font-bold shadow-sm hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                                    className="px-6 py-2 bg-purple-600 text-slate-900 rounded-2xl font-bold shadow-sm hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
                                   >
                                     Odeslat hodnocení
                                   </button>
@@ -1802,7 +1802,7 @@ function StudentDashboardContent() {
             {/* Circular Progress Component */}
             {placement && ["APPROVED", "ACTIVE", "EVALUATION", "CLOSED"].includes(placement.status) && (
 
-              <div className="card-glass p-6 rounded-3xl shadow-sm border border-white/5 text-center">
+              <div className="card-glass p-6 rounded-3xl shadow-sm border border-slate-200 text-center">
                 <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4">
                   Postup praxe
                 </h3>
@@ -1843,11 +1843,11 @@ function StudentDashboardContent() {
                             />
                           </svg>
                           <div className="absolute inset-0 flex flex-col items-center justify-center">
-                            <span className="text-sm font-bold text-white">{total}</span>
-                            <span className="text-[10px] text-slate-400">/ {target} h</span>
+                            <span className="text-sm font-bold text-slate-900">{total}</span>
+                            <span className="text-[10px] text-slate-600">/ {target} h</span>
                           </div>
                         </div>
-                        <p className="mt-2 text-[10px] text-slate-300 font-medium text-center leading-tight h-6">
+                        <p className="mt-2 text-[10px] text-slate-700 font-medium text-center leading-tight h-6">
                           {label}
                         </p>
                       </div>
@@ -1880,21 +1880,21 @@ function StudentDashboardContent() {
 
             {/* QR Kód pro mentora */}
             {placement && placement.status !== "PENDING_ORG_APPROVAL" && placement.status !== "REJECTED" && (
-              <div className="card-glass p-6 rounded-3xl shadow-sm border border-white/5 text-center">
+              <div className="card-glass p-6 rounded-3xl shadow-sm border border-slate-200 text-center">
                 <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4">
                   QR kód pro mentora
                 </h3>
-                <p className="text-xs text-slate-400 mb-4">
+                <p className="text-xs text-slate-600 mb-4">
                   Mentor může naskenovat tento kód ve svém rozhraní pro rychlý přístup k vaší praxi.
                 </p>
-                <div className="flex justify-center p-4 card-glass border-2 border-dashed border-white/10 rounded-3xl">
+                <div className="flex justify-center p-4 card-glass border-2 border-dashed border-slate-200 rounded-3xl">
                   <QRCode value={placement.id} size={150} />
                 </div>
               </div>
             )}
 
             {/* Dokument Karta */}
-            <div className="card-glass p-6 rounded-3xl shadow-sm border border-white/5">
+            <div className="card-glass p-6 rounded-3xl shadow-sm border border-slate-200">
               <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4">
                 Dokumentace
               </h3>
@@ -1903,10 +1903,10 @@ function StudentDashboardContent() {
                   <div className="flex items-center gap-3 p-3 bg-blue-900/20 card-glass rounded-2xl mb-4">
                     <span className="text-2xl">📄</span>
                     <div className="overflow-hidden">
-                      <p className="text-sm font-medium text-white truncate">
+                      <p className="text-sm font-medium text-slate-900 truncate">
                         {placement.fileName}
                       </p>
-                      <p className="text-xs text-slate-400">
+                      <p className="text-xs text-slate-600">
                         Nahráno: {formatDateCZ(placement.createdAt)}
                       </p>
                     </div>
@@ -1930,7 +1930,7 @@ function StudentDashboardContent() {
                   )}
                 </div>
               ) : (
-                <p className="text-sm text-slate-400 italic">
+                <p className="text-sm text-slate-600 italic">
                   {placement?.status === "PENDING_ORG_APPROVAL"
                     ? "Čeká se na schválení firmy."
                     : placement?.status === "ORG_APPROVED"
@@ -1942,7 +1942,7 @@ function StudentDashboardContent() {
 
             {/* Interactive Traffic Light (Semafor) & Contextual Manual */}
             <div className="card card-gradient mb-6">
-              <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-6 text-center">
+              <h3 className="text-sm font-bold text-slate-600 uppercase tracking-wider mb-6 text-center">
                 Stav praxe & Další kroky
               </h3>
 
@@ -1989,7 +1989,7 @@ function StudentDashboardContent() {
                 return (
                   <div className="flex flex-col items-center">
                     {/* The Traffic Light Box */}
-                    <div className="bg-slate-900 border-4 border-slate-700 p-4 rounded-[40px] flex md:flex-row flex-col gap-4 shadow-[0_0_20px_rgba(0,0,0,0.5)]">
+                    <div className="bg-[#f8fafc] border-4 border-slate-700 p-4 rounded-[40px] flex md:flex-row flex-col gap-4 shadow-[0_0_20px_rgba(0,0,0,0.5)]">
                       {/* Red Light */}
                       <button
                         onClick={() => handleLightClick("RED")}
@@ -2023,13 +2023,13 @@ function StudentDashboardContent() {
                     </div>
 
                     {/* Contextual Manual (Next Step) */}
-                    <div className="mt-8 p-5 bg-slate-800/80 rounded-2xl border border-blue-500/30 text-center max-w-md w-full shadow-lg relative overflow-hidden">
+                    <div className="mt-8 p-5 bg-white rounded-2xl border border-blue-500/30 text-center max-w-md w-full shadow-lg relative overflow-hidden">
                       <div className="absolute top-0 left-0 w-1 h-full bg-blue-500"></div>
                       <span className="text-xs font-bold text-blue-400 uppercase tracking-wider mb-2 flex items-center justify-center gap-1">
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                         Aktuální úkol
                       </span>
-                      <p className="text-sm font-medium text-slate-200 mt-1">
+                      <p className="text-sm font-medium text-slate-800 mt-1">
                         {manualText}
                       </p>
                     </div>
