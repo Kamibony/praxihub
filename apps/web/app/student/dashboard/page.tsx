@@ -759,15 +759,15 @@ function StudentDashboardContent() {
     return (
       <div className="space-y-6">
         {/* Success Banner */}
-        <div className="bg-green-900/20 card-glass border border-green-800/50 rounded-2xl p-4 flex items-start gap-3">
-          <div className="shrink-0 text-green-400 mt-0.5">
+        <div className="bg-emerald-50 card-glass border border-emerald-200 rounded-2xl p-4 flex items-start gap-3">
+          <div className="shrink-0 text-emerald-500 mt-0.5">
             <span className="text-2xl">✨</span>
           </div>
           <div>
-            <h3 className="font-bold text-green-300">
+            <h3 className="font-bold text-emerald-900">
               Gratulujeme! Organizace byla schválena.
             </h3>
-            <p className="text-green-400 text-sm mt-1">
+            <p className="text-emerald-500 text-sm mt-1">
               Nyní si připravte smlouvu a podepsanou ji nahrajte.
             </p>
           </div>
@@ -778,7 +778,7 @@ function StudentDashboardContent() {
           {/* Step 1 */}
           <div className="card-glass p-5 rounded-3xl border border-slate-200 shadow-sm flex flex-col h-full">
             <h4 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
-              <span className="bg-blue-800/40 text-blue-300 w-6 h-6 flex items-center justify-center rounded-full text-xs">
+              <span className="bg-brand-50 text-brand-600 w-6 h-6 flex items-center justify-center rounded-full text-xs">
                 1
               </span>
               Získat smlouvu
@@ -786,14 +786,14 @@ function StudentDashboardContent() {
 
             <div className="flex-1 flex flex-col gap-3">
               <Link href="/student/generate" data-testid="generate-contract-link-main" className="block">
-                <div className="w-full h-full p-4 bg-blue-900/20 card-glass border-2 border-blue-800/30 rounded-3xl hover:border-blue-500/50 hover:bg-blue-800/40 transition group cursor-pointer text-center flex flex-col items-center justify-center gap-2">
-                  <div className="p-2 card-glass rounded-full text-blue-400 shadow-sm group-hover:scale-110 transition">
+                <div className="w-full h-full p-4 bg-white card-glass border-2 border-brand-100 rounded-3xl hover:border-brand-300 hover:bg-brand-50 transition group cursor-pointer text-center flex flex-col items-center justify-center gap-2">
+                  <div className="p-2 card-glass rounded-full text-brand-500 shadow-sm group-hover:scale-110 transition">
                     <span className="text-2xl">📄</span>
                   </div>
-                  <span className="font-bold text-blue-300">
+                  <span className="font-bold text-brand-600">
                     Generovat novou smlouvu
                   </span>
-                  <span className="text-xs text-blue-400/80">
+                  <span className="text-xs text-brand-500/80">
                     Automaticky doplní údaje
                   </span>
                 </div>
@@ -804,7 +804,7 @@ function StudentDashboardContent() {
                   href="https://moodle.czu.cz"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-sm text-slate-600 hover:text-blue-400 hover:underline flex items-center justify-center gap-1"
+                  className="text-sm text-slate-600 hover:text-brand-500 hover:underline flex items-center justify-center gap-1"
                 >
                   <span className="text-2xl">✨</span>
                   Stáhnout šablonu z Moodle
@@ -816,7 +816,7 @@ function StudentDashboardContent() {
           {/* Step 2 */}
           <div className="card-glass p-5 rounded-3xl border border-slate-200 shadow-sm flex flex-col h-full">
             <h4 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
-              <span className="bg-blue-800/40 text-blue-300 w-6 h-6 flex items-center justify-center rounded-full text-xs">
+              <span className="bg-brand-50 text-brand-600 w-6 h-6 flex items-center justify-center rounded-full text-xs">
                 2
               </span>
               Nahrát podepsaný sken
@@ -832,21 +832,21 @@ function StudentDashboardContent() {
                   className="hidden"
                 />
                 <div
-                  className={`w-full h-full border-2 border-dashed rounded-3xl flex flex-col items-center justify-center p-4 transition ${uploading ? "bg-white border-slate-200 cursor-not-allowed" : "border-slate-200 hover:border-blue-400 hover:bg-blue-900/40"}`}
+                  className={`w-full h-full border-2 border-dashed rounded-3xl flex flex-col items-center justify-center p-4 transition ${uploading ? "bg-white border-slate-200 cursor-not-allowed" : "border-slate-200 hover:border-blue-400 hover:bg-brand-50"}`}
                 >
                   {uploading ? (
                     <div className="text-center">
                       <span className="text-2xl">✨</span>
-                      <span className="text-sm text-blue-400 font-medium">
+                      <span className="text-sm text-brand-500 font-medium">
                         Nahrávám a analyzuji...
                       </span>
                     </div>
                   ) : (
                     <>
-                      <div className="p-3 bg-slate-700/50 rounded-full text-slate-500 mb-3 group-hover:bg-blue-800/40 group-hover:text-blue-500 transition">
+                      <div className="p-3 bg-slate-700/50 rounded-full text-slate-500 mb-3 group-hover:bg-brand-50 group-hover:text-blue-500 transition">
                         <span className="text-2xl">✨</span>
                       </div>
-                      <span className="font-medium text-slate-800 group-hover:text-blue-300">
+                      <span className="font-medium text-slate-800 group-hover:text-brand-600">
                         Vybrat soubor
                       </span>
                       <span className="text-xs text-slate-500 mt-1">
@@ -912,12 +912,12 @@ function StudentDashboardContent() {
               {skills.map((skill, idx) => (
                 <span
                   key={idx}
-                  className="px-3 py-1 bg-blue-900/20 text-blue-300 rounded-full border border-blue-500/20 text-sm font-medium flex items-center gap-2"
+                  className="px-3 py-1 bg-white text-brand-600 rounded-full border border-blue-500/20 text-sm font-medium flex items-center gap-2"
                 >
                   {skill}
                   <button
                     onClick={() => removeSkill(skill)}
-                    className="text-blue-400 hover:text-blue-900"
+                    className="text-brand-500 hover:text-blue-900"
                   >
                     ×
                   </button>
@@ -965,7 +965,7 @@ function StudentDashboardContent() {
             <Link
               href="/student/generate"
               data-testid="generate-contract-link"
-              className="text-blue-400 border border-blue-800/50 card-glass px-4 py-3 md:py-2 rounded-2xl font-medium hover:bg-blue-900/40 transition block text-center"
+              className="text-brand-500 border border-blue-800/50 card-glass px-4 py-3 md:py-2 rounded-2xl font-medium hover:bg-brand-50 transition block text-center"
             >
               + Nová smlouva / Opravit
             </Link>
@@ -983,7 +983,7 @@ function StudentDashboardContent() {
         <div className="bg-white border border-slate-200 p-6 rounded-3xl shadow-lg mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 rounded-full bg-blue-900/50 flex items-center justify-center border-2 border-blue-500/30">
-              <span className="text-2xl font-bold text-blue-300">
+              <span className="text-2xl font-bold text-brand-600">
                 {user?.displayName ? user.displayName.charAt(0).toUpperCase() : "S"}
               </span>
             </div>
@@ -992,7 +992,7 @@ function StudentDashboardContent() {
                 {user?.displayName || "Student"}
               </h2>
               <div className="flex items-center gap-2 mt-1">
-                <span data-testid="student-major" className="px-2 py-0.5 bg-blue-900/30 text-blue-300 text-xs font-bold rounded-full border border-blue-500/20">
+                <span data-testid="student-major" className="px-2 py-0.5 bg-blue-900/30 text-brand-600 text-xs font-bold rounded-full border border-blue-500/20">
                   {user?.major || "Chybí obor"}
                 </span>
                 <span className="text-slate-600 text-sm">
@@ -1013,7 +1013,7 @@ function StudentDashboardContent() {
                 href={placement.contract_url}
                 target="_blank"
                 rel="noreferrer"
-                className="flex items-center gap-2 px-3 py-1.5 bg-green-900/20 text-green-400 text-sm font-medium rounded-xl border border-green-800/50 hover:bg-green-900/40 transition"
+                className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 text-emerald-500 text-sm font-medium rounded-xl border border-emerald-200 hover:bg-green-900/40 transition"
               >
                 <span>📄 Stáhnout smlouvu</span>
               </a>
@@ -1042,7 +1042,7 @@ function StudentDashboardContent() {
 
                 <div className="flex flex-wrap gap-4 items-center">
                   <Link href="/student/matchmaking">
-                    <button className="px-6 py-2 card-glass text-blue-300 font-bold rounded-2xl shadow-md hover:bg-blue-900/40 transition">
+                    <button className="px-6 py-2 card-glass text-brand-600 font-bold rounded-2xl shadow-md hover:bg-brand-50 transition">
                       🔍 Najít praxi pomocí AI
                     </button>
                   </Link>
@@ -1189,8 +1189,8 @@ function StudentDashboardContent() {
                 <>
                   {/* PENDING APPROVAL */}
                   {placement.status === "PENDING_ORG_APPROVAL" && (
-                    <div className="text-center py-10 bg-blue-900/20 card-glass rounded-2xl border border-blue-800/30">
-                      <div className="mx-auto w-16 h-16 bg-blue-800/40 rounded-full flex items-center justify-center mb-4">
+                    <div className="text-center py-10 bg-white card-glass rounded-2xl border border-brand-100">
+                      <div className="mx-auto w-16 h-16 bg-brand-50 rounded-full flex items-center justify-center mb-4">
                         <span className="text-xl">⏱️</span>
                       </div>
                       <h3 className="text-xl font-bold text-slate-900 mb-2">
@@ -1219,9 +1219,9 @@ function StudentDashboardContent() {
                         <div
                           className={`p-3 rounded-full ${
                             placement.status === "ANALYZING"
-                              ? "bg-blue-800/40 text-blue-400"
+                              ? "bg-brand-50 text-brand-500"
                               : placement.status === "APPROVED" || placement.status === "ACTIVE"
-                                ? "bg-green-800/40 text-green-400"
+                                ? "bg-green-800/40 text-emerald-500"
                                 : placement.status === "NEEDS_REVIEW"
                                   ? "bg-yellow-800/40 text-yellow-400"
                                   : "bg-slate-700/50 text-slate-700"
@@ -1391,7 +1391,7 @@ function StudentDashboardContent() {
 
                             <div className="mt-8 bg-white card-glass rounded-3xl overflow-hidden border border-slate-200">
                                <div className="flex border-b border-slate-200">
-                                  <button onClick={() => setActiveTab('náslechy')} className={`flex-1 py-4 text-sm font-bold tracking-wider uppercase transition-colors ${activeTab === 'náslechy' ? 'bg-blue-600/20 text-blue-400 border-b-2 border-blue-500' : 'text-slate-600 hover:bg-white/5'}`}>Náslechy</button>
+                                  <button onClick={() => setActiveTab('náslechy')} className={`flex-1 py-4 text-sm font-bold tracking-wider uppercase transition-colors ${activeTab === 'náslechy' ? 'bg-blue-600/20 text-brand-500 border-b-2 border-blue-500' : 'text-slate-600 hover:bg-white/5'}`}>Náslechy</button>
                                   <button onClick={() => setActiveTab('výstupy')} className={`flex-1 py-4 text-sm font-bold tracking-wider uppercase transition-colors ${activeTab === 'výstupy' ? 'bg-indigo-600/20 text-indigo-400 border-b-2 border-indigo-500' : 'text-slate-600 hover:bg-white/5'}`}>Výstupy</button>
                                   <button onClick={() => setActiveTab('reflexe')} className={`flex-1 py-4 text-sm font-bold tracking-wider uppercase transition-colors ${activeTab === 'reflexe' ? 'bg-purple-600/20 text-purple-400 border-b-2 border-purple-500' : 'text-slate-600 hover:bg-white/5'}`}>Reflexe</button>
                                </div>
@@ -1400,13 +1400,13 @@ function StudentDashboardContent() {
                                   {/* PILLAR 1: NÁSLECHY (LIVE TRACKER) */}
                                   {activeTab === 'náslechy' && (
                                     <div className="space-y-6">
-                                      <h3 className="font-bold text-blue-400 text-lg flex items-center gap-2">
+                                      <h3 className="font-bold text-brand-500 text-lg flex items-center gap-2">
                                         <span className="text-xl">⏱️</span> Evidence hodin a náslechy
                                       </h3>
 
                                       <form
                                         onSubmit={handleTimeLogSubmit}
-                                        className="mb-6 card-glass p-4 rounded-2xl border border-blue-800/30 shadow-sm"
+                                        className="mb-6 card-glass p-4 rounded-2xl border border-brand-100 shadow-sm"
                                       >
                                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                                           <div>
@@ -1485,14 +1485,14 @@ function StudentDashboardContent() {
                                                 title="Nadiktovat"
                                                 className={`absolute right-2 bottom-2 p-2 rounded-xl transition-all ${
                                                     isDictating ? 'bg-red-500/20 text-red-400 animate-pulse' :
-                                                    isEnhancing ? 'bg-blue-500/20 text-blue-400' :
+                                                    isEnhancing ? 'bg-blue-500/20 text-brand-500' :
                                                     'bg-slate-700/50 text-slate-700 hover:bg-slate-600/50'
                                                 }`}
                                               >
                                                 {isEnhancing ? '✨' : '🎙️'}
                                               </button>
                                             </div>
-                                            {isEnhancing && <p className="text-xs text-blue-400 mt-1 flex items-center gap-1"><span>✨</span> AI upravuje gramatiku a stylistiku...</p>}
+                                            {isEnhancing && <p className="text-xs text-brand-500 mt-1 flex items-center gap-1"><span>✨</span> AI upravuje gramatiku a stylistiku...</p>}
                                           </div>
 
                                         </div>
@@ -1512,28 +1512,28 @@ function StudentDashboardContent() {
                                           Historie záznamů
                                         </h4>
                                         {timeLogs.length === 0 ? (
-                                          <p className="text-sm text-blue-300 italic">
+                                          <p className="text-sm text-brand-600 italic">
                                             Zatím nebyly zapsány žádné hodiny.
                                           </p>
                                         ) : (
                                           timeLogs.map((log) => (
                                             <div
                                               key={log.id}
-                                              className="card-glass p-4 rounded-2xl border border-blue-800/30 flex flex-col sm:flex-row justify-between sm:items-center gap-2 shadow-sm"
+                                              className="card-glass p-4 rounded-2xl border border-brand-100 flex flex-col sm:flex-row justify-between sm:items-center gap-2 shadow-sm"
                                             >
                                               <div>
                                                 <p className="font-bold text-slate-900">
                                                   {new Date(
                                                     log.date,
                                                   ).toLocaleDateString("cs-CZ")}{" "}
-                                                  <span className="text-blue-400 ml-2">
+                                                  <span className="text-brand-500 ml-2">
                                                     {log.hours} h
                                                   </span>
                                                 </p>
                                                 <p className="text-sm text-slate-600">
                                                   {log.description}
                                                 </p>
-                                                <p className="text-blue-400 text-xs mt-1 font-medium">
+                                                <p className="text-brand-500 text-xs mt-1 font-medium">
                                                   {log.category === 'theoretical_observations' && "Teoretické náslechy"}
                                                   {log.category === 'practical_observations' && "Praktické náslechy"}
                                                   {log.category === 'shadowing_hours' && "Stínování"}
@@ -1547,7 +1547,7 @@ function StudentDashboardContent() {
                                                   </span>
                                                 )}
                                                 {log.status === "approved" && (
-                                                  <span className="px-2 py-1 bg-green-800/40 text-green-300 text-xs font-bold rounded-full">
+                                                  <span className="px-2 py-1 bg-green-800/40 text-emerald-900 text-xs font-bold rounded-full">
                                                     Schváleno
                                                   </span>
                                                 )}
@@ -1673,19 +1673,19 @@ function StudentDashboardContent() {
                                         </div>
 
                                         {placement.status === "CLOSED" && placement.evaluationResult && (
-                                            <div className="bg-green-900/20 card-glass p-6 rounded-2xl border border-green-800/50 mt-6">
-                                                <h3 className="font-bold text-green-400 text-lg mb-2 flex items-center gap-2">
+                                            <div className="bg-emerald-50 card-glass p-6 rounded-2xl border border-emerald-200 mt-6">
+                                                <h3 className="font-bold text-emerald-500 text-lg mb-2 flex items-center gap-2">
                                                     <span className="text-2xl">🏆</span> Praxe úspěšně uzavřena
                                                 </h3>
-                                                <p className="text-sm text-green-300 mb-4">Vaše reflexe byla schválena AI Senseiem.</p>
+                                                <p className="text-sm text-emerald-900 mb-4">Vaše reflexe byla schválena AI Senseiem.</p>
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                     {['didacticCompetence', 'pedagogicalCompetence', 'socialCompetence', 'reflectiveCompetence'].map((compKey) => {
                                                         const comp = placement.evaluationResult[compKey];
                                                         if (!comp) return null;
                                                         return (
                                                           <div key={compKey} className="card-glass p-3 rounded border border-green-800/30">
-                                                            <span className="font-bold text-green-300">{compKey} ({comp.score}/100):</span>
-                                                            <p className="text-green-400 mt-1 italic">"{comp.reasoning}"</p>
+                                                            <span className="font-bold text-emerald-900">{compKey} ({comp.score}/100):</span>
+                                                            <p className="text-emerald-500 mt-1 italic">"{comp.reasoning}"</p>
                                                           </div>
                                                         )
                                                     })}
@@ -1830,7 +1830,7 @@ function StudentDashboardContent() {
                             />
                             {/* Progress Circle */}
                             <circle
-                              className={`${progressPercent >= 100 ? 'text-green-500' : 'text-blue-400'} transition-all duration-1000 ease-out`}
+                              className={`${progressPercent >= 100 ? 'text-green-500' : 'text-brand-500'} transition-all duration-1000 ease-out`}
                               strokeWidth="6"
                               strokeDasharray={circleCircumference}
                               strokeDashoffset={strokeDashoffset}
@@ -1900,7 +1900,7 @@ function StudentDashboardContent() {
               </h3>
               {placement && placement.contract_url ? (
                 <div>
-                  <div className="flex items-center gap-3 p-3 bg-blue-900/20 card-glass rounded-2xl mb-4">
+                  <div className="flex items-center gap-3 p-3 bg-white card-glass rounded-2xl mb-4">
                     <span className="text-2xl">📄</span>
                     <div className="overflow-hidden">
                       <p className="text-sm font-medium text-slate-900 truncate">
@@ -1915,7 +1915,7 @@ function StudentDashboardContent() {
                     href={placement.contract_url}
                     target="_blank"
                     rel="noreferrer"
-                    className="block w-full text-center py-2 border border-blue-800/50 text-blue-400 rounded-2xl hover:bg-blue-900/40 text-sm font-medium transition mb-4"
+                    className="block w-full text-center py-2 border border-blue-800/50 text-brand-500 rounded-2xl hover:bg-brand-50 text-sm font-medium transition mb-4"
                   >
                     Stáhnout originál
                   </a>
@@ -2025,7 +2025,7 @@ function StudentDashboardContent() {
                     {/* Contextual Manual (Next Step) */}
                     <div className="mt-8 p-5 bg-white rounded-2xl border border-blue-500/30 text-center max-w-md w-full shadow-lg relative overflow-hidden">
                       <div className="absolute top-0 left-0 w-1 h-full bg-blue-500"></div>
-                      <span className="text-xs font-bold text-blue-400 uppercase tracking-wider mb-2 flex items-center justify-center gap-1">
+                      <span className="text-xs font-bold text-brand-500 uppercase tracking-wider mb-2 flex items-center justify-center gap-1">
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                         Aktuální úkol
                       </span>
