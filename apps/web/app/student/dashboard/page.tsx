@@ -867,7 +867,7 @@ function StudentDashboardContent() {
     return <DashboardSkeleton />;
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] p-8 font-sans card-glass">
+    <div className="min-h-screen bg-slate-900 p-8 font-sans card-glass">
       <Chatbot initialMessage={getChatbotMessage()} />
 
       {/* SKILLS MODAL */}
@@ -1989,7 +1989,7 @@ function StudentDashboardContent() {
                 return (
                   <div className="flex flex-col items-center">
                     {/* The Traffic Light Box */}
-                    <div className="bg-[#f8fafc] border-4 border-slate-700 p-4 rounded-[40px] flex md:flex-row flex-col gap-4 shadow-[0_0_20px_rgba(0,0,0,0.5)]">
+                    <div className="bg-slate-900 border-4 border-slate-700 p-4 rounded-[40px] flex md:flex-row flex-col gap-4 shadow-[0_0_20px_rgba(0,0,0,0.5)]">
                       {/* Red Light */}
                       <button
                         onClick={() => handleLightClick("RED")}
