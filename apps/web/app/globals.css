@@ -14,6 +14,28 @@
 
   /* Legacy dark support vars if needed by older modules */
   --dark-modal-bg: rgba(15, 23, 42, 0.3); /* slate-900/30 */
+
+  /* Semantic Theme Variables (Light Mode) */
+  --text-theme-primary: #0f172a; /* slate-900 */
+  --text-theme-secondary: #334155; /* slate-700 */
+  --text-theme-muted: #64748b; /* slate-500 */
+  --bg-theme-panel: rgba(241, 245, 249, 0.5); /* slate-100/50 */
+  --border-theme-border: rgba(226, 232, 240, 0.8); /* slate-200 */
+
+}
+
+.dark, [data-theme="dark"] {
+  --bg-color: #0f172a;
+  --text-color: #f8fafc;
+
+  --text-theme-primary: #f8fafc; /* slate-50 */
+  --text-theme-secondary: #cbd5e1; /* slate-300 */
+  --text-theme-muted: #94a3b8; /* slate-400 */
+  --bg-theme-panel: rgba(30, 41, 59, 0.5); /* slate-800/50 */
+  --border-theme-border: rgba(255, 255, 255, 0.1); /* white/10 */
+
+  --card-bg: rgba(30, 41, 59, 0.8); /* slate-800/80 */
+  --card-border: rgba(255, 255, 255, 0.1);
 }
 
 body {

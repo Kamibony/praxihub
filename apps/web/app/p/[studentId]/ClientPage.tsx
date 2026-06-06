@@ -56,7 +56,7 @@ function PortfolioContent({ studentId }: { studentId: string }) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-slate-900">
+      <div className="flex items-center justify-center min-h-screen dark bg-slate-900">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500"></div>
       </div>
     );
@@ -66,8 +66,8 @@ function PortfolioContent({ studentId }: { studentId: string }) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen text-center p-6 bg-slate-900">
         <ShieldCheck className="h-16 w-16 text-slate-500 mb-4" />
-        <h1 className="text-2xl font-bold text-slate-100 mb-2">Přístup odepřen</h1>
-        <p className="text-slate-400">{error || 'Portfolio nenalezeno'}</p>
+        <h1 className="text-2xl font-bold text-theme-primary mb-2">Přístup odepřen</h1>
+        <p className="text-theme-muted">{error || 'Portfolio nenalezeno'}</p>
       </div>
     );
   }
@@ -75,12 +75,12 @@ function PortfolioContent({ studentId }: { studentId: string }) {
   return (
     <div data-testid="portfolio-content" className="max-w-5xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
       {/* Header Profile */}
-      <div className="bg-slate-800/75 backdrop-blur-md border border-white/10 rounded-2xl shadow-sm overflow-hidden mb-8">
+      <div className="bg-slate-800/75 backdrop-blur-md border border-theme-border rounded-2xl shadow-sm overflow-hidden mb-8">
         <div className="h-32 bg-gradient-to-r from-indigo-900 to-slate-800"></div>
         <div className="px-8 pb-8">
           <div className="relative flex justify-between items-end -mt-12 mb-6">
-            <div className="h-24 w-24 rounded-full bg-slate-800 p-1 shadow-md border border-white/10">
-              <div className="h-full w-full rounded-full bg-slate-700 flex items-center justify-center text-2xl font-bold text-slate-300 overflow-hidden">
+            <div className="h-24 w-24 rounded-full bg-slate-800 p-1 shadow-md border border-theme-border">
+              <div className="h-full w-full rounded-full bg-slate-700 flex items-center justify-center text-2xl font-bold text-theme-secondary overflow-hidden">
                 {portfolio.avatarUrl ? (
                   <img src={portfolio.avatarUrl} alt="Avatar" className="object-cover h-full w-full" />
                 ) : (
@@ -91,14 +91,14 @@ function PortfolioContent({ studentId }: { studentId: string }) {
           </div>
 
           <div>
-            <h1 className="text-3xl font-bold text-slate-100">{portfolio.displayName}</h1>
-            <div className="flex items-center space-x-4 mt-2 text-slate-400">
+            <h1 className="text-3xl font-bold text-theme-primary">{portfolio.displayName}</h1>
+            <div className="flex items-center space-x-4 mt-2 text-theme-muted">
               <div className="flex items-center">
                 🎓 {portfolio.major || 'Student'}
               </div>
             </div>
 
-            <p className="mt-6 text-slate-300 max-w-3xl leading-relaxed">
+            <p className="mt-6 text-theme-secondary max-w-3xl leading-relaxed">
               {portfolio.bio || 'Student zatím nepřidal svůj profesní profil.'}
             </p>
           </div>
@@ -109,17 +109,17 @@ function PortfolioContent({ studentId }: { studentId: string }) {
         {/* Left Column: Stats */}
         <div className="md:col-span-1 space-y-8">
           <div className="card-glass p-6">
-            <h2 className="text-lg font-semibold text-slate-100 mb-4 flex items-center">
+            <h2 className="text-lg font-semibold text-theme-primary mb-4 flex items-center">
               💼 Statistiky praxe
             </h2>
             <div className="space-y-4">
               <div>
-                <p className="text-sm text-slate-400">Dokončené stáže</p>
-                <p className="text-2xl font-bold text-slate-100">{portfolio.completedPlacements || 0}</p>
+                <p className="text-sm text-theme-muted">Dokončené stáže</p>
+                <p className="text-2xl font-bold text-theme-primary">{portfolio.completedPlacements || 0}</p>
               </div>
               <div>
-                <p className="text-sm text-slate-400">Odpracované hodiny</p>
-                <p className="text-2xl font-bold text-slate-100">{portfolio.totalHours || 0}</p>
+                <p className="text-sm text-theme-muted">Odpracované hodiny</p>
+                <p className="text-2xl font-bold text-theme-primary">{portfolio.totalHours || 0}</p>
               </div>
             </div>
           </div>
@@ -128,7 +128,7 @@ function PortfolioContent({ studentId }: { studentId: string }) {
         {/* Right Column: Skill Matrix */}
         <div className="md:col-span-2">
           <div className="card-glass p-6 h-full">
-            <h2 className="text-lg font-semibold text-slate-100 mb-6">🌟 Profil Kompetencí (MŠMT KRAU)</h2>
+            <h2 className="text-lg font-semibold text-theme-primary mb-6">🌟 Profil Kompetencí (MŠMT KRAU)</h2>
 
             {portfolio.skills && portfolio.skills.length > 0 ? (
               <div className="h-80 w-full">
@@ -149,7 +149,7 @@ function PortfolioContent({ studentId }: { studentId: string }) {
               </div>
             ) : (
               <div className="flex items-center justify-center h-64 bg-slate-800/50 rounded-xl border border-dashed border-slate-600">
-                <p className="text-slate-400">Zatím nejsou k dispozici žádná data z hodnocení.</p>
+                <p className="text-theme-muted">Zatím nejsou k dispozici žádná data z hodnocení.</p>
               </div>
             )}
           </div>
@@ -164,8 +164,8 @@ import { useParams } from 'next/navigation';
 export default function PublicPortfolioPage() {
   const params = useParams();
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-100 font-sans">
-      <Suspense fallback={<div data-testid="portfolio-loading" className="min-h-screen flex items-center justify-center"><p className="text-slate-300">Načítám data...</p></div>}>
+    <div className="min-h-screen dark bg-slate-900 text-theme-primary font-sans">
+      <Suspense fallback={<div data-testid="portfolio-loading" className="min-h-screen flex items-center justify-center"><p className="text-theme-secondary">Načítám data...</p></div>}>
         <PortfolioContent studentId={params.studentId as string} />
       </Suspense>
     </div>

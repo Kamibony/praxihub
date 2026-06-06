@@ -91,7 +91,7 @@ export default function ShowcasePage() {
   }, [currentSlide]);
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col items-center justify-center relative p-8">
+    <div className="min-h-screen dark bg-slate-900 text-theme-primary flex flex-col items-center justify-center relative p-8">
       {/* Orb Avatar */}
       <div className="absolute top-8 right-8 flex flex-col items-center gap-4">
         <div className={`relative w-24 h-24 rounded-full flex items-center justify-center transition-all duration-500
@@ -111,7 +111,7 @@ export default function ShowcasePage() {
       <div className="w-full max-w-6xl card-glass p-12 flex flex-col gap-8 min-h-[70vh]">
 
         {/* Navigation */}
-        <div className="flex justify-center gap-4 border-b border-white/10 pb-6">
+        <div className="flex justify-center gap-4 border-b border-theme-border pb-6">
           {(['Vítejte', 'Pohled studenta', 'Pohled instituce', 'Pohled koordinátora'] as SlideState[]).map(slide => (
             <button
               key={slide}
@@ -119,7 +119,7 @@ export default function ShowcasePage() {
               className={`px-6 py-2 rounded-full font-semibold transition ${
                 currentSlide === slide
                   ? 'bg-indigo-600 text-white shadow-lg'
-                  : 'bg-white/5 hover:bg-white/10 text-slate-300'
+                  : 'bg-white/5 hover:bg-white/10 text-theme-secondary'
               }`}
             >
               {slide}
@@ -131,25 +131,25 @@ export default function ShowcasePage() {
         <div className="flex-1 flex flex-col lg:flex-row gap-8">
 
           {/* Main Visual Placeholder */}
-          <div className="flex-1 bg-slate-950/50 border border-white/5 rounded-2xl p-8 flex flex-col items-center justify-center relative overflow-hidden group">
+          <div className="flex-1 bg-slate-950/50 border border-theme-border rounded-2xl p-8 flex flex-col items-center justify-center relative overflow-hidden group">
             <div className="absolute inset-0 bg-gradient-to-br from-indigo-900/10 to-transparent opacity-50 group-hover:opacity-100 transition-opacity duration-700" />
             <h2 className="text-4xl font-extrabold text-white/80 mb-4 text-center tracking-tight z-10">
               {currentSlide}
             </h2>
-            <div className="w-3/4 h-64 bg-slate-800/50 rounded-xl border border-white/10 border-dashed flex items-center justify-center z-10">
+            <div className="w-3/4 h-64 bg-slate-800/50 rounded-xl border border-theme-border border-dashed flex items-center justify-center z-10">
                <span className="text-slate-500 font-mono">[Zástupný obrázek UI]</span>
             </div>
           </div>
 
           {/* AI Narration Panel */}
           <div className="w-full lg:w-1/3 flex flex-col gap-4">
-            <div className="bg-slate-800/80 rounded-2xl p-6 border border-indigo-500/20 flex-1 flex flex-col">
+            <div className="bg-theme-panel rounded-2xl p-6 border border-indigo-500/20 flex-1 flex flex-col">
               <h3 className="text-indigo-400 font-semibold mb-4 flex items-center gap-2">
                 <BotIcon />
                 Daty podložený výklad
               </h3>
 
-              <div className="flex-1 text-slate-300 leading-relaxed font-medium min-h-[150px]">
+              <div className="flex-1 text-theme-secondary leading-relaxed font-medium min-h-[150px]">
                 {avatarState === 'loading' ? (
                   <div className="animate-pulse flex space-x-4">
                     <div className="flex-1 space-y-4 py-1">
@@ -163,7 +163,7 @@ export default function ShowcasePage() {
                 )}
               </div>
 
-              <div className="mt-6 flex justify-end gap-3 pt-4 border-t border-white/5">
+              <div className="mt-6 flex justify-end gap-3 pt-4 border-t border-theme-border">
                 {!isPlaying ? (
                   <button
                     onClick={handlePlayAudio}

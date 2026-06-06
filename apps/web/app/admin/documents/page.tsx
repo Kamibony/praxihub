@@ -487,20 +487,20 @@ ${currentRulesObj.kompetencni_ramec}
   if (loading) return <div className="p-8">Načítám...</div>;
 
   return (
-    <div className="min-h-screen bg-slate-900">
+    <div className="min-h-screen dark bg-slate-900">
       <Navbar />
       <div className="pt-24 pb-12 px-6 max-w-7xl mx-auto">
         <div className="flex justify-between items-start mb-2">
-          <h1 className="text-3xl font-bold font-sans text-slate-100">Admin Document Center</h1>
+          <h1 className="text-3xl font-bold font-sans text-theme-primary">Admin Document Center</h1>
           <Link
             href="/admin/dashboard"
-            className="text-sm font-medium text-slate-300 hover:text-blue-400 transition"
+            className="text-sm font-medium text-theme-secondary hover:text-blue-400 transition"
           >
             &larr; Zpět na Dashboard
           </Link>
         </div>
         <div className="flex justify-between items-center mb-8">
-          <p className="text-slate-300">Centrální správa dokumentů, šablon a AI metodiky.</p>
+          <p className="text-theme-secondary">Centrální správa dokumentů, šablon a AI metodiky.</p>
           <button
             onClick={handleMigration}
             disabled={runningMigration}
@@ -548,8 +548,8 @@ ${currentRulesObj.kompetencni_ramec}
                  <div className="flex-1">
                    {!manualOverride ? (
                      <>
-                       <h3 className="text-xl font-bold text-slate-100">Zjistili jsme, že jde o <span className="text-indigo-400">{getCategoryName(routingResult.category)}</span> pro obor <span className="text-indigo-400">{routingResult.department}</span>.</h3>
-                       <p className="text-slate-400 mt-2">{routingResult.reasoning} (Jistota: {routingResult.confidence}%)</p>
+                       <h3 className="text-xl font-bold text-theme-primary">Zjistili jsme, že jde o <span className="text-indigo-400">{getCategoryName(routingResult.category)}</span> pro obor <span className="text-indigo-400">{routingResult.department}</span>.</h3>
+                       <p className="text-theme-muted mt-2">{routingResult.reasoning} (Jistota: {routingResult.confidence}%)</p>
                        <div className="mt-6 flex gap-3">
                          <button onClick={() => executeRouting(routingResult.category, routingResult.department)} className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-lg font-bold shadow-md transition">
                            Ano, pokračovat
@@ -557,7 +557,7 @@ ${currentRulesObj.kompetencni_ramec}
                          <button onClick={() => setManualOverride(true)} className="bg-slate-700 hover:bg-slate-600 text-white px-5 py-2.5 rounded-lg font-medium transition">
                            Ne, vybrat ručně
                          </button>
-                         <button onClick={() => { setRoutingResult(null); setDroppedFile(null); }} className="text-slate-400 hover:text-slate-200 px-4 py-2.5 rounded-lg font-medium transition ml-auto">
+                         <button onClick={() => { setRoutingResult(null); setDroppedFile(null); }} className="text-theme-muted hover:text-theme-primary px-4 py-2.5 rounded-lg font-medium transition ml-auto">
                            Zrušit nahrávání
                          </button>
                        </div>
@@ -570,7 +570,7 @@ ${currentRulesObj.kompetencni_ramec}
                         </div>
                         <div className="flex flex-col sm:flex-row gap-4 mb-6">
                            <div className="flex-1">
-                             <label className="block text-sm font-medium text-slate-300 mb-2">Kategorie dokumentu</label>
+                             <label className="block text-sm font-medium text-theme-secondary mb-2">Kategorie dokumentu</label>
                              <select value={overrideCategory} onChange={e => setOverrideCategory(e.target.value as any)} className="w-full bg-slate-900 border border-slate-600 text-white rounded-lg p-2.5 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none">
                                <option value="AI_RULE">AI Knowledge Base (Metodika/Pravidla)</option>
                                <option value="ROSTER">Seznam studentů (Roster Import)</option>
@@ -579,7 +579,7 @@ ${currentRulesObj.kompetencni_ramec}
                              </select>
                            </div>
                            <div className="flex-1">
-                             <label className="block text-sm font-medium text-slate-300 mb-2">Příslušný obor</label>
+                             <label className="block text-sm font-medium text-theme-secondary mb-2">Příslušný obor</label>
                              <select value={overrideDept} onChange={e => setOverrideDept(e.target.value as any)} className="w-full bg-slate-900 border border-slate-600 text-white rounded-lg p-2.5 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none">
                                <option value="UPV">UPV (Učitelství)</option>
                                <option value="KPV">KPV (Poradenství)</option>
@@ -590,7 +590,7 @@ ${currentRulesObj.kompetencni_ramec}
                            <button onClick={() => executeRouting(overrideCategory, overrideDept)} className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-lg font-bold shadow-md transition">
                              Provést ruční zařazení
                            </button>
-                           <button onClick={() => { setRoutingResult(null); setDroppedFile(null); setManualOverride(false); }} className="text-slate-400 hover:text-slate-200 px-4 py-2.5 rounded-lg font-medium transition">
+                           <button onClick={() => { setRoutingResult(null); setDroppedFile(null); setManualOverride(false); }} className="text-theme-muted hover:text-theme-primary px-4 py-2.5 rounded-lg font-medium transition">
                              Zrušit
                            </button>
                         </div>
@@ -605,17 +605,17 @@ ${currentRulesObj.kompetencni_ramec}
 
         {/* Global Department Scope Toggle */}
         <div className="mb-8 flex justify-center">
-          <div className="inline-flex bg-slate-900/50 rounded-xl p-1 border border-white/10 shadow-lg backdrop-blur-md">
+          <div className="inline-flex bg-theme-panel rounded-xl p-1 border border-theme-border shadow-lg backdrop-blur-md">
             <button
               onClick={() => setActiveDept('UPV')}
-              className={`px-6 py-2.5 text-sm font-bold rounded-lg transition-all duration-200 flex items-center gap-2 ${activeDept === 'UPV' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'}`}
+              className={`px-6 py-2.5 text-sm font-bold rounded-lg transition-all duration-200 flex items-center gap-2 ${activeDept === 'UPV' ? 'bg-indigo-600 text-white shadow-md' : 'text-theme-muted hover:text-theme-primary hover:bg-white/5'}`}
             >
               <span className="text-lg">👩‍🏫</span>
               UPV (Učitelství)
             </button>
             <button
               onClick={() => setActiveDept('KPV')}
-              className={`px-6 py-2.5 text-sm font-bold rounded-lg transition-all duration-200 flex items-center gap-2 ${activeDept === 'KPV' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'}`}
+              className={`px-6 py-2.5 text-sm font-bold rounded-lg transition-all duration-200 flex items-center gap-2 ${activeDept === 'KPV' ? 'bg-indigo-600 text-white shadow-md' : 'text-theme-muted hover:text-theme-primary hover:bg-white/5'}`}
             >
               <span className="text-lg">🤝</span>
               KPV (Poradenství)
@@ -623,25 +623,25 @@ ${currentRulesObj.kompetencni_ramec}
           </div>
         </div>
 
-        <div className="flex gap-2 mb-6 border-b border-white/10 overflow-x-auto">
+        <div className="flex gap-2 mb-6 border-b border-theme-border overflow-x-auto">
           <button
             onClick={() => setActiveTab('AI')}
-            className={`py-3 px-6 text-sm font-medium border-b-2 whitespace-nowrap flex items-center gap-2 ${activeTab === 'AI' ? 'border-indigo-400 text-indigo-300 bg-indigo-500/20 rounded-t-lg' : 'border-transparent text-slate-400 hover:text-slate-200'}`}>
+            className={`py-3 px-6 text-sm font-medium border-b-2 whitespace-nowrap flex items-center gap-2 ${activeTab === 'AI' ? 'border-indigo-400 text-indigo-300 bg-indigo-500/20 rounded-t-lg' : 'border-transparent text-theme-muted hover:text-theme-primary'}`}>
             ✨ AI Knowledge Base
           </button>
           <button
             onClick={() => setActiveTab('IMPORT')}
-            className={`py-3 px-6 text-sm font-medium border-b-2 whitespace-nowrap flex items-center gap-2 ${activeTab === 'IMPORT' ? 'border-indigo-400 text-indigo-300 bg-indigo-500/20 rounded-t-lg' : 'border-transparent text-slate-400 hover:text-slate-200'}`}>
+            className={`py-3 px-6 text-sm font-medium border-b-2 whitespace-nowrap flex items-center gap-2 ${activeTab === 'IMPORT' ? 'border-indigo-400 text-indigo-300 bg-indigo-500/20 rounded-t-lg' : 'border-transparent text-theme-muted hover:text-theme-primary'}`}>
             📂 Roster Import
           </button>
           <button
             onClick={() => setActiveTab('TEMPLATES')}
-            className={`py-3 px-6 text-sm font-medium border-b-2 whitespace-nowrap flex items-center gap-2 ${activeTab === 'TEMPLATES' ? 'border-indigo-400 text-indigo-300 bg-indigo-500/20 rounded-t-lg' : 'border-transparent text-slate-400 hover:text-slate-200'}`}>
+            className={`py-3 px-6 text-sm font-medium border-b-2 whitespace-nowrap flex items-center gap-2 ${activeTab === 'TEMPLATES' ? 'border-indigo-400 text-indigo-300 bg-indigo-500/20 rounded-t-lg' : 'border-transparent text-theme-muted hover:text-theme-primary'}`}>
             📄 Template Manager
           </button>
           <button
             onClick={() => setActiveTab('COMPLIANCE')}
-            className={`py-3 px-6 text-sm font-medium border-b-2 whitespace-nowrap flex items-center gap-2 ${activeTab === 'COMPLIANCE' ? 'border-indigo-400 text-indigo-300 bg-indigo-500/20 rounded-t-lg' : 'border-transparent text-slate-400 hover:text-slate-200'}`}>
+            className={`py-3 px-6 text-sm font-medium border-b-2 whitespace-nowrap flex items-center gap-2 ${activeTab === 'COMPLIANCE' ? 'border-indigo-400 text-indigo-300 bg-indigo-500/20 rounded-t-lg' : 'border-transparent text-theme-muted hover:text-theme-primary'}`}>
             🏛️ Compliance Archive
           </button>
         </div>
@@ -659,17 +659,17 @@ ${currentRulesObj.kompetencni_ramec}
           <div className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Editor */}
             <div className="flex flex-col h-[600px]">
-              <div className="bg-slate-800/50 p-4 rounded-xl border border-white/10 mb-6 overflow-y-auto max-h-48">
-                <h3 className="text-sm font-semibold text-slate-300 mb-4 uppercase tracking-wider">Zdrojové dokumenty (AI Rules)</h3>
+              <div className="bg-slate-800/50 p-4 rounded-xl border border-theme-border mb-6 overflow-y-auto max-h-48">
+                <h3 className="text-sm font-semibold text-theme-secondary mb-4 uppercase tracking-wider">Zdrojové dokumenty (AI Rules)</h3>
                 {loadingDocs ? (
-                  <p className="text-sm text-slate-400">Načítám soubory...</p>
+                  <p className="text-sm text-theme-muted">Načítám soubory...</p>
                 ) : docsList.length === 0 ? (
-                  <p className="text-sm text-slate-400 italic">Zatím nebyly nahrány žádné dokumenty pro {activeDept}.</p>
+                  <p className="text-sm text-theme-muted italic">Zatím nebyly nahrány žádné dokumenty pro {activeDept}.</p>
                 ) : (
                   <ul className="space-y-2">
                     {docsList.map((doc) => (
-                      <li key={doc.name} className="flex items-center justify-between p-2 bg-slate-900/50 rounded-lg border border-white/5">
-                        <span className="text-sm text-slate-200 truncate pr-4 flex-1" title={doc.name}>{doc.name}</span>
+                      <li key={doc.name} className="flex items-center justify-between p-2 bg-theme-panel rounded-lg border border-theme-border">
+                        <span className="text-sm text-theme-primary truncate pr-4 flex-1" title={doc.name}>{doc.name}</span>
                         <div className="flex items-center gap-3">
                             <a href={doc.url} target="_blank" rel="noopener noreferrer" className="text-indigo-400 hover:text-indigo-300 text-sm font-medium whitespace-nowrap">Stáhnout</a>
                             <button
@@ -687,7 +687,7 @@ ${currentRulesObj.kompetencni_ramec}
                 )}
               </div>
               <div className="flex items-center justify-between mb-4">
-                 <h3 className="font-bold font-sans text-slate-100 flex items-center gap-2">
+                 <h3 className="font-bold font-sans text-theme-primary flex items-center gap-2">
                     🧠 Upravit pravidla pro {activeDept}
                  </h3>
                  <div className="relative">
@@ -701,7 +701,7 @@ ${currentRulesObj.kompetencni_ramec}
                     />
                    <button
                      disabled={parsingPdf}
-                     className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-200 px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50">
+                     className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 border border-slate-600 text-theme-primary px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50">
                      {parsingPdf ? "🧠 Analyzuji dokument..." : "📥 Importovat z PDF/DOCX"}
                    </button>
                  </div>
@@ -709,25 +709,25 @@ ${currentRulesObj.kompetencni_ramec}
 
               <div className="flex-1 overflow-y-auto space-y-4 pr-2">
                 <div>
-                  <label className="block text-sm font-medium text-slate-200 mb-2">Metodika</label>
+                  <label className="block text-sm font-medium text-theme-primary mb-2">Metodika</label>
                   <textarea
-                    className="w-full h-32 p-4 bg-slate-900/50 border border-white/10 text-slate-100 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none font-mono text-sm"
+                    className="w-full h-32 p-4 bg-theme-panel border border-theme-border text-theme-primary rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none font-mono text-sm"
                     value={activeDept === 'UPV' ? rulesUpv.metodika : rulesKpv.metodika}
                     onChange={(e) => activeDept === 'UPV' ? setRulesUpv({...rulesUpv, metodika: e.target.value}) : setRulesKpv({...rulesKpv, metodika: e.target.value})}
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-200 mb-2">Uznatelnost</label>
+                  <label className="block text-sm font-medium text-theme-primary mb-2">Uznatelnost</label>
                   <textarea
-                    className="w-full h-32 p-4 bg-slate-900/50 border border-white/10 text-slate-100 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none font-mono text-sm"
+                    className="w-full h-32 p-4 bg-theme-panel border border-theme-border text-theme-primary rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none font-mono text-sm"
                     value={activeDept === 'UPV' ? rulesUpv.uznatelnost : rulesKpv.uznatelnost}
                     onChange={(e) => activeDept === 'UPV' ? setRulesUpv({...rulesUpv, uznatelnost: e.target.value}) : setRulesKpv({...rulesKpv, uznatelnost: e.target.value})}
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-200 mb-2">Kompetenční rámec</label>
+                  <label className="block text-sm font-medium text-theme-primary mb-2">Kompetenční rámec</label>
                   <textarea
-                    className="w-full h-32 p-4 bg-slate-900/50 border border-white/10 text-slate-100 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none font-mono text-sm"
+                    className="w-full h-32 p-4 bg-theme-panel border border-theme-border text-theme-primary rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none font-mono text-sm"
                     value={activeDept === 'UPV' ? rulesUpv.kompetencni_ramec : rulesKpv.kompetencni_ramec}
                     onChange={(e) => activeDept === 'UPV' ? setRulesUpv({...rulesUpv, kompetencni_ramec: e.target.value}) : setRulesKpv({...rulesKpv, kompetencni_ramec: e.target.value})}
                   />
@@ -744,15 +744,15 @@ ${currentRulesObj.kompetencni_ramec}
             </div>
 
             {/* Test Playground */}
-            <div className="flex flex-col h-[600px] bg-slate-800/50 p-4 rounded-xl border border-white/10">
-              <h3 className="font-bold font-sans text-slate-100 mb-2 flex items-center gap-2">
+            <div className="flex flex-col h-[600px] bg-slate-800/50 p-4 rounded-xl border border-theme-border">
+              <h3 className="font-bold font-sans text-theme-primary mb-2 flex items-center gap-2">
                 ▶️
                 Otestovat nanečisto
               </h3>
-              <p className="text-sm text-slate-400 mb-4">Vyzkoušejte, jak AI ohodnotí text podle aktuálních (neuložených) pravidel výše.</p>
+              <p className="text-sm text-theme-muted mb-4">Vyzkoušejte, jak AI ohodnotí text podle aktuálních (neuložených) pravidel výše.</p>
 
               <textarea
-                className="w-full h-32 p-3 bg-slate-900/50 border border-white/10 text-slate-100 rounded-lg mb-4 resize-none text-sm"
+                className="w-full h-32 p-3 bg-theme-panel border border-theme-border text-theme-primary rounded-lg mb-4 resize-none text-sm"
                 placeholder="Zadejte testovací text studentské reflexe..."
                 value={testReflection}
                 onChange={(e) => setTestReflection(e.target.value)}
@@ -765,18 +765,18 @@ ${currentRulesObj.kompetencni_ramec}
                 {testing ? 'Analyzuji...' : 'Spustit test'}
               </button>
 
-              <div className="flex-1 overflow-auto bg-slate-800/50 border border-white/10 rounded-lg p-4">
+              <div className="flex-1 overflow-auto bg-slate-800/50 border border-theme-border rounded-lg p-4">
                 {testResult ? (
                   <div>
                     <div className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-sm font-bold mb-4 ${testResult.evaluation?.isPass ? 'bg-green-900/40 text-green-300 border border-green-800' : 'bg-red-900/40 text-red-300 border border-red-800'}`}>
                       Výsledek: {testResult.evaluation?.isPass ? 'SPLNĚNO' : 'NESPLNĚNO'}
                     </div>
-                    <pre className="text-xs font-mono text-slate-300 whitespace-pre-wrap">
+                    <pre className="text-xs font-mono text-theme-secondary whitespace-pre-wrap">
                       {JSON.stringify(testResult, null, 2)}
                     </pre>
                   </div>
                 ) : (
-                  <div className="h-full flex items-center justify-center text-slate-400 text-sm">
+                  <div className="h-full flex items-center justify-center text-theme-muted text-sm">
                     Výsledek testu se zobrazí zde
                   </div>
                 )}
@@ -788,11 +788,11 @@ ${currentRulesObj.kompetencni_ramec}
 
                 {activeTab === 'IMPORT' && (
           <div className="card-glass p-8">
-            <div className="flex items-center gap-3 mb-2 border-b border-white/10 pb-4">
+            <div className="flex items-center gap-3 mb-2 border-b border-theme-border pb-4">
               <span className="text-2xl">📂</span>
-              <h2 className="text-xl font-bold font-sans text-slate-100">Roster Import (Excel/CSV student lists)</h2>
+              <h2 className="text-xl font-bold font-sans text-theme-primary">Roster Import (Excel/CSV student lists)</h2>
             </div>
-            <p className="text-slate-400 text-sm mb-6">Nahrávejte a mapujte seznamy studentů z Excelu (.xlsx) nebo CSV pro automatické vytvoření uživatelů.</p>
+            <p className="text-theme-muted text-sm mb-6">Nahrávejte a mapujte seznamy studentů z Excelu (.xlsx) nebo CSV pro automatické vytvoření uživatelů.</p>
 
             {!importStats ? (
                 <VisualMappingImport onSuccess={setImportStats} department={activeDept} initialFile={importFileToPass} />
@@ -816,7 +816,7 @@ ${currentRulesObj.kompetencni_ramec}
                         setImportStats(null);
                         fetchImportLogs(); // refresh logs after dismiss
                     }}
-                    className="inline-flex items-center gap-2 text-sm font-semibold bg-slate-800/50 px-4 py-2 border border-slate-700 rounded-lg text-slate-200 hover:bg-slate-700 transition"
+                    className="inline-flex items-center gap-2 text-sm font-semibold bg-slate-800/50 px-4 py-2 border border-slate-700 rounded-lg text-theme-primary hover:bg-slate-700 transition"
                   >
                     Nahrát další soubor
                   </button>
@@ -825,15 +825,15 @@ ${currentRulesObj.kompetencni_ramec}
             )}
 
             <div className="mt-12">
-                <h3 className="text-lg font-bold text-slate-200 mb-4 border-b border-white/10 pb-2">Historie importů</h3>
+                <h3 className="text-lg font-bold text-theme-primary mb-4 border-b border-theme-border pb-2">Historie importů</h3>
                 {loadingLogs ? (
-                    <p className="text-sm text-slate-400">Načítám historii...</p>
+                    <p className="text-sm text-theme-muted">Načítám historii...</p>
                 ) : importLogs.length === 0 ? (
-                    <p className="text-sm text-slate-400 italic">Zatím nebyly provedeny žádné importy.</p>
+                    <p className="text-sm text-theme-muted italic">Zatím nebyly provedeny žádné importy.</p>
                 ) : (
                     <div className="overflow-x-auto">
-                        <table className="w-full text-left text-sm text-slate-300">
-                            <thead className="text-xs text-slate-400 uppercase bg-slate-900/50">
+                        <table className="w-full text-left text-sm text-theme-secondary">
+                            <thead className="text-xs text-theme-muted uppercase bg-theme-panel">
                                 <tr>
                                     <th className="px-4 py-3 rounded-tl-lg">Datum</th>
                                     <th className="px-4 py-3">Přidáno</th>
@@ -844,7 +844,7 @@ ${currentRulesObj.kompetencni_ramec}
                             </thead>
                             <tbody>
                                 {importLogs.map((log) => (
-                                    <tr key={log.id} className="border-b border-white/5 bg-slate-800/30 hover:bg-slate-800/50 transition">
+                                    <tr key={log.id} className="border-b border-theme-border bg-slate-800/30 hover:bg-slate-800/50 transition">
                                         <td className="px-4 py-3 font-medium whitespace-nowrap">
                                             {log.timestamp ? new Date(log.timestamp.seconds * 1000).toLocaleString('cs-CZ') : 'Neznámé'}
                                         </td>
@@ -864,9 +864,9 @@ ${currentRulesObj.kompetencni_ramec}
 
                 {activeTab === 'TEMPLATES' && (
           <div className="card-glass p-8">
-            <div className="flex items-center gap-3 mb-4 border-b border-white/10 pb-4">
+            <div className="flex items-center gap-3 mb-4 border-b border-theme-border pb-4">
               <span className="text-2xl">📄</span>
-              <h2 className="text-xl font-bold font-sans text-slate-100">Template Manager ({activeDept})</h2>
+              <h2 className="text-xl font-bold font-sans text-theme-primary">Template Manager ({activeDept})</h2>
             </div>
 
             <div className="bg-amber-900/20 border-l-4 border-amber-500 p-4 mb-6 rounded-r-lg flex items-start gap-3">
@@ -890,25 +890,25 @@ ${currentRulesObj.kompetencni_ramec}
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
                   />
                  <div className="text-5xl mb-4 pointer-events-none opacity-50">📤</div>
-                 <h2 className="text-xl font-bold font-sans text-slate-200 pointer-events-none">Nahrát šablonu</h2>
-                 <p className="text-slate-400 mt-2 pointer-events-none">
+                 <h2 className="text-xl font-bold font-sans text-theme-primary pointer-events-none">Nahrát šablonu</h2>
+                 <p className="text-theme-muted mt-2 pointer-events-none">
                    {uploadingTemplate ? 'Nahrávám...' : 'Klikněte pro nahrání šablony (.pdf, .docx, .pptx) do Firebase Storage.'}
                  </p>
                  <p className="text-slate-500 text-xs mt-2 pointer-events-none">
                    Tip: Přehrání existujícího souboru provedete nahráním souboru se stejným názvem.
                  </p>
               </div>
-              <div className="bg-slate-800/50 p-6 rounded-xl border border-white/10 overflow-y-auto h-64">
-                <h3 className="text-sm font-semibold text-slate-300 mb-4 uppercase tracking-wider">Nahrané šablony</h3>
+              <div className="bg-slate-800/50 p-6 rounded-xl border border-theme-border overflow-y-auto h-64">
+                <h3 className="text-sm font-semibold text-theme-secondary mb-4 uppercase tracking-wider">Nahrané šablony</h3>
                 {loadingDocs ? (
-                  <p className="text-sm text-slate-400">Načítám soubory...</p>
+                  <p className="text-sm text-theme-muted">Načítám soubory...</p>
                 ) : docsList.length === 0 ? (
-                  <p className="text-sm text-slate-400 italic">Zatím nebyly nahrány žádné šablony pro {activeDept}.</p>
+                  <p className="text-sm text-theme-muted italic">Zatím nebyly nahrány žádné šablony pro {activeDept}.</p>
                 ) : (
                   <ul className="space-y-3">
                     {docsList.map((doc) => (
-                      <li key={doc.name} className="flex items-center justify-between p-3 bg-slate-900/50 rounded-lg border border-white/5">
-                        <span className="text-sm text-slate-200 truncate pr-4 flex-1" title={doc.name}>{doc.name}</span>
+                      <li key={doc.name} className="flex items-center justify-between p-3 bg-theme-panel rounded-lg border border-theme-border">
+                        <span className="text-sm text-theme-primary truncate pr-4 flex-1" title={doc.name}>{doc.name}</span>
                         <div className="flex items-center gap-3">
                             <a href={doc.url} target="_blank" rel="noopener noreferrer" className="text-indigo-400 hover:text-indigo-300 text-sm font-medium whitespace-nowrap">Stáhnout</a>
                             <button
@@ -931,9 +931,9 @@ ${currentRulesObj.kompetencni_ramec}
 
                 {activeTab === 'COMPLIANCE' && (
           <div className="card-glass p-8">
-            <div className="flex items-center gap-3 mb-4 border-b border-white/10 pb-4">
+            <div className="flex items-center gap-3 mb-4 border-b border-theme-border pb-4">
               <span className="text-2xl">🏛️</span>
-              <h2 className="text-xl font-bold font-sans text-slate-100">Compliance Archive ({activeDept})</h2>
+              <h2 className="text-xl font-bold font-sans text-theme-primary">Compliance Archive ({activeDept})</h2>
             </div>
 
             <div className="bg-amber-900/20 border-l-4 border-amber-500 p-4 mb-6 rounded-r-lg flex items-start gap-3">
@@ -957,25 +957,25 @@ ${currentRulesObj.kompetencni_ramec}
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
                   />
                  <div className="text-5xl mb-4 pointer-events-none opacity-50">📤</div>
-                 <h2 className="text-xl font-bold font-sans text-slate-200 pointer-events-none">Nahrát rámcovou smlouvu</h2>
-                 <p className="text-slate-400 mt-2 pointer-events-none">
+                 <h2 className="text-xl font-bold font-sans text-theme-primary pointer-events-none">Nahrát rámcovou smlouvu</h2>
+                 <p className="text-theme-muted mt-2 pointer-events-none">
                    {uploadingCompliance ? 'Nahrávám...' : 'Klikněte pro nahrání rámcové smlouvy (.pdf, .docx, .pptx) do Firebase Storage.'}
                  </p>
                  <p className="text-slate-500 text-xs mt-2 pointer-events-none">
                    Tip: Přehrání existujícího souboru provedete nahráním souboru se stejným názvem.
                  </p>
               </div>
-              <div className="bg-slate-800/50 p-6 rounded-xl border border-white/10 overflow-y-auto h-64">
-                <h3 className="text-sm font-semibold text-slate-300 mb-4 uppercase tracking-wider">Nahrané smlouvy</h3>
+              <div className="bg-slate-800/50 p-6 rounded-xl border border-theme-border overflow-y-auto h-64">
+                <h3 className="text-sm font-semibold text-theme-secondary mb-4 uppercase tracking-wider">Nahrané smlouvy</h3>
                 {loadingDocs ? (
-                  <p className="text-sm text-slate-400">Načítám soubory...</p>
+                  <p className="text-sm text-theme-muted">Načítám soubory...</p>
                 ) : docsList.length === 0 ? (
-                  <p className="text-sm text-slate-400 italic">Zatím nebyly nahrány žádné smlouvy pro {activeDept}.</p>
+                  <p className="text-sm text-theme-muted italic">Zatím nebyly nahrány žádné smlouvy pro {activeDept}.</p>
                 ) : (
                   <ul className="space-y-3">
                     {docsList.map((doc) => (
-                      <li key={doc.name} className="flex items-center justify-between p-3 bg-slate-900/50 rounded-lg border border-white/5">
-                        <span className="text-sm text-slate-200 truncate pr-4 flex-1" title={doc.name}>{doc.name}</span>
+                      <li key={doc.name} className="flex items-center justify-between p-3 bg-theme-panel rounded-lg border border-theme-border">
+                        <span className="text-sm text-theme-primary truncate pr-4 flex-1" title={doc.name}>{doc.name}</span>
                         <div className="flex items-center gap-3">
                             <a href={doc.url} target="_blank" rel="noopener noreferrer" className="text-indigo-400 hover:text-indigo-300 text-sm font-medium whitespace-nowrap">Stáhnout</a>
                             <button
