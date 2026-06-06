@@ -111,7 +111,7 @@ export default function PayrollModule() {
      document.body.removeChild(link);
   };
 
-  if (loading) return <div className="p-8 text-white">Načítám výkaz...</div>;
+  if (loading) return <div className="p-8 text-theme-primary">Načítám výkaz...</div>;
 
   return (
 
@@ -119,23 +119,23 @@ export default function PayrollModule() {
       <Navbar />
       <div className="pt-24 pb-12 px-6 max-w-7xl mx-auto">
         <div className="flex justify-between items-start mb-6">
-          <h1 className="text-3xl font-bold font-sans text-slate-100">Mzdový modul (Payroll)</h1>
+          <h1 className="text-3xl font-bold font-sans text-theme-primary">Mzdový modul (Payroll)</h1>
           <Link
             href="/admin/dashboard"
-            className="text-sm font-medium text-slate-300 hover:text-blue-400 transition"
+            className="text-sm font-medium text-theme-secondary hover:text-blue-400 transition"
           >
             &larr; Zpět na Dashboard
           </Link>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div className="card-glass p-6 rounded-2xl border border-white/5">
-                <p className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2">Sazba UPV</p>
-                <p className="text-3xl font-bold text-white">{rates.UPV} CZK / h</p>
+            <div className="card-glass p-6 rounded-2xl border border-theme-border">
+                <p className="text-sm font-bold text-theme-muted uppercase tracking-wider mb-2">Sazba UPV</p>
+                <p className="text-3xl font-bold text-theme-primary">{rates.UPV} CZK / h</p>
             </div>
-            <div className="card-glass p-6 rounded-2xl border border-white/5">
-                <p className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2">Sazba KPV</p>
-                <p className="text-3xl font-bold text-white">{rates.KPV} CZK / h</p>
+            <div className="card-glass p-6 rounded-2xl border border-theme-border">
+                <p className="text-sm font-bold text-theme-muted uppercase tracking-wider mb-2">Sazba KPV</p>
+                <p className="text-3xl font-bold text-theme-primary">{rates.KPV} CZK / h</p>
             </div>
             <div className="card-glass p-6 rounded-2xl border border-green-500/30 bg-green-900/10">
                 <p className="text-sm font-bold text-green-400 uppercase tracking-wider mb-2">Celkové odměny</p>
@@ -143,9 +143,9 @@ export default function PayrollModule() {
             </div>
         </div>
 
-        <div className="card-glass rounded-3xl overflow-hidden border border-white/5">
-          <div className="flex justify-between items-center p-6 border-b border-white/5 bg-slate-900/50">
-            <h2 className="text-xl font-bold text-slate-100">Výkaz odměn mentorů podle organizace</h2>
+        <div className="card-glass rounded-3xl overflow-hidden border border-theme-border">
+          <div className="flex justify-between items-center p-6 border-b border-theme-border bg-theme-panel">
+            <h2 className="text-xl font-bold text-theme-primary">Výkaz odměn mentorů podle organizace</h2>
             <button
                 onClick={downloadCSV}
                 className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition text-sm flex items-center gap-2"
@@ -154,8 +154,8 @@ export default function PayrollModule() {
             </button>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm text-slate-300">
-              <thead className="bg-slate-800/80 text-slate-400 font-bold">
+            <table className="w-full text-left text-sm text-theme-secondary">
+              <thead className="bg-theme-panel text-theme-muted font-bold">
                 <tr>
                   <th className="px-6 py-4">Organizace</th>
                   <th className="px-6 py-4">IČO</th>
@@ -170,8 +170,8 @@ export default function PayrollModule() {
                 ) : (
                     payrollData.map((row, idx) => (
                     <tr key={idx} data-testid="payroll-row" className="hover:bg-slate-800/30 transition">
-                        <td className="px-6 py-4 font-bold text-slate-200" data-testid="institution-name">{row.institutionName}</td>
-                        <td className="px-6 py-4 font-mono text-slate-400">{row.institutionIco}</td>
+                        <td className="px-6 py-4 font-bold text-theme-primary" data-testid="institution-name">{row.institutionName}</td>
+                        <td className="px-6 py-4 font-mono text-theme-muted">{row.institutionIco}</td>
                         <td className="px-6 py-4"><span className="px-2 py-1 bg-blue-900/30 text-blue-300 rounded-md font-mono">{row.approvedHoursUPV} h</span></td>
                         <td className="px-6 py-4"><span className="px-2 py-1 bg-indigo-900/30 text-indigo-300 rounded-md font-mono">{row.approvedHoursKPV} h</span></td>
                         <td className="px-6 py-4 text-right font-bold text-green-400 text-base">{row.totalPayout.toLocaleString('cs-CZ')} CZK</td>

@@ -13,6 +13,13 @@ module.exports = {
         sans: ['"Poppins"', 'sans-serif'],
       },
       colors: {
+        theme: {
+          primary: 'var(--text-theme-primary)',
+          secondary: 'var(--text-theme-secondary)',
+          muted: 'var(--text-theme-muted)',
+          panel: 'var(--bg-theme-panel)',
+          border: 'var(--border-theme-border)'
+        },
         brand: {
           500: '#6366f1',
         },

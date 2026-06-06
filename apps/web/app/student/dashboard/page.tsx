@@ -867,7 +867,7 @@ function StudentDashboardContent() {
     return <DashboardSkeleton />;
 
   return (
-    <div className="min-h-screen bg-slate-900 p-8 font-sans card-glass">
+    <div className="min-h-screen dark bg-slate-900 p-8 font-sans card-glass">
       <Chatbot initialMessage={getChatbotMessage()} />
 
       {/* SKILLS MODAL */}
