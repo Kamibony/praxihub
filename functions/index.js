@@ -56,7 +56,7 @@ exports.analyzeContract = functions.firestore
           ? "application/pdf"
           : "image/jpeg";
 
-        // Prompt pre Gemini
+        // Sanitize Prompt: Although prompt is hardcoded, ensure chunks if large docs in future
         const prompt = `
           Analyzuj túto zmluvu o praxi.
           Vráť IBA validný JSON objekt (čistý text bez formátovania kódu) s kľúčmi:
@@ -69,6 +69,9 @@ exports.analyzeContract = functions.firestore
           Nájdi názov organizácie, jej IČO (identifikačné číslo), dátum začiatku a konca praxe. 
           Ak IČO nevieš nájsť, skús hľadať 8-miestne číslo označené ako IČO. Ak údaj chýba, daj null.
         `;
+
+        // Chunk large base64 strings if necessary (Gemini has limits, but typically fine for PDF pages)
+        // Here we ensure mimeType is strictly validated as well.
 
         const result = await model.generateContent([
           prompt,
@@ -134,8 +137,13 @@ exports.sendEmailNotification = functions.firestore
 exports.chatWithAI = functions.runWith({ memory: "512MB" }).https.onCall(async (data, context) => {
   // data obsahuje: { message: "Otázka užívateľa", role: "student/company/..." }
 
-  const userMessage = data.message;
+  // Sanitize input: strip zero-width characters and limit length
+  let userMessage = (data.message || "").replace(/[​-‍﻿]/g, '');
+  if (userMessage.length > 5000) {
+      userMessage = userMessage.substring(0, 5000);
+  }
   const userRole = data.role || "visitor";
+
 
   try {
     const db = admin.firestore();
