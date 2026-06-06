@@ -104,3 +104,48 @@ This scenario follows the same validation cycle but specifically targets a **KPV
    - Navigate to `/admin/payroll`.
    - Find the institution's `data-testid="payroll-row"`.
    - **Crucial Difference:** Unlike Scenario A, verify the hours and payouts specifically for the **KPV categories**. Ensure KPV time logs are properly categorized and do not bleed into UPV payroll calculations.
+
+---
+
+## Scenario C: New Baselines and System Checks
+
+This section covers validation for the new architectural and design realities of the platform, including UI/UX, layouts, ARES API, regressions, and critical workflows.
+
+### 1. UX/UI & Design System (Light Glassmorphism Consistency)
+The application adheres strictly to the 'Master Blueprint' philosophy. Check the following:
+- **Global Theme Check:** Verify the UI defaults to a light theme (`bg-[#f8fafc]`) and uses the primary brand color Indigo/Violet (`brand-500: #6366f1`).
+- **Glassmorphism Elements:** Inspect header elements for `backdrop-blur-12px`.
+- **Dark Mode Encapsulation:** Certain modular views like `/student/dashboard` and `/admin/documents` are intentionally encapsulated as dark themes (e.g. `bg-slate-900/30`, `backdrop-blur-8px`, heavily rounded modals `rounded-[2.5rem]`). Ensure that legacy dark-mode styles do not leak into the global light AppShell.
+- **Contrast Check:** Verify text-contrast over glassmorphism backgrounds.
+- **Action Tables:** Hover over table rows to confirm that primary action buttons appear correctly on hover.
+
+### 2. Layout Constraints (AppShell Geometry)
+The AppShell employs a two-column layout consisting of a fixed 300px sidebar and a fluid main content area.
+- **No Horizontal Scrolling:** Verify that across various breakpoints (Desktop, Tablet, Mobile) there is NO horizontal scrolling. The root container should enforce `overflow-x-hidden` and the fluid main content wrapper must use `min-w-0 max-w-full overflow-hidden`.
+- **Sidebar Collapse:** On smaller breakpoints, verify the 300px fixed sidebar hides/collapses properly into a hamburger menu or equivalent responsive pattern.
+
+### 3. ARES API Integration
+The application uses the ARES REST API to fetch institution details automatically.
+- **Valid IČO Test:** Navigate to the Institution creation/editing form. Input a valid IČO (e.g. `00023337` for UK). The form should automatically populate the institution's official name, address, and legal details.
+- **Invalid IČO Test:** Enter an invalid or non-existent IČO (e.g. `99999999`). Verify that a clear error message is shown and the system does not crash or partially populate incorrect data.
+
+### 4. Regression Checks
+- **Globální dokumenty (Admin Dashboard):** Navigate to the Admin Dashboard. Verify that the legacy "Globální dokumenty" module is completely absent from the UI. Admin document assets are now stored exclusively under `/global_documents/{category}/{dept}/{fileName}`.
+- **Legacy Directories:** Ensure there are no active links to deprecated root folders like `templates/`, `compliance/`, or `methodologies/`.
+
+### 5. Registration & Onboarding Workflows (CRITICAL)
+Verify the end-to-end user creation scenarios for all primary roles. The application uses Magic Links for primary web auth.
+
+#### A. Self-Registration Paths
+1. **Student Registration:** Go to `/signup` and select the Student role. Complete the form and verify the Magic Link email is sent. Click the link and verify you enter the `/onboarding` pipeline to select your major (UPV vs KPV) and complete profile setup.
+2. **Institution Registration:** Go to `/signup` and select the Institution role. Complete the form, confirm email, and verify you are directed to the specific Institution onboarding flow to input details like capacity and KRAU criteria.
+
+#### B. Admin-Provisioned Paths
+1. **Manual User Creation:** As an Admin (`role: 'admin'`), navigate to `/admin/users`.
+2. **Invite User:** Use the admin panel to manually invite/create a new Coordinator or Institution account. Verify that the user receives an invitation email and can set up their account smoothly.
+
+#### C. Role Routing Validation
+After completing onboarding or logging in:
+- **Student Role:** Verify successful redirection to `/student/dashboard`. Check the 3-state Interactive Traffic Light (Semafor) mapped to the placement status.
+- **Institution Role:** Verify successful redirection to `/institution/dashboard`.
+- **Coordinator/Admin Role:** Verify successful redirection to `/admin/dashboard`.
