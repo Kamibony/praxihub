@@ -26,8 +26,18 @@ This scenario validates the flow for a student with the **UPV** major, from cont
    - **Verification 1:** Check the element with `data-testid="student-name"`. Ensure it matches the student you selected. Expected visual state: The student's name is displayed in a white, bold font.
    - **Verification 2:** Check the element with `data-testid="student-major"`. It must display **UPV**. Expected visual state: A blue badge with "UPV". *Fallback:* If missing, it will display "Chybí obor".
 
-3. **Generate Contract:**
-   - Click the button with `data-testid="generate-contract-link-main"` (or `data-testid="generate-contract-link"`).
+3. **Request Organization Approval:**
+   - On the dashboard, fill out the "Vyberte organizaci" (Select organization) form and submit the request.
+   - The system will transition to the "PENDING_MATCH" (Waiting for organization approval) state.
+
+4. **Organization Approval by Coordinator:**
+   - Open a new window (or temporarily stop impersonating) and navigate to the Admin Dashboard as an Administrator/Coordinator.
+   - Find the student's request and approve it. (The student's state will change to "ORG_APPROVED").
+   - Resume impersonating the student on their Dashboard.
+
+5. **Generate Contract:**
+   - Now, the "Získat smlouvu" (Get Contract) section should be visible on the student's dashboard.
+   - Click the button labeled "Generovat novou smlouvu" (or "+ Nová smlouva / Opravit" in the header).
    - Complete the contract generation wizard steps (using the Draft Storage).
    - Submit the contract and ensure the success state (toast notification or redirect) is triggered.
 
@@ -78,8 +88,16 @@ This scenario follows the same validation cycle but specifically targets a **KPV
    - **Verification 1:** Check `data-testid="student-name"`.
    - **Verification 2:** Check `data-testid="student-major"`. **Crucial Difference:** This must display **KPV**.
 
-3. **Generate Contract:**
-   - Click `data-testid="generate-contract-link-main"`.
+3. **Request Organization Approval:**
+   - On the dashboard, fill out the "Vyberte organizaci" (Select organization) form and submit the request.
+   - Due to the Fast-Track ARES integration, the organization should be automatically approved (or fallback to manual approval if ARES fails).
+
+4. **Organization Approval by Coordinator (if ARES fails):**
+   - If the request wasn't automatically approved, stop impersonating, approve the request as an administrator, and return to impersonating the student.
+
+5. **Generate Contract:**
+   - Now, the "Získat smlouvu" (Get Contract) section should be visible on the student's dashboard.
+   - Click the button labeled "Generovat novou smlouvu" (or "+ Nová smlouva / Opravit" in the header).
    - Complete the KPV specific contract wizard. *Note: KPV contracts may have different terms or evaluation parameters compared to UPV.*
 
 ### Phase 2: Assigned Institution - Contract Signature

@@ -22,7 +22,7 @@ test.describe('UAT: Student Journey (UPV/KPV)', () => {
 
         await db.collection('placements').doc('uat-placement').set({
             studentId: 'uat-student',
-            status: 'ACTIVE',
+            status: 'ORG_APPROVED',
             organization_name: 'UAT Company s.r.o.',
             createdAt: new Date().toISOString(),
         });
