@@ -171,6 +171,12 @@ export default function UserManagementPage() {
     }
   };
 
+  const formatDate = (dateVal: any) => {
+    if (!dateVal) return '-';
+    const d = dateVal?.seconds ? new Date(dateVal.seconds * 1000) : new Date(dateVal);
+    return isNaN(d.getTime()) ? '-' : d.toLocaleDateString('cs-CZ');
+  };
+
   const handleExportCSV = () => {
     if (filteredUsers.length === 0) return;
 
@@ -767,7 +773,7 @@ export default function UserManagementPage() {
                     </div>
                     <div>
                       <span className="block text-slate-500 mb-1">Založeno</span>
-                      <span className="font-medium text-slate-900">{selectedUser.createdAt ? new Date(selectedUser.createdAt).toLocaleDateString('cs-CZ') : '-'}</span>
+                      <span className="font-medium text-slate-900">{formatDate(selectedUser.createdAt)}</span>
                     </div>
 
                     {/* Conditional rendering for student fields */}
