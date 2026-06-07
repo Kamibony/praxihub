@@ -92,6 +92,13 @@ exports.analyzeContract = functions.firestore
         });
       } catch (error) {
         console.error("❌ Chyba pri analýze:", error);
+        if (error.status === 429 || error.message?.includes('429') || error.message?.includes('quota') || error.message?.includes('Too Many Requests')) {
+           await change.after.ref.update({
+             status: "REJECTED",
+             ai_error_message: "Omlouváme se, ale AI služby jsou momentálně přetížené (byl vyčerpán limit požadavků). Zkuste to prosím znovu za chvíli."
+           });
+           return null;
+        }
         await change.after.ref.update({
           status: "REJECTED",
           ai_error_message: error.message,
@@ -197,6 +204,9 @@ exports.chatWithAI = functions.runWith({ memory: "512MB" }).https.onCall(async (
     return { response: result.response.text() };
   } catch (error) {
     console.error("Chatbot Error:", error);
+    if (error.status === 429 || error.message?.includes('429') || error.message?.includes('quota') || error.message?.includes('Too Many Requests')) {
+      throw new functions.https.HttpsError("resource-exhausted", "Omlouváme se, ale AI služby jsou momentálně přetížené (byl vyčerpán limit požadavků). Zkuste to prosím znovu za chvíli.");
+    }
     // Vrátime chybu frontend klientovi
     throw new functions.https.HttpsError(
       "internal",
@@ -1212,6 +1222,9 @@ Veškeré texty pro zpětnou vazbu (reasoning) musí být napsány v profesioná
     return evaluationData;
   } catch (error) {
     console.error("Chyba při hodnocení reflexe:", error);
+    if (error.status === 429 || error.message?.includes('429') || error.message?.includes('quota') || error.message?.includes('Too Many Requests')) {
+      throw new functions.https.HttpsError("resource-exhausted", "Omlouváme se, ale AI služby jsou momentálně přetížené (byl vyčerpán limit požadavků). Zkuste to prosím znovu za chvíli.");
+    }
     throw new functions.https.HttpsError(
       "internal",
       "Nastala chyba při zpracování s AI: " + error.message,
@@ -1572,6 +1585,9 @@ exports.testEvaluateReflection = functions.https.onCall(
       return evaluationData;
     } catch (error) {
       console.error("Chyba pri testovaní AI hodnocení:", error);
+    if (error.status === 429 || error.message?.includes('429') || error.message?.includes('quota') || error.message?.includes('Too Many Requests')) {
+      throw new functions.https.HttpsError("resource-exhausted", "Omlouváme se, ale AI služby jsou momentálně přetížené (byl vyčerpán limit požadavků). Zkuste to prosím znovu za chvíli.");
+    }
       throw new functions.https.HttpsError(
         "internal",
         "Nepodařilo se ohodnotit reflexi",
@@ -1841,6 +1857,9 @@ Zachovej původní tón a záměr autora. Vrať POUZE opravený text bez jakých
       return { correctedText: correctedText.trim() };
     } catch (error) {
       console.error("Error correcting grammar:", error);
+    if (error.status === 429 || error.message?.includes('429') || error.message?.includes('quota') || error.message?.includes('Too Many Requests')) {
+      throw new functions.https.HttpsError("resource-exhausted", "Omlouváme se, ale AI služby jsou momentálně přetížené (byl vyčerpán limit požadavků). Zkuste to prosím znovu za chvíli.");
+    }
       throw new functions.https.HttpsError(
         "internal",
         "Nepodařilo se opravit gramatiku.",
@@ -2169,6 +2188,9 @@ Explain this data into a 2-sentence spoken explanation. You must answer in stric
     return { narration: result.response.text() };
   } catch (error) {
     console.error("generateShowcaseNarration Error:", error);
+    if (error.status === 429 || error.message?.includes('429') || error.message?.includes('quota') || error.message?.includes('Too Many Requests')) {
+      throw new functions.https.HttpsError("resource-exhausted", "Omlouváme se, ale AI služby jsou momentálně přetížené (byl vyčerpán limit požadavků). Zkuste to prosím znovu za chvíli.");
+    }
     throw new functions.https.HttpsError("internal", "Nepodařilo se vygenerovat naraci: " + error.message);
   }
 });
@@ -2332,6 +2354,9 @@ ${textToParse.substring(0, 80000)}
 
   } catch (error) {
     console.error("routeDocument Error:", error);
+    if (error.status === 429 || error.message?.includes('429') || error.message?.includes('quota') || error.message?.includes('Too Many Requests')) {
+      throw new functions.https.HttpsError("resource-exhausted", "Omlouváme se, ale AI služby jsou momentálně přetížené (byl vyčerpán limit požadavků). Zkuste to prosím znovu za chvíli.");
+    }
     throw new functions.https.HttpsError("internal", "Došlo k interní chybě při zpracování.");
   }
 });
@@ -2442,6 +2467,9 @@ ${textToParse.substring(0, 80000)} // Increased limit leveraging Gemini 2.5 Pro 
 
   } catch (error) {
      console.error("parseDocumentForAI Error:", error);
+    if (error.status === 429 || error.message?.includes('429') || error.message?.includes('quota') || error.message?.includes('Too Many Requests')) {
+      throw new functions.https.HttpsError("resource-exhausted", "Omlouváme se, ale AI služby jsou momentálně přetížené (byl vyčerpán limit požadavků). Zkuste to prosím znovu za chvíli.");
+    }
      throw new functions.https.HttpsError("internal", "Došlo k interní chybě při zpracování.");
   }
 });

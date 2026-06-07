@@ -337,7 +337,7 @@ function StudentDashboardContent() {
 
   const handleOrgRequestSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !orgRequest.name || !orgRequest.ico || (selectedInstitutionId === "NEW" && !orgRequest.web)) {
+    if (!user || (selectedInstitutionId === "NEW" && (!orgRequest.name || !orgRequest.ico || !orgRequest.web))) {
       toast.success("Vyplňte prosím povinné údaje (Název, IČO a případně kontaktní email).");
       return;
     }
