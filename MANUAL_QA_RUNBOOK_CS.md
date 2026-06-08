@@ -35,11 +35,12 @@ Tento scénář ověřuje tok pro studenta s oborem **UPV**, od generování sml
    - Najděte žádost studenta a schvalte ji. (Stav studenta se změní na "ORG_APPROVED").
    - Vraťte se k zastupování studenta na jeho Dashboard.
 
-5. **Generovat smlouvu:**
+5. **Generovat a nahrát smlouvu:**
    - Nyní by se na nástěnce studenta měla zobrazit sekce "Získat smlouvu".
    - Klikněte na tlačítko s nápisem "Generovat novou smlouvu" (nebo "+ Nová smlouva / Opravit" v hlavičce).
    - Dokončete kroky průvodce generováním smlouvy (s využitím Draft Storage).
-   - Odešlete smlouvu a ujistěte se, že se spustí stav o úspěchu (toast notifikace nebo přesměrování).
+   - Odešlete smlouvu. Ujistěte se, že se vygenerovalo a stáhlo PDF.
+   - **Klíčový krok:** Student poté musí nahrát fyzicky/digitálně podepsanou kopii zpět na Dashboard prostřednictvím sekce pro nahrávání. Ujistěte se, že tato akce změní stav umístění na "ANALYZING" (Analyzuje se). *Při selhání:* Pokud nahrávání selže, pořiďte snímek obrazovky s chybou v konzoli (Network tab) a založte bug ticket na komponentu 'Generování smlouvy'.
 
 ### Fáze 2: Přiřazená instituce - Podpis smlouvy
 
@@ -56,10 +57,23 @@ Tento scénář ověřuje tok pro studenta s oborem **UPV**, od generování sml
    - **Ověření 2:** Zkontrolujte odznak oboru. Musí zobrazovat **UPV**.
 
 3. **Podepsat smlouvu:**
-   - Postupujte podle pokynů uživatelského rozhraní na kartě studenta nebo v detailu umístění a zkontrolujte a podepište nově vygenerovanou smlouvu.
-   - Ověřte stav úspěchu, který indikuje, že požadavek na třístranný podpis je za instituci splněn.
+   - Postupujte podle pokynů uživatelského rozhraní na kartě studenta nebo v detailu umístění a zkontrolujte a podepište nahranou smlouvu.
+   - Ověřte stav úspěchu, který indikuje, že požadavek na třístranný podpis je za instituci splněn. *Při selhání:* Pokud je tlačítko pro podpis neaktivní (disabled), ověřte, zda je smlouva skutečně ve stavu 'ANALYZING'. Pokud ano, založte bug ticket na Dashboard Instituce.
 
-### Fáze 3: Koordinátor - Ověření mezd
+### Fáze 3: Vykazování hodin a schválení mentorem
+
+Před ověřením mezd musí být vykázány a schváleny hodiny.
+
+1. **Vykázat hodiny (Student):**
+   - Vraťte se na Student Dashboard (změňte roli zpět na studenta).
+   - Po podepsání smlouvy přejde stav umístění do aktivního stavu. Použijte modul pro vykazování hodin na domovské stránce k zápisu požadovaných hodin.
+
+2. **Schválit hodiny (Instituce):**
+   - Zastupujte opět Instituci.
+   - Na Institution Dashboard vyhledejte sekci "Čeká na schválení".
+   - Schvalte hodiny vykázané studentem.
+
+### Fáze 4: Koordinátor - Ověření mezd
 
 1. **Změnit roli:**
    - Zastavte zastupování Instituce pomocí horního banneru kliknutím na **"Návrat do Adminu"**.
@@ -95,10 +109,12 @@ Tento scénář sleduje stejný cyklus ověřování, ale specificky se zaměřu
 4. **Schválení organizace Koordinátorem (pokud ARES selhal):**
    - Pokud se žádost neschválila automaticky, ukončete zastupování, schvalte žádost jako administrátor a vraťte se k zastupování studenta.
 
-5. **Generovat smlouvu:**
+5. **Generovat a nahrát smlouvu:**
    - Nyní by se na nástěnce studenta měla zobrazit sekce "Získat smlouvu".
    - Klikněte na tlačítko s nápisem "Generovat novou smlouvu" (nebo "+ Nová smlouva / Opravit" v hlavičce).
    - Dokončete průvodce smlouvou specifického pro KPV. *Poznámka: KPV smlouvy mohou mít odlišné podmínky nebo parametry hodnocení ve srovnání s UPV.*
+   - Odešlete smlouvu. Ujistěte se, že se vygenerovalo a stáhlo PDF.
+   - **Klíčový krok:** Student poté musí nahrát fyzicky/digitálně podepsanou kopii zpět na Dashboard prostřednictvím sekce pro nahrávání. Ujistěte se, že tato akce změní stav umístění na "ANALYZING" (Analyzuje se). *Při selhání:* Pokud nahrávání selže, pořiďte snímek obrazovky s chybou v konzoli (Network tab) a založte bug ticket na komponentu 'Generování smlouvy'.
 
 ### Fáze 2: Přiřazená instituce - Podpis smlouvy
 
@@ -111,9 +127,19 @@ Tento scénář sleduje stejný cyklus ověřování, ale specificky se zaměřu
    - **Ověření 2:** Zkontrolujte odznak oboru. Musí explicitně zobrazovat **KPV**.
 
 3. **Podepsat smlouvu:**
-   - Dokončete proces podpisu pro smlouvu KPV.
+   - Dokončete proces podpisu pro smlouvu KPV nahranou studentem. *Při selhání:* Pokud je tlačítko pro podpis neaktivní (disabled), ověřte, zda je smlouva skutečně ve stavu 'ANALYZING'. Pokud ano, založte bug ticket na Dashboard Instituce.
 
-### Fáze 3: Koordinátor - Ověření mezd
+### Fáze 3: Vykazování hodin a schválení mentorem
+
+1. **Vykázat hodiny (Student):**
+   - Změňte roli zpět na studenta KPV.
+   - Zapište požadované hodiny praxe pomocí modulu pro vykazování hodin na domovské stránce.
+
+2. **Schválit hodiny (Instituce):**
+   - Změňte roli zpět na Instituci.
+   - Schvalte studentem vykázané hodiny v sekci "Čeká na schválení".
+
+### Fáze 4: Koordinátor - Ověření mezd
 
 1. **Změnit roli:**
    - Klikněte na **"Návrat do Adminu"**.
