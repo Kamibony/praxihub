@@ -35,11 +35,12 @@ This scenario validates the flow for a student with the **UPV** major, from cont
    - Find the student's request and approve it. (The student's state will change to "ORG_APPROVED").
    - Resume impersonating the student on their Dashboard.
 
-5. **Generate Contract:**
+5. **Generate & Upload Contract:**
    - Now, the "Získat smlouvu" (Get Contract) section should be visible on the student's dashboard.
    - Click the button labeled "Generovat novou smlouvu" (or "+ Nová smlouva / Opravit" in the header).
    - Complete the contract generation wizard steps (using the Draft Storage).
-   - Submit the contract and ensure the success state (toast notification or redirect) is triggered.
+   - Submit the contract. Ensure the PDF is generated and downloaded.
+   - **Crucial Step:** The student must then upload the physical/digitally signed copy back to the Dashboard via the upload section. Ensure this action transitions the placement state to "ANALYZING". *Failure:* If the upload fails, take a screenshot of the console network error and file a bug ticket under the 'Contract Generation' component.
 
 ### Phase 2: Assigned Institution - Contract Signature
 
@@ -56,10 +57,23 @@ This scenario validates the flow for a student with the **UPV** major, from cont
    - **Verification 2:** Check the student's major badge. It must display **UPV**.
 
 3. **Sign Contract:**
-   - Follow the UI prompts on the student's card or placement detail to review and sign the newly generated contract.
-   - Verify the success state indicating the tripartite signature requirement is met for the institution.
+   - Follow the UI prompts on the student's card or placement detail to review and sign the uploaded contract.
+   - Verify the success state indicating the tripartite signature requirement is met for the institution. *Failure:* If the signature button is disabled, verify that the contract is actually in the 'ANALYZING' state. If it is, file a bug ticket for the Institution Dashboard.
 
-### Phase 3: Coordinator - Payroll Verification
+### Phase 3: Time Logging and Mentor Approval
+
+Before payroll can be verified, hours must be logged and approved.
+
+1. **Log Hours (Student):**
+   - Return to the Student Dashboard (switch role back to the student).
+   - Once the contract is signed, the placement state transitions to an active state. Use the time-logging module on the dashboard to log the required hours.
+
+2. **Approve Hours (Institution):**
+   - Switch back to impersonating the Institution.
+   - On the Institution Dashboard, locate the "Čeká na schválení" (Pending Approvals) section.
+   - Approve the hours logged by the student.
+
+### Phase 4: Coordinator - Payroll Verification
 
 1. **Switch Role:**
    - Stop impersonating the Institution using the top banner.
@@ -95,10 +109,12 @@ This scenario follows the same validation cycle but specifically targets a **KPV
 4. **Organization Approval by Coordinator (if ARES fails):**
    - If the request wasn't automatically approved, stop impersonating, approve the request as an administrator, and return to impersonating the student.
 
-5. **Generate Contract:**
+5. **Generate & Upload Contract:**
    - Now, the "Získat smlouvu" (Get Contract) section should be visible on the student's dashboard.
    - Click the button labeled "Generovat novou smlouvu" (or "+ Nová smlouva / Opravit" in the header).
    - Complete the KPV specific contract wizard. *Note: KPV contracts may have different terms or evaluation parameters compared to UPV.*
+   - Submit the contract. Ensure the PDF is generated and downloaded.
+   - **Crucial Step:** The student must then upload the physical/digitally signed copy back to the Dashboard via the upload section. Ensure this action transitions the placement state to "ANALYZING". *Failure:* If the upload fails, take a screenshot of the console network error and file a bug ticket under the 'Contract Generation' component.
 
 ### Phase 2: Assigned Institution - Contract Signature
 
@@ -111,9 +127,19 @@ This scenario follows the same validation cycle but specifically targets a **KPV
    - **Verification 2:** Check the student's major badge. It must explicitly show **KPV**.
 
 3. **Sign Contract:**
-   - Complete the signature process for the KPV contract.
+   - Complete the signature process for the KPV contract uploaded by the student. *Failure:* If the signature button is disabled, verify that the contract is actually in the 'ANALYZING' state. If it is, file a bug ticket for the Institution Dashboard.
 
-### Phase 3: Coordinator - Payroll Verification
+### Phase 3: Time Logging and Mentor Approval
+
+1. **Log Hours (Student):**
+   - Switch role back to the KPV student.
+   - Log the required practice hours using the dashboard's time-logging section.
+
+2. **Approve Hours (Institution):**
+   - Switch role back to the Institution.
+   - Approve the student's logged hours in the "Čeká na schválení" section.
+
+### Phase 4: Coordinator - Payroll Verification
 
 1. **Switch Role:**
    - Stop impersonating.
