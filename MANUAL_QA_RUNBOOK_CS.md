@@ -23,8 +23,8 @@ Tento scénář ověřuje tok pro studenta s oborem **UPV**, od generování sml
 2. **Ověřit stav studenta:**
    - Měli byste být přesměrováni na Student Dashboard (`/student/dashboard`).
    - Podívejte se na Impersonation Banner v horní části pro potvrzení, že zastupujete.
-   - **Ověření 1:** Zkontrolujte prvek s `data-testid="student-name"`. Ujistěte se, že odpovídá vybranému studentovi. Očekávaný vizuální stav: Jméno studenta je zobrazeno bílým tučným písmem.
-   - **Ověření 2:** Zkontrolujte prvek s `data-testid="student-major"`. Musí zobrazovat **UPV**. Očekávaný vizuální stav: Modrý odznak s "UPV". *Záloha:* Pokud chybí, zobrazí se "Chybí obor".
+   - **Ověření 1:** Zkontrolujte text se jménem studenta. Ujistěte se, že odpovídá vybranému studentovi. Očekávaný vizuální stav: Jméno studenta je zobrazeno bílým tučným písmem.
+   - **Ověření 2:** Zkontrolujte odznak oboru. Musí zobrazovat **UPV**. Očekávaný vizuální stav: Modrý odznak s "UPV". *Záloha:* Pokud chybí, zobrazí se "Chybí obor".
 
 3. **Zažádat o schválení organizace:**
    - Na domovské stránce vyplňte formulář "Vyberte organizaci" a odešlete žádost.
@@ -51,9 +51,9 @@ Tento scénář ověřuje tok pro studenta s oborem **UPV**, od generování sml
 
 2. **Ověřit hranici mezi tenanty a přiřazení studenta:**
    - Měli byste být na Institution Dashboard (`/institution/dashboard`).
-   - Najděte kartu přiřazeného studenta pomocí `data-testid="assigned-student-card"`.
-   - **Ověření 1:** V rámci této karty zkontrolujte `data-testid="student-name"`. Musí odpovídat studentovi UPV z Fáze 1.
-   - **Ověření 2:** Zkontrolujte `data-testid="student-major"`. Musí zobrazovat **UPV**.
+   - Najděte kartu přiřazeného studenta vizuálně na obrazovce.
+   - **Ověření 1:** V rámci této karty zkontrolujte jméno studenta. Musí odpovídat studentovi UPV z Fáze 1.
+   - **Ověření 2:** Zkontrolujte odznak oboru. Musí zobrazovat **UPV**.
 
 3. **Podepsat smlouvu:**
    - Postupujte podle pokynů uživatelského rozhraní na kartě studenta nebo v detailu umístění a zkontrolujte a podepište nově vygenerovanou smlouvu.
@@ -67,8 +67,8 @@ Tento scénář ověřuje tok pro studenta s oborem **UPV**, od generování sml
 
 2. **Ověřit mzdy:**
    - Přejděte do modulu Mzdy: `/admin/payroll`.
-   - **Ověření 1:** Najděte řádek pro instituci pomocí `data-testid="payroll-row"`.
-   - **Ověření 2:** Potvrďte shodu názvu instituce pomocí `data-testid="institution-name"`.
+   - **Ověření 1:** Najděte řádek pro instituci v tabulce mezd.
+   - **Ověření 2:** Potvrďte shodu názvu instituce ve sloupci s názvem instituce.
    - **Ověření 3:** Zkontrolujte sloupec "Schválené hodiny (UPV)". Ověřte, že schválené hodiny přesně odpovídají dokončeným datům studenta UPV. Zajistěte, že dynamický výpočet (hodiny * sazba) odpovídá systémovým konfiguracím.
 
 ---
@@ -85,8 +85,8 @@ Tento scénář sleduje stejný cyklus ověřování, ale specificky se zaměřu
    - Klikněte na jeho řádek a klikněte na **"Přihlásit se jako tento uživatel"**.
 
 2. **Ověřit stav studenta:**
-   - **Ověření 1:** Zkontrolujte `data-testid="student-name"`.
-   - **Ověření 2:** Zkontrolujte `data-testid="student-major"`. **Klíčový rozdíl:** Zde musí být zobrazeno **KPV**.
+   - **Ověření 1:** Zkontrolujte jméno studenta.
+   - **Ověření 2:** Zkontrolujte odznak oboru. **Klíčový rozdíl:** Zde musí být zobrazeno **KPV**.
 
 3. **Zažádat o schválení organizace:**
    - Na domovské stránce vyplňte formulář "Vyberte organizaci" a odešlete žádost.
@@ -106,9 +106,9 @@ Tento scénář sleduje stejný cyklus ověřování, ale specificky se zaměřu
    - Klikněte na **"Návrat do Adminu"**. Přejděte na `/admin/users` a zastupujte **Instituci** přiřazenou studentovi KPV.
 
 2. **Ověřit přiřazení:**
-   - Na Institution Dashboard (`/institution/dashboard`) najděte `data-testid="assigned-student-card"`.
-   - **Ověření 1:** Zkontrolujte `data-testid="student-name"`.
-   - **Ověření 2:** Zkontrolujte `data-testid="student-major"`. Musí explicitně zobrazovat **KPV**.
+   - Na Institution Dashboard (`/institution/dashboard`) najděte kartu přiřazeného studenta.
+   - **Ověření 1:** Zkontrolujte jméno studenta.
+   - **Ověření 2:** Zkontrolujte odznak oboru. Musí explicitně zobrazovat **KPV**.
 
 3. **Podepsat smlouvu:**
    - Dokončete proces podpisu pro smlouvu KPV.
@@ -120,7 +120,7 @@ Tento scénář sleduje stejný cyklus ověřování, ale specificky se zaměřu
 
 2. **Ověřit mzdová data:**
    - Přejděte na `/admin/payroll`.
-   - Najděte řádek instituce `data-testid="payroll-row"`.
+   - Najděte řádek instituce v tabulce mezd.
    - **Klíčový rozdíl:** Na rozdíl od Scénáře A ověřte hodiny a výplaty specificky pro **kategorie KPV** ("Schválené hodiny (KPV)"). Ujistěte se, že časové záznamy KPV jsou správně kategorizovány a nepromítají se do výpočtů mezd UPV.
 
 ---
