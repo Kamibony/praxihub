@@ -23,8 +23,8 @@ This scenario validates the flow for a student with the **UPV** major, from cont
 2. **Verify Student State:**
    - You should be redirected to the Student Dashboard (`/student/dashboard`).
    - Look for the Impersonation Banner at the top to confirm you are impersonating.
-   - **Verification 1:** Check the element with `data-testid="student-name"`. Ensure it matches the student you selected. Expected visual state: The student's name is displayed in a white, bold font.
-   - **Verification 2:** Check the element with `data-testid="student-major"`. It must display **UPV**. Expected visual state: A blue badge with "UPV". *Fallback:* If missing, it will display "Chybí obor".
+   - **Verification 1:** Check the student's name text. Ensure it matches the student you selected. Expected visual state: The student's name is displayed in a white, bold font.
+   - **Verification 2:** Check the student's major badge. It must display **UPV**. Expected visual state: A blue badge with "UPV". *Fallback:* If missing, it will display "Chybí obor".
 
 3. **Request Organization Approval:**
    - On the dashboard, fill out the "Vyberte organizaci" (Select organization) form and submit the request.
@@ -51,9 +51,9 @@ This scenario validates the flow for a student with the **UPV** major, from cont
 
 2. **Verify Cross-Tenant Boundary & Student Assignment:**
    - You should be on the Institution Dashboard (`/institution/dashboard`).
-   - Locate the assigned student's card using `data-testid="assigned-student-card"`.
-   - **Verification 1:** Within this card, check `data-testid="student-name"`. It must match the UPV student from Phase 1.
-   - **Verification 2:** Check `data-testid="student-major"`. It must display **UPV**.
+   - Locate the assigned student's card by visually looking for the assigned student's card.
+   - **Verification 1:** Within this card, check the student's name. It must match the UPV student from Phase 1.
+   - **Verification 2:** Check the student's major badge. It must display **UPV**.
 
 3. **Sign Contract:**
    - Follow the UI prompts on the student's card or placement detail to review and sign the newly generated contract.
@@ -67,8 +67,8 @@ This scenario validates the flow for a student with the **UPV** major, from cont
 
 2. **Verify Payroll:**
    - Navigate to the Payroll module: `/admin/payroll`.
-   - **Verification 1:** Find the row for the institution using `data-testid="payroll-row"`.
-   - **Verification 2:** Confirm the institution name matches via `data-testid="institution-name"`.
+   - **Verification 1:** Find the row for the institution in the payroll table.
+   - **Verification 2:** Confirm the institution name matches in the institution name column.
    - **Verification 3:** Check the "Schválené hodiny (UPV)" column. Verify that the approved hours exactly match the UPV student's completed data. Ensure the dynamic calculation (hours * rate) matches the system configs.
 
 ---
@@ -85,8 +85,8 @@ This scenario follows the same validation cycle but specifically targets a **KPV
    - Click their row and click **"Přihlásit se jako tento uživatel"**.
 
 2. **Verify Student State:**
-   - **Verification 1:** Check `data-testid="student-name"`.
-   - **Verification 2:** Check `data-testid="student-major"`. **Crucial Difference:** This must display **KPV**.
+   - **Verification 1:** Check the student's name.
+   - **Verification 2:** Check the student's major badge. **Crucial Difference:** This must display **KPV**.
 
 3. **Request Organization Approval:**
    - On the dashboard, fill out the "Vyberte organizaci" (Select organization) form and submit the request.
@@ -106,9 +106,9 @@ This scenario follows the same validation cycle but specifically targets a **KPV
    - Stop impersonating. Navigate to `/admin/users` and impersonate the KPV student's assigned **Institution**.
 
 2. **Verify Assignment:**
-   - On the Institution Dashboard (`/institution/dashboard`), find `data-testid="assigned-student-card"`.
-   - **Verification 1:** Check `data-testid="student-name"`.
-   - **Verification 2:** Check `data-testid="student-major"`. It must explicitly show **KPV**.
+   - On the Institution Dashboard (`/institution/dashboard`), find the assigned student's card.
+   - **Verification 1:** Check the student's name.
+   - **Verification 2:** Check the student's major badge. It must explicitly show **KPV**.
 
 3. **Sign Contract:**
    - Complete the signature process for the KPV contract.
@@ -120,7 +120,7 @@ This scenario follows the same validation cycle but specifically targets a **KPV
 
 2. **Verify Payroll Data:**
    - Navigate to `/admin/payroll`.
-   - Find the institution's `data-testid="payroll-row"`.
+   - Find the institution's row in the payroll table.
    - **Crucial Difference:** Unlike Scenario A, verify the hours and payouts specifically for the **KPV categories**. Ensure KPV time logs are properly categorized and do not bleed into UPV payroll calculations.
 
 ---
