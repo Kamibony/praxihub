@@ -26,8 +26,18 @@ Tento scénář ověřuje tok pro studenta s oborem **UPV**, od generování sml
    - **Ověření 1:** Zkontrolujte prvek s `data-testid="student-name"`. Ujistěte se, že odpovídá vybranému studentovi. Očekávaný vizuální stav: Jméno studenta je zobrazeno bílým tučným písmem.
    - **Ověření 2:** Zkontrolujte prvek s `data-testid="student-major"`. Musí zobrazovat **UPV**. Očekávaný vizuální stav: Modrý odznak s "UPV". *Záloha:* Pokud chybí, zobrazí se "Chybí obor".
 
-3. **Generovat smlouvu:**
-   - Klikněte na tlačítko s `data-testid="generate-contract-link-main"` (nebo `data-testid="generate-contract-link"`).
+3. **Zažádat o schválení organizace:**
+   - Na domovské stránce vyplňte formulář "Vyberte organizaci" a odešlete žádost.
+   - Systém přejde do stavu "Čeká se na schválení organizace" (PENDING_MATCH).
+
+4. **Schválení organizace Koordinátorem:**
+   - Otevřete nové okno (nebo dočasně ukončete zastupování) a jako Administrátor/Koordinátor přejděte na Dashboard.
+   - Najděte žádost studenta a schvalte ji. (Stav studenta se změní na "ORG_APPROVED").
+   - Vraťte se k zastupování studenta na jeho Dashboard.
+
+5. **Generovat smlouvu:**
+   - Nyní by se na nástěnce studenta měla zobrazit sekce "Získat smlouvu".
+   - Klikněte na tlačítko s nápisem "Generovat novou smlouvu" (nebo "+ Nová smlouva / Opravit" v hlavičce).
    - Dokončete kroky průvodce generováním smlouvy (s využitím Draft Storage).
    - Odešlete smlouvu a ujistěte se, že se spustí stav o úspěchu (toast notifikace nebo přesměrování).
 
@@ -78,8 +88,16 @@ Tento scénář sleduje stejný cyklus ověřování, ale specificky se zaměřu
    - **Ověření 1:** Zkontrolujte `data-testid="student-name"`.
    - **Ověření 2:** Zkontrolujte `data-testid="student-major"`. **Klíčový rozdíl:** Zde musí být zobrazeno **KPV**.
 
-3. **Generovat smlouvu:**
-   - Klikněte na `data-testid="generate-contract-link-main"`.
+3. **Zažádat o schválení organizace:**
+   - Na domovské stránce vyplňte formulář "Vyberte organizaci" a odešlete žádost.
+   - Díky Fast-Track ARES integraci by se organizace měla automaticky schválit (nebo přejde na manuální schválení, pokud ARES selže).
+
+4. **Schválení organizace Koordinátorem (pokud ARES selhal):**
+   - Pokud se žádost neschválila automaticky, ukončete zastupování, schvalte žádost jako administrátor a vraťte se k zastupování studenta.
+
+5. **Generovat smlouvu:**
+   - Nyní by se na nástěnce studenta měla zobrazit sekce "Získat smlouvu".
+   - Klikněte na tlačítko s nápisem "Generovat novou smlouvu" (nebo "+ Nová smlouva / Opravit" v hlavičce).
    - Dokončete průvodce smlouvou specifického pro KPV. *Poznámka: KPV smlouvy mohou mít odlišné podmínky nebo parametry hodnocení ve srovnání s UPV.*
 
 ### Fáze 2: Přiřazená instituce - Podpis smlouvy

@@ -962,13 +962,15 @@ function StudentDashboardContent() {
             </p>
           </div>
           <div className="flex flex-col sm:flex-row gap-3 items-stretch w-full md:w-auto">
-            <Link
-              href="/student/generate"
-              data-testid="generate-contract-link"
-              className="text-brand-500 border border-blue-800/50 card-glass px-4 py-3 md:py-2 rounded-2xl font-medium hover:bg-brand-50 transition block text-center"
-            >
-              + Nová smlouva / Opravit
-            </Link>
+            {placement && ["ORG_APPROVED", "NEEDS_REVIEW", "PENDING_COORDINATOR", "ANALYZING", "APPROVED", "ACTIVE", "EVALUATION", "CLOSED", "FINAL_EXAM"].includes(placement.status) && (
+              <Link
+                href="/student/generate"
+                data-testid="generate-contract-link"
+                className="text-brand-500 border border-blue-800/50 card-glass px-4 py-3 md:py-2 rounded-2xl font-medium hover:bg-brand-50 transition block text-center"
+              >
+                + Nová smlouva / Opravit
+              </Link>
+            )}
 
             <button
               onClick={() => auth.signOut()}
