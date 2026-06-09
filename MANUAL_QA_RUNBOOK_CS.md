@@ -10,9 +10,9 @@ Tento runbook vede testery Quality Assurance a User Acceptance Testing (UAT) skr
 
 ## Scénář A: E2E životní cyklus UPV
 
-Tento scénář ověřuje tok pro studenta s oborem **UPV**, od generování smlouvy přes podpis instituce až po ověření mezd koordinátorem.
+Tento scénář ověřuje tok pro studenta s oborem **UPV**, od schválení organizace s automatickým přeskočením smlouvy rovnou k logování hodin, a nakonec k ověření mezd koordinátorem.
 
-### Fáze 1: Student UPV - Generování smlouvy
+### Fáze 1: Student UPV - Žádost o organizaci
 
 1. **Zahájit zastupování:**
    - Přejděte na seznam administrátorských uživatelů: `/admin/users`
@@ -32,41 +32,18 @@ Tento scénář ověřuje tok pro studenta s oborem **UPV**, od generování sml
 
 4. **Schválení organizace Koordinátorem:**
    - Otevřete nové okno (nebo dočasně ukončete zastupování) a jako Administrátor/Koordinátor přejděte na Dashboard.
-   - Najděte žádost studenta a schvalte ji. (Stav studenta se změní na "ORG_APPROVED").
+   - Najděte žádost studenta a schvalte ji.
+   - **Klíčový krok:** Protože má student obor UPV, systém automaticky přeskočí proces podepisování smlouvy a přejde přímo do stavu "APPROVED" (Odblokování vykazování hodin).
    - Vraťte se k zastupování studenta na jeho Dashboard.
 
-5. **Generovat a nahrát smlouvu:**
-   - Nyní by se na nástěnce studenta měla zobrazit sekce "Získat smlouvu".
-   - Klikněte na tlačítko s nápisem "Generovat novou smlouvu" (nebo "+ Nová smlouva / Opravit" v hlavičce).
-   - Dokončete kroky průvodce generováním smlouvy (s využitím Draft Storage).
-   - Odešlete smlouvu. Ujistěte se, že se vygenerovalo a stáhlo PDF.
-   - **Klíčový krok:** Student poté musí nahrát fyzicky/digitálně podepsanou kopii zpět na Dashboard prostřednictvím sekce pro nahrávání. Ujistěte se, že tato akce změní stav umístění na "ANALYZING" (Analyzuje se). *Při selhání:* Pokud nahrávání selže, pořiďte snímek obrazovky s chybou v konzoli (Network tab) a založte bug ticket na komponentu 'Generování smlouvy'.
+### Fáze 2: Vykazování hodin a schválení mentorem
 
-### Fáze 2: Přiřazená instituce - Podpis smlouvy
-
-1. **Změnit roli:**
-   - Klikněte na **"Návrat do Adminu"** v horním Impersonation Banneru pro návrat do vaší administrátorské relace.
-   - Přejděte zpět na `/admin/users`.
-   - Najděte **Instituci** (Organizaci/Školu), která byla přiřazena studentovi UPV.
-   - Klikněte na její řádek pro otevření CRM panelu a klikněte na **"Přihlásit se jako tento uživatel"**.
-
-2. **Ověřit hranici mezi tenanty a přiřazení studenta:**
-   - Měli byste být na Institution Dashboard (`/institution/dashboard`).
-   - Najděte kartu přiřazeného studenta vizuálně na obrazovce.
-   - **Ověření 1:** V rámci této karty zkontrolujte jméno studenta. Musí odpovídat studentovi UPV z Fáze 1.
-   - **Ověření 2:** Zkontrolujte odznak oboru. Musí zobrazovat **UPV**.
-
-3. **Podepsat smlouvu:**
-   - Postupujte podle pokynů uživatelského rozhraní na kartě studenta nebo v detailu umístění a zkontrolujte a podepište nahranou smlouvu.
-   - Ověřte stav úspěchu, který indikuje, že požadavek na třístranný podpis je za instituci splněn. *Při selhání:* Pokud je tlačítko pro podpis neaktivní (disabled), ověřte, zda je smlouva skutečně ve stavu 'ANALYZING'. Pokud ano, založte bug ticket na Dashboard Instituce.
-
-### Fáze 3: Vykazování hodin a schválení mentorem
-
-Před ověřením mezd musí být vykázány a schváleny hodiny.
+Protože studenti oboru UPV nevyžadují smlouvu, modul pro vykazování hodin se odemkne okamžitě po schválení organizace.
 
 1. **Vykázat hodiny (Student):**
    - Vraťte se na Student Dashboard (změňte roli zpět na studenta).
-   - Po podepsání smlouvy přejde stav umístění do aktivního stavu. Použijte modul pro vykazování hodin na domovské stránce k zápisu požadovaných hodin.
+   - Ověřte, že modul pro vykazování hodin je k dispozici bez nutnosti nahrání smlouvy.
+   - Použijte modul pro vykazování hodin na domovské stránce k zápisu požadovaných hodin.
 
 2. **Schválit hodiny (Instituce):**
    - Zastupujte opět Instituci.

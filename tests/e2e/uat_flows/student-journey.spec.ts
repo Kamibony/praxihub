@@ -48,8 +48,15 @@ test.describe('UAT: Student Journey (UPV/KPV)', () => {
         }
 
         // Navigate to document generation via proper test ID
+        // For UPV, contract generation is bypassed and hidden, but this E2E runs globally for KPV flows as well where it may exist.
         try {
-            await page.getByTestId('generate-contract-link-main').first().click({ timeout: 5000 });
+            const contractLink = page.getByTestId('generate-contract-link-main').first();
+            const isVisible = await contractLink.isVisible();
+            if (isVisible) {
+                await contractLink.click({ timeout: 5000 });
+            } else {
+                console.log("Contract link not visible, likely bypassed for UPV flow");
+            }
         } catch (e) {
             console.log("Could not click generate contract link");
         }
