@@ -550,9 +550,11 @@ exports.transitionPlacementState = functions.https.onCall(
     // Definitive State Transition Matrix
     const validTransitions = {
       DRAFT: ["PENDING_MATCH", "PENDING_INSTITUTION", "ANALYZING"],
-      PENDING_MATCH: ["PENDING_INSTITUTION", "DRAFT"],
+      PENDING_MATCH: ["PENDING_INSTITUTION", "DRAFT", "ORG_APPROVED", "APPROVED", "ACTIVE"],
+      PENDING_ORG_APPROVAL: ["ORG_APPROVED", "APPROVED", "ACTIVE", "REJECTED"],
       PENDING_INSTITUTION: ["PENDING_COORDINATOR", "DRAFT", "ANALYZING"],
       PENDING_COORDINATOR: ["ACTIVE", "DRAFT", "ANALYZING"],
+      ORG_APPROVED: ["ANALYZING", "APPROVED", "ACTIVE"],
       ANALYZING: ["NEEDS_REVIEW", "REJECTED"],
       NEEDS_REVIEW: ["APPROVED", "PENDING_COORDINATOR", "ACTIVE", "REJECTED"],
       APPROVED: ["ACTIVE", "EVALUATION", "CLOSED"],
@@ -562,7 +564,7 @@ exports.transitionPlacementState = functions.https.onCall(
       REJECTED: ["DRAFT"],
     };
 
-    const { placementId, newState } = data;
+    let { placementId, newState } = data;
 
     if (!placementId || !newState) {
       throw new functions.https.HttpsError(
@@ -596,6 +598,15 @@ exports.transitionPlacementState = functions.https.onCall(
         }
 
         const currentState = currentData.status || "DRAFT";
+
+        // Intercept ORG_APPROVED for UPV students to bypass KPV contract flow
+        if (newState === "ORG_APPROVED") {
+          const studentDocForMajor = await transaction.get(db.collection("users").doc(currentData.studentId));
+          const major = studentDocForMajor.exists ? studentDocForMajor.data().major : null;
+          if (major === "UPV") {
+            newState = "APPROVED";
+          }
+        }
 
         // Strictly enforce the state machine matrix
         const allowedNextStates = validTransitions[currentState];

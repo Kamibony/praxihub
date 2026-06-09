@@ -10,9 +10,9 @@ This runbook guides Quality Assurance and User Acceptance Testing (UAT) testers 
 
 ## Scenario A: The UPV E2E Lifecycle
 
-This scenario validates the flow for a student with the **UPV** major, from contract generation to institution signature, and finally to coordinator payroll verification.
+This scenario validates the flow for a student with the **UPV** major, from organization approval bypassing the contract directly to time logging, and finally to coordinator payroll verification.
 
-### Phase 1: UPV Student - Contract Generation
+### Phase 1: UPV Student - Request Organization
 
 1. **Initiate Impersonation:**
    - Navigate to the Admin Users list: `/admin/users`
@@ -32,41 +32,18 @@ This scenario validates the flow for a student with the **UPV** major, from cont
 
 4. **Organization Approval by Coordinator:**
    - Open a new window (or temporarily stop impersonating) and navigate to the Admin Dashboard as an Administrator/Coordinator.
-   - Find the student's request and approve it. (The student's state will change to "ORG_APPROVED").
+   - Find the student's request and approve it.
+   - **Crucial Step:** Because this student is UPV, their state should automatically bypass contract generation and skip directly to "APPROVED" state (time-logging unlocked).
    - Resume impersonating the student on their Dashboard.
 
-5. **Generate & Upload Contract:**
-   - Now, the "Získat smlouvu" (Get Contract) section should be visible on the student's dashboard.
-   - Click the button labeled "Generovat novou smlouvu" (or "+ Nová smlouva / Opravit" in the header).
-   - Complete the contract generation wizard steps (using the Draft Storage).
-   - Submit the contract. Ensure the PDF is generated and downloaded.
-   - **Crucial Step:** The student must then upload the physical/digitally signed copy back to the Dashboard via the upload section. Ensure this action transitions the placement state to "ANALYZING". *Failure:* If the upload fails, take a screenshot of the console network error and file a bug ticket under the 'Contract Generation' component.
+### Phase 2: Time Logging and Mentor Approval
 
-### Phase 2: Assigned Institution - Contract Signature
-
-1. **Switch Role:**
-   - Click **"Zastavit"** (or the equivalent stop button) in the top Impersonation Banner to return to your Admin session.
-   - Navigate back to `/admin/users`.
-   - Find the **Institution** (Organization/School) that was assigned to the UPV student.
-   - Click their row to open the CRM panel and click **"Přihlásit se jako tento uživatel"**.
-
-2. **Verify Cross-Tenant Boundary & Student Assignment:**
-   - You should be on the Institution Dashboard (`/institution/dashboard`).
-   - Locate the assigned student's card by visually looking for the assigned student's card.
-   - **Verification 1:** Within this card, check the student's name. It must match the UPV student from Phase 1.
-   - **Verification 2:** Check the student's major badge. It must display **UPV**.
-
-3. **Sign Contract:**
-   - Follow the UI prompts on the student's card or placement detail to review and sign the uploaded contract.
-   - Verify the success state indicating the tripartite signature requirement is met for the institution. *Failure:* If the signature button is disabled, verify that the contract is actually in the 'ANALYZING' state. If it is, file a bug ticket for the Institution Dashboard.
-
-### Phase 3: Time Logging and Mentor Approval
-
-Before payroll can be verified, hours must be logged and approved.
+Because UPV students do not require contracts, the time logging module unlocks immediately after organizational approval.
 
 1. **Log Hours (Student):**
    - Return to the Student Dashboard (switch role back to the student).
-   - Once the contract is signed, the placement state transitions to an active state. Use the time-logging module on the dashboard to log the required hours.
+   - Verify that the time-logging module is available without a contract.
+   - Use the time-logging module on the dashboard to log the required hours.
 
 2. **Approve Hours (Institution):**
    - Switch back to impersonating the Institution.

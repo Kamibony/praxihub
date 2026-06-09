@@ -747,6 +747,8 @@ function StudentDashboardContent() {
 
   // UI Components
   const UploadSection = () => {
+    if (user?.major === 'UPV') return null;
+
     // Ak užívateľ nemá schválenú organizáciu, zobrazíme pôvodnú správu (defenzívne, hoci rodič to kontroluje)
     if (placement?.status !== "ORG_APPROVED") {
       return (
@@ -785,19 +787,21 @@ function StudentDashboardContent() {
             </h4>
 
             <div className="flex-1 flex flex-col gap-3">
-              <Link href="/student/generate" data-testid="generate-contract-link-main" className="block">
-                <div className="w-full h-full p-4 bg-white card-glass border-2 border-brand-100 rounded-3xl hover:border-brand-300 hover:bg-brand-50 transition group cursor-pointer text-center flex flex-col items-center justify-center gap-2">
-                  <div className="p-2 card-glass rounded-full text-brand-500 shadow-sm group-hover:scale-110 transition">
-                    <span className="text-2xl">📄</span>
+              {user?.major !== 'UPV' && (
+                <Link href="/student/generate" data-testid="generate-contract-link-main" className="block">
+                  <div className="w-full h-full p-4 bg-white card-glass border-2 border-brand-100 rounded-3xl hover:border-brand-300 hover:bg-brand-50 transition group cursor-pointer text-center flex flex-col items-center justify-center gap-2">
+                    <div className="p-2 card-glass rounded-full text-brand-500 shadow-sm group-hover:scale-110 transition">
+                      <span className="text-2xl">📄</span>
+                    </div>
+                    <span className="font-bold text-brand-600">
+                      Generovat novou smlouvu
+                    </span>
+                    <span className="text-xs text-brand-500/80">
+                      Automaticky doplní údaje
+                    </span>
                   </div>
-                  <span className="font-bold text-brand-600">
-                    Generovat novou smlouvu
-                  </span>
-                  <span className="text-xs text-brand-500/80">
-                    Automaticky doplní údaje
-                  </span>
-                </div>
-              </Link>
+                </Link>
+              )}
 
               <div className="text-center mt-2">
                 <a
@@ -962,7 +966,7 @@ function StudentDashboardContent() {
             </p>
           </div>
           <div className="flex flex-col sm:flex-row gap-3 items-stretch w-full md:w-auto">
-            {placement && ["ORG_APPROVED", "NEEDS_REVIEW", "PENDING_COORDINATOR", "ANALYZING", "APPROVED", "ACTIVE", "EVALUATION", "CLOSED", "FINAL_EXAM"].includes(placement.status) && (
+            {placement && user?.major !== 'UPV' && ["ORG_APPROVED", "NEEDS_REVIEW", "PENDING_COORDINATOR", "ANALYZING", "APPROVED", "ACTIVE", "EVALUATION", "CLOSED", "FINAL_EXAM"].includes(placement.status) && (
               <Link
                 href="/student/generate"
                 data-testid="generate-contract-link"
@@ -1896,51 +1900,53 @@ function StudentDashboardContent() {
             )}
 
             {/* Dokument Karta */}
-            <div className="card-glass p-6 rounded-3xl shadow-sm border border-slate-200">
-              <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4">
-                Dokumentace
-              </h3>
-              {placement && placement.contract_url ? (
-                <div>
-                  <div className="flex items-center gap-3 p-3 bg-white card-glass rounded-2xl mb-4">
-                    <span className="text-2xl">📄</span>
-                    <div className="overflow-hidden">
-                      <p className="text-sm font-medium text-slate-900 truncate">
-                        {placement.fileName}
-                      </p>
-                      <p className="text-xs text-slate-600">
-                        Nahráno: {formatDateCZ(placement.createdAt)}
-                      </p>
+            {user?.major !== 'UPV' && (
+              <div className="card-glass p-6 rounded-3xl shadow-sm border border-slate-200">
+                <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4">
+                  Dokumentace
+                </h3>
+                {placement && placement.contract_url ? (
+                  <div>
+                    <div className="flex items-center gap-3 p-3 bg-white card-glass rounded-2xl mb-4">
+                      <span className="text-2xl">📄</span>
+                      <div className="overflow-hidden">
+                        <p className="text-sm font-medium text-slate-900 truncate">
+                          {placement.fileName}
+                        </p>
+                        <p className="text-xs text-slate-600">
+                          Nahráno: {formatDateCZ(placement.createdAt)}
+                        </p>
+                      </div>
                     </div>
+                    <a
+                      href={placement.contract_url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="block w-full text-center py-2 border border-blue-800/50 text-brand-500 rounded-2xl hover:bg-brand-50 text-sm font-medium transition mb-4"
+                    >
+                      Stáhnout originál
+                    </a>
+                    {((placement?.major || placement?.major || user?.major) === "KPV") && (
+                      <div className="mt-4 border-t pt-4">
+                        <ContractSignature
+                          placementId={placement.id}
+                          role="student"
+                          signatures={placement.signatures}
+                        />
+                      </div>
+                    )}
                   </div>
-                  <a
-                    href={placement.contract_url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="block w-full text-center py-2 border border-blue-800/50 text-brand-500 rounded-2xl hover:bg-brand-50 text-sm font-medium transition mb-4"
-                  >
-                    Stáhnout originál
-                  </a>
-                  {((placement?.major || placement?.major || user?.major) === "KPV") && (
-                    <div className="mt-4 border-t pt-4">
-                      <ContractSignature
-                        placementId={placement.id}
-                        role="student"
-                        signatures={placement.signatures}
-                      />
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <p className="text-sm text-slate-600 italic">
-                  {placement?.status === "PENDING_ORG_APPROVAL"
-                    ? "Čeká se na schválení firmy."
-                    : placement?.status === "ORG_APPROVED"
-                      ? "Čeká se na nahrání smlouvy."
-                      : "Žádný dokument nebyl nahrán."}
-                </p>
-              )}
-            </div>
+                ) : (
+                  <p className="text-sm text-slate-600 italic">
+                    {placement?.status === "PENDING_ORG_APPROVAL"
+                      ? "Čeká se na schválení firmy."
+                      : placement?.status === "ORG_APPROVED"
+                        ? "Čeká se na nahrání smlouvy."
+                        : "Žádný dokument nebyl nahrán."}
+                  </p>
+                )}
+              </div>
+            )}
 
             {/* Interactive Traffic Light (Semafor) & Contextual Manual */}
             <div className="card card-gradient mb-6">
@@ -1968,7 +1974,8 @@ function StudentDashboardContent() {
                   manualText = pStatus === "REJECTED" ? "Vaše praxe byla zamítnuta. Podat nový návrh." : "Vyplňte žádost o schválení firmy a začněte svou praxi.";
                 } else if (lightState === "YELLOW") {
                    if (pStatus === "PENDING_ORG_APPROVAL") manualText = "Čeká se na schválení organizace firmou nebo koordinátorem.";
-                   if (pStatus === "ORG_APPROVED") manualText = "Organizace schválena! Vaším dalším krokem je vygenerovat a nahrát smlouvu.";
+                   if (hasMajor === "UPV" && pStatus === "ORG_APPROVED") manualText = "Organizace schválena! Můžete začít logovat hodiny."; // defensive fallback
+                   else if (pStatus === "ORG_APPROVED") manualText = "Organizace schválena! Vaším dalším krokem je vygenerovat a nahrát smlouvu.";
                    if (["ANALYZING", "NEEDS_REVIEW"].includes(pStatus)) manualText = "Smlouva se kontroluje. Čeká se na finální schválení koordinátorem.";
                 } else if (lightState === "GREEN") {
                    if (["APPROVED", "ACTIVE"].includes(pStatus)) manualText = "Praxe schválena! Nyní můžete začít logovat své hodiny a náslechy.";
