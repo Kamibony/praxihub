@@ -337,8 +337,8 @@ function StudentDashboardContent() {
 
   const handleOrgRequestSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || (selectedInstitutionId === "NEW" && (!orgRequest.name || !orgRequest.ico || !orgRequest.web))) {
-      toast.success("Vyplňte prosím povinné údaje (Název, IČO a případně kontaktní email).");
+    if (!user) {
+      toast.error("Uživatel není přihlášen.");
       return;
     }
 
@@ -348,10 +348,25 @@ function StudentDashboardContent() {
       return;
     }
 
+    const isKpv = user.major === 'KPV';
+
+    if (selectedInstitutionId === "NEW") {
+      if (!orgRequest.name) {
+        toast.error("Žádost nelze odeslat: Chybí název organizace.");
+        return;
+      }
+      if (isKpv && !orgRequest.ico) {
+        toast.error("Žádost nelze odeslat: Chybí povinné údaje jako IČO.");
+        return;
+      }
+      if (!orgRequest.web) {
+        toast.error("Žádost nelze odeslat: Chybí kontaktní email.");
+        return;
+      }
+    }
+
     setSubmittingOrg(true);
     try {
-      const isKpv = user.major === 'KPV';
-
       let instId = selectedInstitutionId;
 
       if (selectedInstitutionId === "NEW") {
@@ -359,7 +374,7 @@ function StudentDashboardContent() {
           role: "institution",
           displayName: orgRequest.name,
           email: orgRequest.web, // we stored email here
-          ico: orgRequest.ico,
+          ico: orgRequest.ico || null, // Optional for UPV
           status: "PENDING_INVITE",
           createdAt: new Date().toISOString()
         });
@@ -370,37 +385,32 @@ function StudentDashboardContent() {
         studentId: user.uid,
         studentEmail: user.email,
         studentName: user.displayName || user.email,
-        status: "DRAFT", // Start as DRAFT
+        status: "PENDING_ORG_APPROVAL", // Changed to a normal pending state per request
         createdAt: new Date().toISOString(),
         institutionId: instId !== "NEW" ? instId : null,
         organization_name: orgRequest.name,
-        organization_ico: orgRequest.ico,
+        organization_ico: orgRequest.ico || null,
         organization_web: orgRequest.web,
         major: user.major
       });
 
-      if (isKpv) {
+      if (isKpv && orgRequest.ico) {
         try {
           const fetchAres = httpsCallable(functions, 'fetchAresAndLink');
           await fetchAres({ ico: orgRequest.ico, placementId: docRef.id });
           toast.success("Žádost odeslána. Organizace byla automaticky ověřena v registru ARES (Fast-Track)!");
         } catch (aresError) {
           console.error("ARES error:", aresError);
-          // Fallback if ARES fails
-          const transitionFn = httpsCallable(functions, 'transitionPlacementState');
-          await transitionFn({ placementId: docRef.id, newState: 'PENDING_MATCH' });
-          toast.success("Žádost odeslána, ale ověření v ARES se nezdařilo. Přesunuto k manuálnímu schválení.");
+          toast.success("Žádost odeslána, ale ověření v ARES se nezdařilo.");
         }
       } else {
-        const transitionFn = httpsCallable(functions, 'transitionPlacementState');
-        await transitionFn({ placementId: docRef.id, newState: 'PENDING_MATCH' });
-        toast.success("Žádost odeslána a čeká na manuální přiřazení koordinátorem (UPV).");
+        toast.success("Žádost odeslána a čeká na manuální přiřazení koordinátorem.");
       }
 
       setOrgRequest({ name: "", ico: "", web: "" });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error submitting org request:", error);
-      toast.error("Chyba při odesílání žádosti.");
+      toast.error(`Žádost nelze odeslat: ${error.message || "Neočekávaná chyba při komunikaci s databází."}`);
     } finally {
       setSubmittingOrg(false);
     }
