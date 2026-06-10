@@ -383,15 +383,13 @@ function StudentDashboardContent() {
 
       const docRef = await addDoc(collection(db, "placements"), {
         studentId: user.uid,
-        studentEmail: user.email,
-        studentName: user.displayName || user.email,
         status: "PENDING_ORG_APPROVAL", // Changed to a normal pending state per request
         createdAt: new Date().toISOString(),
         institutionId: instId !== "NEW" ? instId : null,
         organization_name: orgRequest.name,
         organization_ico: orgRequest.ico || null,
-        organization_web: orgRequest.web,
-        major: user.major
+        ico: orgRequest.ico || null,
+        organization_web: orgRequest.web
       });
 
       if (isKpv && orgRequest.ico) {
@@ -447,12 +445,11 @@ function StudentDashboardContent() {
         // Fallback - should not happen in this flow if strictly following APPROVED path
         await addDoc(collection(db, "placements"), {
           studentId: user.uid,
-          studentEmail: user.email,
-          studentName: user.displayName || user.email,
           contract_url: downloadURL,
-          status: "ANALYZING",
+          status: "DRAFT",
           createdAt: new Date().toISOString(),
           fileName: file.name,
+          ico: "00000000" // Placeholder for rules
         });
       }
     } catch (error) {
@@ -707,13 +704,11 @@ function StudentDashboardContent() {
       } else {
         const newPlacement = {
           studentId: user.uid,
-          studentEmail: user.email,
-          studentName: user.displayName || user.email,
-          status: "EVALUATION",
+          status: "DRAFT",
           createdAt: new Date().toISOString(),
           organization_name: "UAT Demo Company",
           organization_ico: "12345678",
-          major: user.major,
+          ico: "12345678",
           targetHours: 80,
           migratedHours: 80
         };

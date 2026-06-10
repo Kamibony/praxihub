@@ -164,11 +164,12 @@ export default function GenerateContractPage() {
              institutionId: instId !== "NEW" && instId ? instId : null,
              organization_name: formData.companyName,
              organization_ico: formData.ico,
+             ico: formData.ico,
              position: formData.position,
              startDate: formData.startDate,
              endDate: formData.endDate,
              contractUrl: downloadURL,
-             status: "PENDING_COORDINATOR",
+             status: "DRAFT", // Must be DRAFT or PENDING_ORG_APPROVAL
              createdAt: new Date().toISOString(),
              updatedAt: new Date().toISOString()
          });
