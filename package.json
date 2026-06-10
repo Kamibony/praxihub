@@ -27,6 +27,7 @@
   },
   "homepage": "https://github.com/Kamibony/praxihub#readme",
   "devDependencies": {
+    "@firebase/rules-unit-testing": "^5.0.1",
     "@playwright/test": "^1.60.0",
     "@types/crypto-js": "^4.2.2",
     "eslint": "^8.57.1",

@@ -36,7 +36,9 @@ service cloud.firestore {
       }
 
       // Allow creation
-      allow create: if request.auth != null && hasNoDenormalizedFields();
+      allow create: if request.auth != null && hasNoDenormalizedFields()
+                    && request.resource.data.status in ['DRAFT', 'PENDING_ORG_APPROVAL']
+                    && (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.major != 'KPV' || request.resource.data.keys().hasAll(['ico']));
 
       // Restrict update: do not allow the client to update the 'status' field directly.
       allow update: if request.auth != null && hasNoDenormalizedFields()
