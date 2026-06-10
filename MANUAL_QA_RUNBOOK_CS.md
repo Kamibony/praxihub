@@ -28,10 +28,11 @@ Tento scénář ověřuje tok pro studenta s oborem **UPV**, od schválení orga
 
 3. **Zažádat o schválení organizace:**
    - Na domovské stránce vyplňte formulář "Vyberte organizaci" a odešlete žádost.
-   - Systém přejde do stavu "Čeká se na schválení organizace" (PENDING_MATCH).
+   - Systém přejde do stavu "Čeká se na schválení organizace" (PENDING_ORG_APPROVAL).
 
 4. **Schválení organizace Koordinátorem:**
    - Otevřete nové okno (nebo dočasně ukončete zastupování) a jako Administrátor/Koordinátor přejděte na Dashboard.
+   - Najděte žádost ve skupině zobrazení "Vyžaduje akci" (Action Required).
    - Najděte žádost studenta a schvalte ji.
    - **Klíčový krok:** Protože má student obor UPV, systém automaticky přeskočí proces podepisování smlouvy a přejde přímo do stavu "APPROVED" (Odblokování vykazování hodin).
    - Vraťte se k zastupování studenta na jeho Dashboard.
