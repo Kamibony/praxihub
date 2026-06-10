@@ -119,7 +119,7 @@ export default function PayrollModule() {
       <Navbar />
       <div className="pt-24 pb-12 px-6 max-w-7xl mx-auto">
         <div className="flex justify-between items-start mb-6">
-          <h1 className="text-3xl font-bold font-sans text-slate-900 dark:text-white">Mzdový modul (Payroll)</h1>
+          <h1 className="text-3xl font-bold font-sans !text-slate-900 dark:!text-white">Mzdový modul (Payroll)</h1>
           <Link
             href="/admin/dashboard"
             className="text-sm font-medium text-theme-secondary hover:text-blue-400 transition"
