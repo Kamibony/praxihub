@@ -5,7 +5,7 @@ import { db } from "../../../lib/firebase";
 import { collection, query, where, getDocs, doc, getDoc } from "firebase/firestore";
 import Navbar from "@/components/Navbar";
 import Link from 'next/link';
-
+import { PlacementStatus } from "../../../lib/constants/placementStates";
 
 export default function PayrollModule() {
   const [loading, setLoading] = useState(true);
@@ -26,8 +26,8 @@ export default function PayrollModule() {
 
         // Fetch valid placements
         const placementsRef = collection(db, "placements");
-        const evaluationQ = query(placementsRef, where("status", "==", "EVALUATION"));
-        const closedQ = query(placementsRef, where("status", "==", "CLOSED"));
+        const evaluationQ = query(placementsRef, where("status", "==", PlacementStatus.EVALUATION));
+        const closedQ = query(placementsRef, where("status", "==", PlacementStatus.CLOSED));
 
         const [evalSnap, closedSnap] = await Promise.all([getDocs(evaluationQ), getDocs(closedQ)]);
         const allPlacements: any[] = [...evalSnap.docs, ...closedSnap.docs].map(d => ({ id: d.id, ...(d.data() as any) }));

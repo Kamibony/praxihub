@@ -30,6 +30,7 @@ import SHA256 from "crypto-js/sha256";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import DashboardSkeleton from "@/components/skeletons/DashboardSkeleton";
 import RoleBadge from "@/components/RoleBadge";
+import { PlacementStatus } from "../../../lib/constants/placementStates";
 
 export default function StudentDashboard() {
   return (
@@ -383,7 +384,7 @@ function StudentDashboardContent() {
 
       const docRef = await addDoc(collection(db, "placements"), {
         studentId: user.uid,
-        status: "PENDING_ORG_APPROVAL", // Changed to a normal pending state per request
+        status: PlacementStatus.PENDING_ORG_APPROVAL, // Changed to a normal pending state per request
         createdAt: new Date().toISOString(),
         institutionId: instId !== "NEW" ? instId : null,
         organization_name: orgRequest.name,
@@ -446,7 +447,7 @@ function StudentDashboardContent() {
         await addDoc(collection(db, "placements"), {
           studentId: user.uid,
           contract_url: downloadURL,
-          status: "DRAFT",
+          status: PlacementStatus.DRAFT,
           createdAt: new Date().toISOString(),
           fileName: file.name,
           ico: "00000000" // Placeholder for rules
@@ -475,7 +476,7 @@ function StudentDashboardContent() {
       );
       await transitionPlacementState({
         placementId: placement.id,
-        newState: "APPROVED",
+        newState: PlacementStatus.APPROVED,
       });
       toast.success("Údaje potvrzeny!");
     } catch (error) {
@@ -696,7 +697,7 @@ function StudentDashboardContent() {
       if (placement && placement.id) {
         const docRef = doc(db, "placements", placement.id);
         await updateDoc(docRef, {
-          status: "EVALUATION",
+          status: PlacementStatus.EVALUATION,
           targetHours: 80,
           migratedHours: 80
         });
@@ -704,7 +705,7 @@ function StudentDashboardContent() {
       } else {
         const newPlacement = {
           studentId: user.uid,
-          status: "DRAFT",
+          status: PlacementStatus.DRAFT,
           createdAt: new Date().toISOString(),
           organization_name: "UAT Demo Company",
           organization_ico: "12345678",
@@ -736,14 +737,14 @@ function StudentDashboardContent() {
     if (!placement)
       return "Ahoj! Vítám tě v PraxiHubu. Začni tím, že vyplníš žádost o schválení firmy.";
     switch (placement.status) {
-      case "PENDING_ORG_APPROVAL":
+      case PlacementStatus.PENDING_ORG_APPROVAL:
         return "Právě čekáme na schválení firmy koordinátorem. Dám ti vědět, jakmile to bude hotové.";
-      case "ORG_APPROVED":
+      case PlacementStatus.ORG_APPROVED:
         return "Skvělá zpráva! Firma byla schválena. Tvým dalším krokem je vygenerování smlouvy (sekce 'Získat smlouvu').";
-      case "NEEDS_REVIEW":
+      case PlacementStatus.NEEDS_REVIEW:
         return "Analyzoval jsem tvou smlouvu. Prosím, zkontroluj níže, zda jsem všechny údaje přečetl správně.";
-      case "APPROVED":
-      case "ACTIVE":
+      case PlacementStatus.APPROVED:
+      case PlacementStatus.ACTIVE:
         return "Vše hotovo! Tvá praxe je schválena. Hodně štěstí!";
       default:
         return undefined;
@@ -755,7 +756,7 @@ function StudentDashboardContent() {
     if (user?.major === 'UPV') return null;
 
     // Ak užívateľ nemá schválenú organizáciu, zobrazíme pôvodnú správu (defenzívne, hoci rodič to kontroluje)
-    if (placement?.status !== "ORG_APPROVED") {
+    if (placement?.status !== PlacementStatus.ORG_APPROVED) {
       return (
         <div className="text-center py-10 bg-white rounded-2xl border-2 border-dashed border-slate-200">
           <p className="text-slate-600">Zatím nemáš žádnou aktivní praxi.</p>
@@ -971,7 +972,7 @@ function StudentDashboardContent() {
             </p>
           </div>
           <div className="flex flex-col sm:flex-row gap-3 items-stretch w-full md:w-auto">
-            {placement && user?.major !== 'UPV' && ["ORG_APPROVED", "NEEDS_REVIEW", "PENDING_COORDINATOR", "ANALYZING", "APPROVED", "ACTIVE", "EVALUATION", "CLOSED", "FINAL_EXAM"].includes(placement.status) && (
+            {placement && user?.major !== 'UPV' && [PlacementStatus.ORG_APPROVED, PlacementStatus.NEEDS_REVIEW, PlacementStatus.PENDING_COORDINATOR, PlacementStatus.ANALYZING, PlacementStatus.APPROVED, PlacementStatus.ACTIVE, PlacementStatus.EVALUATION, PlacementStatus.CLOSED, PlacementStatus.FINAL_EXAM].includes(placement.status) && (
               <Link
                 href="/student/generate"
                 data-testid="generate-contract-link"
@@ -1199,7 +1200,7 @@ function StudentDashboardContent() {
               ) : (
                 <>
                   {/* PENDING APPROVAL */}
-                  {placement.status === "PENDING_ORG_APPROVAL" && (
+                  {placement.status === PlacementStatus.PENDING_ORG_APPROVAL && (
                     <div className="text-center py-10 bg-white card-glass rounded-2xl border border-brand-100">
                       <div className="mx-auto w-16 h-16 bg-brand-50 rounded-full flex items-center justify-center mb-4">
                         <span className="text-xl">⏱️</span>
@@ -1216,71 +1217,71 @@ function StudentDashboardContent() {
                   )}
 
                   {/* ORG APPROVED - Show Upload/Generate Buttons */}
-                  {placement.status === "ORG_APPROVED" && <UploadSection />}
+                  {placement.status === PlacementStatus.ORG_APPROVED && <UploadSection />}
 
                   {/* EXISTING STATUSES */}
-                  {(placement.status === "ANALYZING" ||
-                    placement.status === "NEEDS_REVIEW" ||
-                    placement.status === "APPROVED" || placement.status === "ACTIVE" ||
-                    placement.status === "EVALUATION" ||
-                    placement.status === "CLOSED") && (
+                  {(placement.status === PlacementStatus.ANALYZING ||
+                    placement.status === PlacementStatus.NEEDS_REVIEW ||
+                    placement.status === PlacementStatus.APPROVED || placement.status === PlacementStatus.ACTIVE ||
+                    placement.status === PlacementStatus.EVALUATION ||
+                    placement.status === PlacementStatus.CLOSED) && (
                     <div className="space-y-6">
                       {/* STATUS BAR */}
                       <div className="flex items-center gap-4 p-4 bg-white rounded-2xl border border-slate-200">
                         <div
                           className={`p-3 rounded-full ${
-                            placement.status === "ANALYZING"
+                            placement.status === PlacementStatus.ANALYZING
                               ? "bg-brand-50 text-brand-500"
-                              : placement.status === "APPROVED" || placement.status === "ACTIVE"
+                              : placement.status === PlacementStatus.APPROVED || placement.status === PlacementStatus.ACTIVE
                                 ? "bg-green-800/40 text-emerald-500"
-                                : placement.status === "NEEDS_REVIEW"
+                                : placement.status === PlacementStatus.NEEDS_REVIEW
                                   ? "bg-yellow-800/40 text-yellow-400"
                                   : "bg-slate-700/50 text-slate-700"
                           }`}
                         >
-                          {placement.status === "ANALYZING" && (
+                          {placement.status === PlacementStatus.ANALYZING && (
                             <span className="text-2xl">✨</span>
                           )}
-                          {placement.status === "APPROVED" || placement.status === "ACTIVE" && (
+                          {placement.status === PlacementStatus.APPROVED || placement.status === PlacementStatus.ACTIVE && (
                             <span className="text-sm">✨</span>
                           )}
-                          {(placement.status === "EVALUATION" ||
-                            placement.status === "CLOSED") && (
+                          {(placement.status === PlacementStatus.EVALUATION ||
+                            placement.status === PlacementStatus.CLOSED) && (
                             <span className="text-sm">✨</span>
                           )}
-                          {placement.status === "NEEDS_REVIEW" && (
+                          {placement.status === PlacementStatus.NEEDS_REVIEW && (
                             <span className="text-2xl">🚨</span>
                           )}
                         </div>
                         <div>
                           <h3 className="font-bold text-lg text-slate-900">
-                            {placement.status === "ANALYZING" &&
+                            {placement.status === PlacementStatus.ANALYZING &&
                               "AI zpracovává dokument..."}
-                            {placement.status === "NEEDS_REVIEW" &&
+                            {placement.status === PlacementStatus.NEEDS_REVIEW &&
                               "Nutná kontrola údajů"}
-                            {placement.status === "APPROVED" || placement.status === "ACTIVE" &&
+                            {placement.status === PlacementStatus.APPROVED || placement.status === PlacementStatus.ACTIVE &&
                               "Praxe je oficiálně schválena"}
-                            {placement.status === "EVALUATION" &&
+                            {placement.status === PlacementStatus.EVALUATION &&
                               "Čeká se na hodnocení"}
-                            {placement.status === "CLOSED" && "Praxe uzavřena"}
+                            {placement.status === PlacementStatus.CLOSED && "Praxe uzavřena"}
                           </h3>
                           <p className="text-sm text-slate-600">
-                            {placement.status === "ANALYZING" &&
+                            {placement.status === PlacementStatus.ANALYZING &&
                               "Čekejte prosím, čtu data ze smlouvy."}
-                            {placement.status === "NEEDS_REVIEW" &&
+                            {placement.status === PlacementStatus.NEEDS_REVIEW &&
                               "AI předvyplnila data. Prosím o vaši kontrolu níže."}
-                            {placement.status === "APPROVED" || placement.status === "ACTIVE" &&
+                            {placement.status === PlacementStatus.APPROVED || placement.status === PlacementStatus.ACTIVE &&
                               `Schváleno dne ${formatDateCZ(placement.approvedAt)}. E-mail odeslán firmě.`}
-                            {placement.status === "EVALUATION" &&
+                            {placement.status === PlacementStatus.EVALUATION &&
                               "Napiš svou reflexi z praxe."}
-                            {placement.status === "CLOSED" &&
+                            {placement.status === PlacementStatus.CLOSED &&
                               "Tvá praxe byla úspěšně hodnocena."}
                           </p>
                         </div>
                       </div>
 
                       {/* FORMULÁR NA KONTROLU (Iba ak NEEDS_REVIEW) */}
-                      {placement.status === "NEEDS_REVIEW" && (
+                      {placement.status === PlacementStatus.NEEDS_REVIEW && (
                         <div className="bg-yellow-900/20 card-glass p-6 rounded-2xl border border-yellow-800/50">
                           <h4 className="font-bold text-yellow-300 mb-4">
                             Zkontrolujte údaje nalezené AI:
@@ -1361,9 +1362,9 @@ function StudentDashboardContent() {
                       )}
 
                       {/* SCHVÁLENÉ ÚDAJE (Iba ak APPROVED alebo EVALUATION alebo CLOSED) */}
-                      {(placement.status === "APPROVED" || placement.status === "ACTIVE" ||
-                        placement.status === "EVALUATION" ||
-                        placement.status === "CLOSED") && (
+                      {(placement.status === PlacementStatus.APPROVED || placement.status === PlacementStatus.ACTIVE ||
+                        placement.status === PlacementStatus.EVALUATION ||
+                        placement.status === PlacementStatus.CLOSED) && (
                         <div className="space-y-6">
                           <div className="card-glass rounded-2xl border border-slate-200 overflow-hidden">
                             <table className="min-w-full divide-y divide-gray-200 text-sm">
@@ -1398,7 +1399,7 @@ function StudentDashboardContent() {
                           </div>
 
                           {/* 3-PILLAR PRACTICE UI (Náslechy, Výstupy, Reflexe) */}
-                          {(placement.status === "APPROVED" || placement.status === "ACTIVE" || placement.status === "EVALUATION" || placement.status === "CLOSED") && (
+                          {(placement.status === PlacementStatus.APPROVED || placement.status === PlacementStatus.ACTIVE || placement.status === PlacementStatus.EVALUATION || placement.status === PlacementStatus.CLOSED) && (
 
                             <div className="mt-8 bg-white card-glass rounded-3xl overflow-hidden border border-slate-200">
                                <div className="flex border-b border-slate-200">
@@ -1675,7 +1676,7 @@ function StudentDashboardContent() {
                                               </button>
                                               <button
                                                 onClick={handleEvaluateReflection}
-                                                disabled={evaluating || isCorrectingGrammar || reflectionText.trim().length === 0 || placement.status === "CLOSED"}
+                                                disabled={evaluating || isCorrectingGrammar || reflectionText.trim().length === 0 || placement.status === PlacementStatus.CLOSED}
                                                 className="flex-1 py-3 bg-purple-600 text-slate-900 rounded-xl font-bold hover:bg-purple-700 disabled:opacity-50 transition"
                                               >
                                                 {evaluating ? "Hodnocení..." : "Odeslat k hodnocení AI"}
@@ -1683,7 +1684,7 @@ function StudentDashboardContent() {
                                             </div>
                                         </div>
 
-                                        {placement.status === "CLOSED" && placement.evaluationResult && (
+                                        {placement.status === PlacementStatus.CLOSED && placement.evaluationResult && (
                                             <div className="bg-emerald-50 card-glass p-6 rounded-2xl border border-emerald-200 mt-6">
                                                 <h3 className="font-bold text-emerald-500 text-lg mb-2 flex items-center gap-2">
                                                     <span className="text-2xl">🏆</span> Praxe úspěšně uzavřena
@@ -1811,7 +1812,7 @@ function StudentDashboardContent() {
           {/* BOČNÝ PANEL (INFO & LOG) */}
           <div className="space-y-6">
             {/* Circular Progress Component */}
-            {placement && ["APPROVED", "ACTIVE", "EVALUATION", "CLOSED"].includes(placement.status) && (
+            {placement && [PlacementStatus.APPROVED, PlacementStatus.ACTIVE, PlacementStatus.EVALUATION, PlacementStatus.CLOSED].includes(placement.status) && (
 
               <div className="card-glass p-6 rounded-3xl shadow-sm border border-slate-200 text-center">
                 <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4">
@@ -1890,7 +1891,7 @@ function StudentDashboardContent() {
             )}
 
             {/* QR Kód pro mentora */}
-            {placement && placement.status !== "PENDING_ORG_APPROVAL" && placement.status !== "REJECTED" && (
+            {placement && placement.status !== PlacementStatus.PENDING_ORG_APPROVAL && placement.status !== PlacementStatus.REJECTED && (
               <div className="card-glass p-6 rounded-3xl shadow-sm border border-slate-200 text-center">
                 <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4">
                   QR kód pro mentora
@@ -1943,9 +1944,9 @@ function StudentDashboardContent() {
                   </div>
                 ) : (
                   <p className="text-sm text-slate-600 italic">
-                    {placement?.status === "PENDING_ORG_APPROVAL"
+                    {placement?.status === PlacementStatus.PENDING_ORG_APPROVAL
                       ? "Čeká se na schválení firmy."
-                      : placement?.status === "ORG_APPROVED"
+                      : placement?.status === PlacementStatus.ORG_APPROVED
                         ? "Čeká se na nahrání smlouvy."
                         : "Žádný dokument nebyl nahrán."}
                   </p>
@@ -1965,27 +1966,27 @@ function StudentDashboardContent() {
 
                 // Determine State
                 let lightState = "RED"; // Default fallback
-                if (!hasMajor || !placement || pStatus === "REJECTED") {
+                if (!hasMajor || !placement || pStatus === PlacementStatus.REJECTED) {
                   lightState = "RED";
-                } else if (["PENDING_ORG_APPROVAL", "ORG_APPROVED", "ANALYZING", "NEEDS_REVIEW"].includes(pStatus)) {
+                } else if ([PlacementStatus.PENDING_ORG_APPROVAL, PlacementStatus.ORG_APPROVED, PlacementStatus.ANALYZING, PlacementStatus.NEEDS_REVIEW].includes(pStatus)) {
                   lightState = "YELLOW";
-                } else if (["APPROVED", "ACTIVE", "EVALUATION", "CLOSED"].includes(pStatus)) {
+                } else if ([PlacementStatus.APPROVED, PlacementStatus.ACTIVE, PlacementStatus.EVALUATION, PlacementStatus.CLOSED].includes(pStatus)) {
                   lightState = "GREEN";
                 }
 
                 // Determine Manual Text
                 let manualText = "Vyberte si obor pro zahájení procesu.";
                 if (lightState === "RED" && hasMajor) {
-                  manualText = pStatus === "REJECTED" ? "Vaše praxe byla zamítnuta. Podat nový návrh." : "Vyplňte žádost o schválení firmy a začněte svou praxi.";
+                  manualText = pStatus === PlacementStatus.REJECTED ? "Vaše praxe byla zamítnuta. Podat nový návrh." : "Vyplňte žádost o schválení firmy a začněte svou praxi.";
                 } else if (lightState === "YELLOW") {
-                   if (pStatus === "PENDING_ORG_APPROVAL") manualText = "Čeká se na schválení organizace firmou nebo koordinátorem.";
-                   if (hasMajor === "UPV" && pStatus === "ORG_APPROVED") manualText = "Organizace schválena! Můžete začít logovat hodiny."; // defensive fallback
-                   else if (pStatus === "ORG_APPROVED") manualText = "Organizace schválena! Vaším dalším krokem je vygenerovat a nahrát smlouvu.";
-                   if (["ANALYZING", "NEEDS_REVIEW"].includes(pStatus)) manualText = "Smlouva se kontroluje. Čeká se na finální schválení koordinátorem.";
+                   if (pStatus === PlacementStatus.PENDING_ORG_APPROVAL) manualText = "Čeká se na schválení organizace firmou nebo koordinátorem.";
+                   if (hasMajor === "UPV" && pStatus === PlacementStatus.ORG_APPROVED) manualText = "Organizace schválena! Můžete začít logovat hodiny."; // defensive fallback
+                   else if (pStatus === PlacementStatus.ORG_APPROVED) manualText = "Organizace schválena! Vaším dalším krokem je vygenerovat a nahrát smlouvu.";
+                   if ([PlacementStatus.ANALYZING, PlacementStatus.NEEDS_REVIEW].includes(pStatus)) manualText = "Smlouva se kontroluje. Čeká se na finální schválení koordinátorem.";
                 } else if (lightState === "GREEN") {
-                   if (["APPROVED", "ACTIVE"].includes(pStatus)) manualText = "Praxe schválena! Nyní můžete začít logovat své hodiny a náslechy.";
-                   if (pStatus === "EVALUATION") manualText = "Vyplňte a vyhodnoťte svou závěrečnou reflexi.";
-                   if (pStatus === "CLOSED") manualText = "Praxe úspěšně ukončena. Skvělá práce!";
+                   if ([PlacementStatus.APPROVED, PlacementStatus.ACTIVE].includes(pStatus)) manualText = "Praxe schválena! Nyní můžete začít logovat své hodiny a náslechy.";
+                   if (pStatus === PlacementStatus.EVALUATION) manualText = "Vyplňte a vyhodnoťte svou závěrečnou reflexi.";
+                   if (pStatus === PlacementStatus.CLOSED) manualText = "Praxe úspěšně ukončena. Skvělá práce!";
                 }
 
                 // Click Actions
