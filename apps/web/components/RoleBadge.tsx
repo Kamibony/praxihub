@@ -19,20 +19,20 @@ export default function RoleBadge({ role, className = "" }: RoleBadgeProps) {
         return {
           label: "Student",
           icon: <User size={14} />,
-          classes: "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800",
+          classes: "bg-blue-600 text-white border-blue-700 dark:bg-blue-500 dark:border-blue-600",
         };
       case "coordinator":
       case "admin":
         return {
           label: r.toLowerCase() === "admin" ? "Administrátor" : "Koordinátor",
           icon: <ShieldAlert size={14} />,
-          classes: "bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800",
+          classes: "bg-purple-600 text-white border-purple-700 dark:bg-purple-500 dark:border-purple-600",
         };
       case "institution":
         return {
           label: "Instituce",
           icon: <Building size={14} />,
-          classes: "bg-teal-100 text-teal-800 border-teal-200 dark:bg-teal-900/30 dark:text-teal-300 dark:border-teal-800",
+          classes: "bg-teal-600 text-white border-teal-700 dark:bg-teal-500 dark:border-teal-600",
         };
       default:
         return {
