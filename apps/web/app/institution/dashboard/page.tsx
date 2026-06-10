@@ -9,22 +9,7 @@ import { useRouter } from "next/navigation";
 import { CheckCircle, XCircle, Star, LogOut, Clock, User, Building } from 'lucide-react';
 import Chatbot from "@/components/Chatbot";
 import QrScanner from "@/components/QrScanner";
-
-const STATUS_LABELS: Record<string, string> = {
-  DRAFT: 'Koncept',
-  PENDING_MATCH: 'Čeká na spárování',
-  PENDING_INSTITUTION: 'Čeká na instituci',
-  PENDING_ORG_APPROVAL: 'Čeká na schválení organizací',
-  ORG_APPROVED: 'Schváleno organizací',
-  ANALYZING: 'Analyzuje se',
-  NEEDS_REVIEW: 'Vyžaduje kontrolu',
-  APPROVED: 'Smlouva schválena',
-  PENDING_COORDINATOR: 'Čeká na koordinátora',
-  ACTIVE: 'Aktivní',
-  EVALUATION: 'Hodnocení',
-  CLOSED: 'Uzavřeno',
-  FINAL_EXAM: 'Závěrečná zkouška'
-};
+import { PLACEMENT_STATUS_LABELS } from "../../../lib/constants/placementStates";
 
 export default function InstitutionDashboard() {
   const [user, setUser] = useState<any>(null);
@@ -271,7 +256,7 @@ export default function InstitutionDashboard() {
                       </div>
                     </div>
                     <span className="text-xs font-bold bg-slate-100 text-slate-600 px-2 py-1 rounded-full">
-                      {STATUS_LABELS[placement.status] || placement.status}
+                      {PLACEMENT_STATUS_LABELS[placement.status] || placement.status}
                     </span>
                   </div>
                   <div className="text-xs text-slate-500">

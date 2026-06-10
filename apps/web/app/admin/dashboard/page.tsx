@@ -27,17 +27,10 @@ import { storage } from "../../../lib/firebase";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import DashboardSkeleton from "@/components/skeletons/DashboardSkeleton";
 import RoleBadge from "@/components/RoleBadge";
+import { COORDINATOR_VIEW_GROUPS, PLACEMENT_STATUS_LABELS } from "../../../lib/constants/placementStates";
 
 // Define filter type
-type FilterStatus =
-  | "ALL"
-  | "PENDING_MATCH"
-  | "PENDING_INSTITUTION"
-  | "PENDING_COORDINATOR"
-  | "APPROVED"
-  | "ACTIVE"
-  | "EVALUATION"
-  | "CLOSED";
+type FilterStatus = "ALL" | keyof typeof COORDINATOR_VIEW_GROUPS;
 
 export default function CoordinatorDashboard() {
   return (
@@ -53,7 +46,7 @@ function CoordinatorDashboardContent() {
   const [matchmakingOrgId, setMatchmakingOrgId] = useState<string>("");
   const [linkingPlacementId, setLinkingPlacementId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [filterStatus, setFilterStatus] = useState<FilterStatus>("ALL");
+  const [filterStatus, setFilterStatus] = useState<FilterStatus>("ACTION_REQUIRED");
   const [selectedPlacement, setSelectedPlacement] = useState<any>(null);
 
   // View mode state
@@ -388,7 +381,7 @@ function CoordinatorDashboardContent() {
   // Filter Logic
   const filteredPlacements = placements.filter((item) => {
     if (filterStatus === "ALL") return true;
-    return item.status === filterStatus;
+    return COORDINATOR_VIEW_GROUPS[filterStatus]?.includes(item.status);
   });
 
   const getCardClasses = (status: FilterStatus) => {
@@ -404,11 +397,14 @@ function CoordinatorDashboardContent() {
   const pendingReview = placements.filter(
     (i) => i.status === "NEEDS_REVIEW",
   ).length;
-  const chatbotMessage = `Vítej zpět! Aktuálně máš ke schválení ${pendingOrgs} firem a ${pendingReview} smluv čeká na kontrolu.`;
+  const pendingApproval = placements.filter(
+    (i) => i.status === "PENDING_ORG_APPROVAL",
+  ).length;
+  const chatbotMessage = `Vítej zpět! Aktuálně máš ke schválení ${pendingOrgs} firem, ${pendingApproval} praxí čeká na schválení, a ${pendingReview} smluv čeká na kontrolu.`;
 
   // Statistics for Overview Section
   const approvedCount = placements.filter(
-    (i) => i.status === "APPROVED" || i.status === "ACTIVE", "ACTIVE",
+    (i) => COORDINATOR_VIEW_GROUPS.APPROVED_ACTIVE.includes(i.status)
   ).length;
   const totalCount = placements.length;
   const progressPercentage =
@@ -901,47 +897,45 @@ function CoordinatorDashboardContent() {
                 onClick={() => setFilterStatus("ALL")}
               >
                 <p className="text-xs text-gray-500 uppercase font-bold">
-                  Celkem smluv
+                  Celkem
                 </p>
                 <p className="text-2xl font-bold text-gray-900">
                   {placements.length}
                 </p>
               </div>
               <div
-                className={getCardClasses("PENDING_MATCH")} onClick={() => setFilterStatus("PENDING_MATCH")}
+                className={getCardClasses("ACTION_REQUIRED")} onClick={() => setFilterStatus("ACTION_REQUIRED")}
               >
-                <p className="text-xs text-gray-500 uppercase font-bold">Matchmaking</p>
-                <p className="text-2xl font-bold text-blue-800">
-                  {
-                    placements.filter((i) => i.status === "PENDING_MATCH").length
-                  }
+                <p className="text-xs text-red-500 uppercase font-bold">Vyžaduje Akci</p>
+                <p className="text-2xl font-bold text-red-800">
+                  {placements.filter((i) => COORDINATOR_VIEW_GROUPS.ACTION_REQUIRED.includes(i.status)).length}
                 </p>
               </div>
               <div
-                className={getCardClasses("APPROVED")}
-                onClick={() => setFilterStatus("APPROVED")}
+                className={getCardClasses("WAITING_ON_OTHERS")} onClick={() => setFilterStatus("WAITING_ON_OTHERS")}
               >
-                <p className="text-xs text-gray-500 uppercase font-bold">
-                  Schváleno
+                <p className="text-xs text-yellow-500 uppercase font-bold">Čeká na ostatní</p>
+                <p className="text-2xl font-bold text-yellow-600">
+                  {placements.filter((i) => COORDINATOR_VIEW_GROUPS.WAITING_ON_OTHERS.includes(i.status)).length}
+                </p>
+              </div>
+              <div
+                className={getCardClasses("APPROVED_ACTIVE")}
+                onClick={() => setFilterStatus("APPROVED_ACTIVE")}
+              >
+                <p className="text-xs text-green-500 uppercase font-bold">
+                  Schváleno / Aktivní
                 </p>
                 <p className="text-2xl font-bold text-green-600">
-                  {placements.filter((i) => i.status === "APPROVED" || i.status === "ACTIVE").length}
+                  {placements.filter((i) => COORDINATOR_VIEW_GROUPS.APPROVED_ACTIVE.includes(i.status)).length}
                 </p>
               </div>
               <div
-                className={getCardClasses("PENDING_INSTITUTION")} onClick={() => setFilterStatus("PENDING_INSTITUTION")}
+                className={getCardClasses("COMPLETED")} onClick={() => setFilterStatus("COMPLETED")}
               >
-                <p className="text-xs text-gray-500 uppercase font-bold">Čeká Firma</p>
-                <p className="text-2xl font-bold text-yellow-600">
-                  {placements.filter((i) => i.status === "PENDING_INSTITUTION").length}
-                </p>
-              </div>
-              <div
-                className={getCardClasses("PENDING_COORDINATOR")} onClick={() => setFilterStatus("PENDING_COORDINATOR")}
-              >
-                <p className="text-xs text-gray-500 uppercase font-bold">Čeká Koord</p>
-                <p className="text-2xl font-bold text-blue-600">
-                  {placements.filter((i) => i.status === "PENDING_COORDINATOR").length}
+                <p className="text-xs text-gray-500 uppercase font-bold">Dokončeno</p>
+                <p className="text-2xl font-bold text-gray-800">
+                  {placements.filter((i) => COORDINATOR_VIEW_GROUPS.COMPLETED.includes(i.status)).length}
                 </p>
               </div>
             </div>
@@ -1050,24 +1044,16 @@ function CoordinatorDashboardContent() {
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span
                             className={`px-2.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full border ${
-                              item.status === "PENDING_MATCH"
-                                ? "bg-purple-100 text-purple-800"
-                                : item.status === "PENDING_INSTITUTION"
-                                  ? "bg-blue-100 text-blue-800"
-                                  : item.status === "PENDING_COORDINATOR"
-                                    ? "bg-yellow-100 text-yellow-800"
-                                    : item.status === "APPROVED" || item.status === "ACTIVE"
-                                      ? "bg-green-100 text-green-800"
-                                      : item.status === "ACTIVE"
-                                        ? "bg-teal-100 text-teal-800"
-                                        : item.status === "EVALUATION"
-                                          ? "bg-orange-100 text-orange-800"
-                                          : item.status === "CLOSED"
-                                            ? "bg-gray-100 text-gray-800"
-                                            : "bg-gray-100 text-gray-800"
+                              COORDINATOR_VIEW_GROUPS.ACTION_REQUIRED.includes(item.status)
+                                ? "bg-red-100 text-red-800 border-red-300"
+                                : COORDINATOR_VIEW_GROUPS.WAITING_ON_OTHERS.includes(item.status)
+                                  ? "bg-yellow-100 text-yellow-800 border-yellow-300"
+                                  : COORDINATOR_VIEW_GROUPS.APPROVED_ACTIVE.includes(item.status)
+                                    ? "bg-green-100 text-green-800 border-green-300"
+                                    : "bg-gray-100 text-gray-800 border-gray-300"
                             }`}
                           >
-                            {item.status}
+                            {PLACEMENT_STATUS_LABELS[item.status] || item.status}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -1102,15 +1088,15 @@ function CoordinatorDashboardContent() {
                               <span className="text-xs text-gray-400">-</span>
                             )}
                           </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-3">
-                          {item.status === "PENDING_ORG_APPROVAL" ? (
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-3 flex items-center justify-end">
+                          {item.status === "PENDING_ORG_APPROVAL" && (
                             <>
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   handleApproveOrg(item.id);
                                 }}
-                                className="text-green-600 hover:text-green-900 font-bold hover:underline"
+                                className="text-green-600 hover:text-green-900 font-bold hover:underline mr-3"
                               >
                                 Schválit
                               </button>
@@ -1119,49 +1105,46 @@ function CoordinatorDashboardContent() {
                                   e.stopPropagation();
                                   handleRejectOrg(item.id);
                                 }}
-                                className="text-red-600 hover:text-red-900 font-bold hover:underline"
+                                className="text-red-600 hover:text-red-900 font-bold hover:underline mr-3"
                               >
                                 Zamítnout
                               </button>
                             </>
+                          )}
+                          <a
+                            href={`mailto:${item.studentEmail}?subject=Dotaz k praxi&body=Dobrý den, ohledně vaší smlouvy...`}
+                            className="text-gray-400 hover:text-gray-600 inline-block align-middle mr-3"
+                            title="Napsat email"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <svg
+                              className="w-5 h-5"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                              />
+                            </svg>
+                          </a>
+                          {item.contract_url ? (
+                            <a
+                              href={item.contract_url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-blue-600 hover:text-blue-900 hover:underline inline-block align-middle"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              Otevřít PDF
+                            </a>
                           ) : (
-                            <>
-                              <a
-                                href={`mailto:${item.studentEmail}?subject=Dotaz k praxi&body=Dobrý den, ohledně vaší smlouvy...`}
-                                className="text-gray-400 hover:text-gray-600 inline-block align-middle"
-                                title="Napsat email"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                <svg
-                                  className="w-5 h-5"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                                  />
-                                </svg>
-                              </a>
-                              {item.contract_url ? (
-                                <a
-                                  href={item.contract_url}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  className="text-blue-600 hover:text-blue-900 hover:underline inline-block align-middle"
-                                  onClick={(e) => e.stopPropagation()}
-                                >
-                                  Otevřít PDF
-                                </a>
-                              ) : (
-                                <span className="text-gray-300 cursor-not-allowed">
-                                  PDF
-                                </span>
-                              )}
-                            </>
+                            <span className="text-gray-300 cursor-not-allowed">
+                              PDF
+                            </span>
                           )}
                         </td>
                       </tr>
@@ -1205,25 +1188,16 @@ function CoordinatorDashboardContent() {
                   <div className="mt-2">
                     <span
                       className={`px-2.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full border ${
-                        selectedPlacement.status === "APPROVED" || selectedPlacement.status === "ACTIVE"
-                          ? "bg-green-50 text-green-700 border-green-200"
-                          : selectedPlacement.status === "ORG_APPROVED"
-                            ? "bg-indigo-50 text-indigo-700 border-indigo-200"
-                            : selectedPlacement.status ===
-                                "PENDING_ORG_APPROVAL"
-                              ? "bg-blue-100 text-blue-800 border-blue-300"
-                              : selectedPlacement.status === "REJECTED"
-                                ? "bg-red-50 text-red-700 border-red-200"
-                                : selectedPlacement.status === "NEEDS_REVIEW"
-                                  ? "bg-yellow-50 text-yellow-700 border-yellow-200"
-                                  : "bg-blue-50 text-blue-700 border-blue-200"
+                        COORDINATOR_VIEW_GROUPS.ACTION_REQUIRED.includes(selectedPlacement.status)
+                          ? "bg-red-50 text-red-700 border-red-200"
+                          : COORDINATOR_VIEW_GROUPS.WAITING_ON_OTHERS.includes(selectedPlacement.status)
+                            ? "bg-yellow-50 text-yellow-700 border-yellow-200"
+                            : COORDINATOR_VIEW_GROUPS.APPROVED_ACTIVE.includes(selectedPlacement.status)
+                              ? "bg-green-50 text-green-700 border-green-200"
+                              : "bg-blue-50 text-blue-700 border-blue-200"
                       }`}
                     >
-                      {selectedPlacement.status === "PENDING_ORG_APPROVAL"
-                        ? "Čeká na schválení"
-                        : selectedPlacement.status === "ORG_APPROVED"
-                          ? "Firma schválena"
-                          : selectedPlacement.status}
+                      {PLACEMENT_STATUS_LABELS[selectedPlacement.status] || selectedPlacement.status}
                     </span>
                   </div>
                 </div>
