@@ -28,10 +28,11 @@ This scenario validates the flow for a student with the **UPV** major, from orga
 
 3. **Request Organization Approval:**
    - On the dashboard, fill out the "Vyberte organizaci" (Select organization) form and submit the request.
-   - The system will transition to the "PENDING_MATCH" (Waiting for organization approval) state.
+   - The system will transition to the "PENDING_ORG_APPROVAL" (Waiting for organization approval) state.
 
 4. **Organization Approval by Coordinator:**
    - Open a new window (or temporarily stop impersonating) and navigate to the Admin Dashboard as an Administrator/Coordinator.
+   - Locate the request in the "Action Required" view group.
    - Find the student's request and approve it.
    - **Crucial Step:** Because this student is UPV, their state should automatically bypass contract generation and skip directly to "APPROVED" state (time-logging unlocked).
    - Resume impersonating the student on their Dashboard.
