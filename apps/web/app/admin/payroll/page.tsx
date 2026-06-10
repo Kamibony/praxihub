@@ -111,7 +111,7 @@ export default function PayrollModule() {
      document.body.removeChild(link);
   };
 
-  if (loading) return <div className="p-8 text-theme-primary">Načítám výkaz...</div>;
+  if (loading) return <div className="p-8 text-slate-900 dark:text-white">Načítám výkaz...</div>;
 
   return (
 
@@ -119,7 +119,7 @@ export default function PayrollModule() {
       <Navbar />
       <div className="pt-24 pb-12 px-6 max-w-7xl mx-auto">
         <div className="flex justify-between items-start mb-6">
-          <h1 className="text-3xl font-bold font-sans text-theme-primary">Mzdový modul (Payroll)</h1>
+          <h1 className="text-3xl font-bold font-sans text-slate-900 dark:text-white">Mzdový modul (Payroll)</h1>
           <Link
             href="/admin/dashboard"
             className="text-sm font-medium text-theme-secondary hover:text-blue-400 transition"
@@ -131,11 +131,11 @@ export default function PayrollModule() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <div className="card-glass p-6 rounded-2xl border border-theme-border">
                 <p className="text-sm font-bold text-theme-muted uppercase tracking-wider mb-2">Sazba UPV</p>
-                <p className="text-3xl font-bold text-theme-primary">{rates.UPV} CZK / h</p>
+                <p className="text-3xl font-bold text-slate-900 dark:text-white">{rates.UPV} CZK / h</p>
             </div>
             <div className="card-glass p-6 rounded-2xl border border-theme-border">
                 <p className="text-sm font-bold text-theme-muted uppercase tracking-wider mb-2">Sazba KPV</p>
-                <p className="text-3xl font-bold text-theme-primary">{rates.KPV} CZK / h</p>
+                <p className="text-3xl font-bold text-slate-900 dark:text-white">{rates.KPV} CZK / h</p>
             </div>
             <div className="card-glass p-6 rounded-2xl border border-green-500/30 bg-green-900/10">
                 <p className="text-sm font-bold text-green-400 uppercase tracking-wider mb-2">Celkové odměny</p>
@@ -145,7 +145,7 @@ export default function PayrollModule() {
 
         <div className="card-glass rounded-3xl overflow-hidden border border-theme-border">
           <div className="flex justify-between items-center p-6 border-b border-theme-border bg-theme-panel">
-            <h2 className="text-xl font-bold text-theme-primary">Výkaz odměn mentorů podle organizace</h2>
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white">Výkaz odměn mentorů podle organizace</h2>
             <button
                 onClick={downloadCSV}
                 className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition text-sm flex items-center gap-2"
@@ -170,7 +170,7 @@ export default function PayrollModule() {
                 ) : (
                     payrollData.map((row, idx) => (
                     <tr key={idx} data-testid="payroll-row" className="hover:bg-slate-800/30 transition">
-                        <td className="px-6 py-4 font-bold text-theme-primary" data-testid="institution-name">{row.institutionName}</td>
+                        <td className="px-6 py-4 font-bold text-slate-900 dark:text-white" data-testid="institution-name">{row.institutionName}</td>
                         <td className="px-6 py-4 font-mono text-theme-muted">{row.institutionIco}</td>
                         <td className="px-6 py-4"><span className="px-2 py-1 bg-blue-900/30 text-blue-300 rounded-md font-mono">{row.approvedHoursUPV} h</span></td>
                         <td className="px-6 py-4"><span className="px-2 py-1 bg-indigo-900/30 text-indigo-300 rounded-md font-mono">{row.approvedHoursKPV} h</span></td>
