@@ -1110,7 +1110,7 @@ function StudentDashboardContent() {
                     className="space-y-4 max-w-lg"
                   >
                     <div>
-                      <label className="block text-sm font-medium text-slate-800 dark:text-slate-200 mb-1">
+                      <label className="block text-sm font-medium text-theme-secondary mb-1">
                         Vyberte organizaci *
                       </label>
                       <select
@@ -1126,7 +1126,7 @@ function StudentDashboardContent() {
                             setOrgRequest({ name: "", ico: "", web: "" });
                           }
                         }}
-                        className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-2xl px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full bg-theme-panel border border-theme-border text-theme-primary rounded-2xl px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
                         required
                       >
                         <option value="" disabled>-- Vyberte registrovanou organizaci --</option>
@@ -1142,7 +1142,7 @@ function StudentDashboardContent() {
                     {selectedInstitutionId === "NEW" && (
                       <>
                         <div>
-                          <label className="block text-sm font-medium text-slate-800 dark:text-slate-200 mb-1">
+                          <label className="block text-sm font-medium text-theme-secondary mb-1">
                             Název organizace *
                           </label>
                           <input
@@ -1151,13 +1151,13 @@ function StudentDashboardContent() {
                             onChange={(e) =>
                               setOrgRequest({ ...orgRequest, name: e.target.value })
                             }
-                            className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-2xl px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 placeholder-slate-500 dark:placeholder-slate-400"
+                            className="w-full bg-theme-panel border border-theme-border text-theme-primary rounded-2xl px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 placeholder-theme-muted"
                             placeholder="Např. Acme Corp s.r.o."
                             required
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-slate-800 dark:text-slate-200 mb-1">
+                          <label className="block text-sm font-medium text-theme-secondary mb-1">
                             IČO *
                           </label>
                           <input
@@ -1166,13 +1166,13 @@ function StudentDashboardContent() {
                             onChange={(e) =>
                               setOrgRequest({ ...orgRequest, ico: e.target.value })
                             }
-                            className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-2xl px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 placeholder-slate-500 dark:placeholder-slate-400"
+                            className="w-full bg-theme-panel border border-theme-border text-theme-primary rounded-2xl px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 placeholder-theme-muted"
                             placeholder="12345678"
                             required
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-slate-800 dark:text-slate-200 mb-1">
+                          <label className="block text-sm font-medium text-theme-secondary mb-1">
                             Kontaktní email společnosti *
                           </label>
                           <input
@@ -1181,7 +1181,7 @@ function StudentDashboardContent() {
                             onChange={(e) =>
                               setOrgRequest({ ...orgRequest, web: e.target.value })
                             }
-                            className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-2xl px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 placeholder-slate-500 dark:placeholder-slate-400"
+                            className="w-full bg-theme-panel border border-theme-border text-theme-primary rounded-2xl px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 placeholder-theme-muted"
                             placeholder="kontakt@firma.cz"
                             required
                           />
