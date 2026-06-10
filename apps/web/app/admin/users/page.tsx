@@ -308,7 +308,7 @@ export default function UserManagementPage() {
   };
 
   const filteredUsers = users.filter(u => {
-    const matchesSearch = (u.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+    const matchesSearch = (u.name || u.displayName || u.organizationId || u.companyName || u.organizationName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
                           (u.email || '').toLowerCase().includes(searchQuery.toLowerCase());
 
     let matchesRole = false;
@@ -327,15 +327,15 @@ export default function UserManagementPage() {
 
   const getRoleBadge = (role: string) => {
     switch(role) {
-      case 'student': return <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-semibold">Student</span>;
+      case 'student': return <span className="px-2 py-1 bg-blue-600 text-white rounded-full text-xs font-semibold">Student</span>;
       case 'institution':
       case 'company':
       case 'mentor':
-        return <span className="px-2 py-1 bg-teal-100 text-teal-800 rounded-full text-xs font-semibold">Instituce</span>;
+        return <span className="px-2 py-1 bg-teal-600 text-white rounded-full text-xs font-semibold">Instituce</span>;
       case 'coordinator':
       case 'admin':
-        return <span className="px-2 py-1 bg-orange-100 text-orange-800 rounded-full text-xs font-semibold">Koordinátor</span>;
-      default: return <span className="px-2 py-1 bg-slate-100 text-slate-800 rounded-full text-xs font-semibold">{role}</span>;
+        return <span className="px-2 py-1 bg-purple-600 text-white rounded-full text-xs font-semibold">Koordinátor</span>;
+      default: return <span className="px-2 py-1 bg-slate-600 text-white rounded-full text-xs font-semibold">{role}</span>;
     }
   };
 
@@ -656,7 +656,7 @@ export default function UserManagementPage() {
                 placeholder="Hledat podle jména nebo e-mailu..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
+                className="w-full pl-10 pr-4 py-2 bg-white text-slate-900 dark:bg-slate-800 dark:text-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
               />
             </div>
 
@@ -665,7 +665,7 @@ export default function UserManagementPage() {
               <select
                 value={roleFilter}
                 onChange={(e) => setRoleFilter(e.target.value)}
-                className="p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm w-full md:w-auto"
+                className="p-2 bg-white text-slate-900 dark:bg-slate-800 dark:text-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm w-full md:w-auto"
               >
                 <option value="ALL">Všechny role</option>
                 <option value="student">Studenti</option>
