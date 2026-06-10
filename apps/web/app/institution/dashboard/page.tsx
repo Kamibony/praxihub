@@ -165,7 +165,7 @@ export default function InstitutionDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+      <div className="min-h-screen flex items-center justify-center bg-theme-panel">
         <div className="text-blue-600 animate-spin w-8 h-8 border-4 border-current border-t-transparent rounded-full" />
       </div>
     );
@@ -204,16 +204,16 @@ export default function InstitutionDashboard() {
   const approvedHours = timeLogs.filter(log => log.status === 'approved').reduce((acc, log) => acc + (Number(log.hours) || 0), 0);
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-20 md:pb-0">
+    <div className="min-h-screen bg-theme-panel pb-20 md:pb-0">
       {/* Mobile-first Header */}
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-10 px-4 py-4 flex items-center justify-between shadow-sm">
+      <header className="bg-theme-panel border-b border-theme-border sticky top-0 z-10 px-4 py-4 flex items-center justify-between shadow-sm">
         <div>
-          <h1 className="text-xl font-bold text-slate-900">Mentor Hub</h1>
-          <p className="text-xs text-slate-500">Schvalování praxí</p>
+          <h1 className="text-xl font-bold text-theme-primary">Mentor Hub</h1>
+          <p className="text-xs text-theme-muted">Schvalování praxí</p>
         </div>
         <button
           onClick={handleLogout}
-          className="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-full transition"
+          className="p-2 text-theme-muted hover:text-red-600 hover:bg-red-50 rounded-full transition"
           aria-label="Odhlásit se"
         >
           <LogOut className="w-5 h-5" />
@@ -225,7 +225,7 @@ export default function InstitutionDashboard() {
         {/* QR Scanner Hub */}
         <section className="bg-slate-800/75 backdrop-blur-md p-6 rounded-3xl border border-white/10 shadow-lg text-center">
            <h2 className="text-sm font-bold text-indigo-300 uppercase tracking-wider mb-4 flex items-center justify-center gap-2">📷 QR Hub Scanner</h2>
-           <p className="text-xs text-slate-400 mb-4">Naskenujte QR kód ze smlouvy nebo certifikátu pro bezpečné ověření pravosti (Audit Logs).</p>
+           <p className="text-xs text-theme-muted mb-4">Naskenujte QR kód ze smlouvy nebo certifikátu pro bezpečné ověření pravosti (Audit Logs).</p>
            <QrScanner onScanSuccess={handleScanSuccess} />
         </section>
 
@@ -241,25 +241,25 @@ export default function InstitutionDashboard() {
         {/* Assigned Students List */}
         {placements.length > 0 && (
           <section className="mb-8">
-            <h2 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4 flex items-center gap-2">
+            <h2 className="text-sm font-bold text-theme-muted uppercase tracking-wider mb-4 flex items-center gap-2">
               <User className="w-4 h-4" />
               Přiřazení studenti ({placements.length})
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {(hydratedPlacements.length > 0 ? hydratedPlacements : placements).map((placement: any) => (
-                <div key={placement.id} data-testid="assigned-student-card" className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col gap-2">
+                <div key={placement.id} data-testid="assigned-student-card" className="bg-theme-panel p-4 rounded-xl border border-theme-border shadow-sm flex flex-col gap-2">
                   <div className="flex justify-between items-start">
                     <div>
-                      <div className="font-medium text-slate-900" data-testid="student-name">{placement.studentName || 'Načítám...'}</div>
-                      <div className="text-xs text-slate-500 font-normal">
+                      <div className="font-medium text-theme-primary" data-testid="student-name">{placement.studentName || 'Načítám...'}</div>
+                      <div className="text-xs text-theme-muted font-normal">
                         {hydratedPlacements.length > 0 ? placement.studentEmail : 'Načítám...'}
                       </div>
                     </div>
-                    <span className="text-xs font-bold bg-slate-100 text-slate-600 px-2 py-1 rounded-full">
+                    <span className="text-xs font-bold bg-theme-panel text-theme-secondary px-2 py-1 rounded-full">
                       {PLACEMENT_STATUS_LABELS[placement.status] || placement.status}
                     </span>
                   </div>
-                  <div className="text-xs text-slate-500">
+                  <div className="text-xs text-theme-muted">
                     <div><span className="font-semibold">Zaměření:</span> <span data-testid="student-major">{placement.major || 'Načítám...'}</span> &bull; <span className="font-semibold">Organizace:</span> {placement.organization_name || placement.companyData?.name || 'Organizace neuvedena'}</div>
                   </div>
                 </div>
@@ -270,50 +270,50 @@ export default function InstitutionDashboard() {
 
         {/* Pending Approvals */}
         <section>
-          <h2 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4 flex items-center gap-2">
+          <h2 className="text-sm font-bold text-theme-muted uppercase tracking-wider mb-4 flex items-center gap-2">
             <Clock className="w-4 h-4" />
             Čeká na schválení ({pendingLogs.length})
           </h2>
 
           {pendingLogs.length === 0 ? (
-            <div className="bg-white p-8 rounded-2xl border border-slate-200 text-center text-slate-500">
+            <div className="bg-theme-panel p-8 rounded-2xl border border-theme-border text-center text-theme-muted">
               <CheckCircle className="w-12 h-12 mx-auto text-green-300 mb-2" />
               <p>Všechny záznamy jsou vyřízené.</p>
             </div>
           ) : (
             <div className="space-y-4">
               {pendingLogs.map(log => (
-                <div key={log.id} className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                  <div className="p-4 border-b border-slate-100">
+                <div key={log.id} className="bg-theme-panel rounded-2xl border border-theme-border shadow-sm overflow-hidden">
+                  <div className="p-4 border-b border-theme-border">
                     <div className="flex justify-between items-start mb-2">
-                      <div className="flex items-center gap-2 text-sm text-slate-600">
-                        <User className="w-4 h-4" /> <span className="font-medium text-slate-900">{getStudentNameForLog(log.id, log.placementId, log.studentName)}</span>
+                      <div className="flex items-center gap-2 text-sm text-theme-secondary">
+                        <User className="w-4 h-4" /> <span className="font-medium text-theme-primary">{getStudentNameForLog(log.id, log.placementId, log.studentName)}</span>
                       </div>
                       <span className="text-xs font-bold bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
                         {log.hours} hod
                       </span>
                     </div>
-                    <div className="flex items-center gap-2 text-xs text-slate-500 mb-3">
+                    <div className="flex items-center gap-2 text-xs text-theme-muted mb-3">
                       <Building className="w-3 h-3" /> {log.organizationName} &bull; {new Date(log.date).toLocaleDateString('cs-CZ')}
                     </div>
-                    <p className="text-sm text-slate-700 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                    <p className="text-sm text-theme-secondary bg-theme-panel p-3 rounded-xl border border-theme-border">
                       {log.description}
                     </p>
                   </div>
 
                   {/* Icon System Actions */}
-                  <div className="p-4 bg-slate-50 border-t border-slate-100">
+                  <div className="p-4 bg-theme-panel border-t border-theme-border">
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                       <button
                         onClick={() => updateLogStatus(log.placementId, log.id, 'approved')}
-                        className="p-4 bg-white border-2 border-slate-200 text-slate-700 rounded-2xl hover:border-green-500 hover:text-green-600 hover:bg-green-50 transition flex flex-col items-center justify-center gap-2 shadow-sm"
+                        className="p-4 bg-theme-panel border-2 border-theme-border text-theme-secondary rounded-2xl hover:border-green-500 hover:text-green-600 hover:bg-green-50 transition flex flex-col items-center justify-center gap-2 shadow-sm"
                       >
                         <CheckCircle className="w-8 h-8" />
                         <span className="text-sm font-bold">Schválit</span>
                       </button>
                       <button
                         onClick={() => updateLogStatus(log.placementId, log.id, 'rejected')}
-                        className="p-4 bg-white border-2 border-slate-200 text-slate-700 rounded-2xl hover:border-red-500 hover:text-red-600 hover:bg-red-50 transition flex flex-col items-center justify-center gap-2 shadow-sm"
+                        className="p-4 bg-theme-panel border-2 border-theme-border text-theme-secondary rounded-2xl hover:border-red-500 hover:text-red-600 hover:bg-red-50 transition flex flex-col items-center justify-center gap-2 shadow-sm"
                       >
                         <XCircle className="w-8 h-8" />
                         <span className="text-sm font-bold">Zamítnout</span>
@@ -325,7 +325,7 @@ export default function InstitutionDashboard() {
                             updateLogRating(log.placementId, log.id, Number(rating));
                           }
                         }}
-                        className="p-4 bg-white border-2 border-slate-200 text-slate-700 rounded-2xl hover:border-blue-500 hover:text-blue-600 hover:bg-blue-50 transition flex flex-col items-center justify-center gap-2 shadow-sm"
+                        className="p-4 bg-theme-panel border-2 border-theme-border text-theme-secondary rounded-2xl hover:border-blue-500 hover:text-blue-600 hover:bg-blue-50 transition flex flex-col items-center justify-center gap-2 shadow-sm"
                       >
                         <Star className="w-8 h-8" />
                         <span className="text-sm font-bold">Hodnotit</span>
@@ -341,13 +341,13 @@ export default function InstitutionDashboard() {
         {/* Reviewed History */}
         {reviewedLogs.length > 0 && (
           <section className="pt-4">
-            <h2 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4">Historie hodnocení</h2>
+            <h2 className="text-sm font-bold text-theme-muted uppercase tracking-wider mb-4">Historie hodnocení</h2>
             <div className="space-y-3">
               {reviewedLogs.slice(0, 10).map(log => (
-                <div key={log.id} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center opacity-80 hover:opacity-100 transition">
+                <div key={log.id} className="bg-theme-panel p-4 rounded-xl border border-theme-border shadow-sm flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center opacity-80 hover:opacity-100 transition">
                   <div>
-                    <p className="text-sm font-bold text-slate-900">{getStudentNameForLog(log.id, log.placementId, log.studentName)} <span className="text-slate-500 font-normal">({log.hours} hod)</span></p>
-                    <p className="text-xs text-slate-500 truncate max-w-xs">{log.description}</p>
+                    <p className="text-sm font-bold text-theme-primary">{getStudentNameForLog(log.id, log.placementId, log.studentName)} <span className="text-theme-muted font-normal">({log.hours} hod)</span></p>
+                    <p className="text-xs text-theme-muted truncate max-w-xs">{log.description}</p>
                   </div>
 
                   <div className="flex items-center gap-4 w-full sm:w-auto justify-between">

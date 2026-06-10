@@ -1060,7 +1060,7 @@ function CoordinatorDashboardContent() {
                             {item.status === "PENDING_MATCH" ? (
                               <div className="flex flex-col gap-1 min-w-[150px]" onClick={(e) => e.stopPropagation()}>
                                 <select
-                                  className="text-xs p-1 border border-gray-300 rounded dark:bg-slate-800 dark:border-slate-700 dark:text-white"
+                                  className="text-xs p-1 border border-gray-300 rounded bg-theme-panel border-theme-border text-theme-primary"
                                   value={linkingPlacementId === item.id ? matchmakingOrgId : ""}
                                   onChange={(e) => {
                                     setLinkingPlacementId(item.id);
