@@ -10,61 +10,65 @@ import { CheckCircle, XCircle, Star, LogOut, Clock, User, Building } from 'lucid
 import Chatbot from "@/components/Chatbot";
 import QrScanner from "@/components/QrScanner";
 import { PLACEMENT_STATUS_LABELS } from "../../../lib/constants/placementStates";
+import { useHydratedPlacements } from "../../../hooks/useDataAdapters";
 
 export default function InstitutionDashboard() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [placements, setPlacements] = useState<any[]>([]);
-  const [hydratedPlacements, setHydratedPlacements] = useState<any[]>([]);
+  const [userQ, setUserQ] = useState<any>(null);
+
+  useEffect(() => {
+    if (user && user.uid) {
+       setUserQ(query(collection(db, "placements"), where("institutionId", "==", user.uid)));
+    } else {
+       setUserQ(null);
+    }
+  }, [user?.uid]);
+
+  const { placements: hydratedPlacementsRaw, loading: hydratedLoading } = useHydratedPlacements(userQ);
+  const placements = hydratedPlacementsRaw || [];
+  const hydratedPlacements = hydratedPlacementsRaw || [];
   const [timeLogs, setTimeLogs] = useState<any[]>([]);
 
   const router = useRouter();
 
   useEffect(() => {
-    let isMounted = true;
-    const hydratePlacements = async () => {
-      if (!placements || placements.length === 0) {
-        if (isMounted) setHydratedPlacements([]);
-        return;
-      }
+    if (!hydratedPlacements || hydratedPlacements.length === 0) return;
 
-      const newHydrated = await Promise.all(placements.map(async (placement) => {
-        let studentData: any = {};
-        if (placement.studentId) {
-          const studentDoc = await getDoc(doc(db, "users", placement.studentId));
-          if (studentDoc.exists()) {
-            studentData = studentDoc.data();
-          }
-        }
-        return {
-          ...placement,
-          studentName: studentData.displayName || studentData.email || "Student neuveden",
-          studentEmail: studentData.email || 'Email neuveden',
-          major: studentData.major || 'Zaměření neuvedeno'
-        };
-      }));
 
-      if (isMounted) {
-        setHydratedPlacements(newHydrated);
-      }
+    let timeLogsUnsubscribes: (() => void)[] = [];
+    let allLogs: any[] = [];
+
+    hydratedPlacements.forEach(placement => {
+      const logsRef = collection(db, "placements", placement.id, "time_logs");
+      const logsQ = query(logsRef, orderBy("date", "desc"));
+
+      const unsub = onSnapshot(logsQ, (logsSnapshot) => {
+        const logsData = logsSnapshot.docs.map(doc => ({
+          id: doc.id,
+          placementId: placement.id,
+          studentName: placement.studentData?.displayName || placement.studentName || "Student",
+          organizationName: placement.companyData?.name || 'Firma',
+          ...doc.data() as any
+        }));
+
+        allLogs = [...allLogs.filter(log => log.placementId !== placement.id), ...logsData];
+        allLogs.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        setTimeLogs([...allLogs]);
+      });
+      timeLogsUnsubscribes.push(unsub);
+    });
+
+    return () => {
+      timeLogsUnsubscribes.forEach(unsub => unsub());
     };
+  }, [hydratedPlacements]);
 
-    hydratePlacements();
-    return () => { isMounted = false; };
-  }, [placements]);
+
+
 
   useEffect(() => {
-    let unsubscribeFirestore: (() => void) | null = null;
-    let timeLogsUnsubscribes: (() => void)[] = [];
-
     const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
-      if (unsubscribeFirestore) {
-        unsubscribeFirestore();
-        unsubscribeFirestore = null;
-      }
-      timeLogsUnsubscribes.forEach(unsub => unsub());
-      timeLogsUnsubscribes = [];
-
       if (!currentUser) {
         router.push("/login");
         return;
@@ -80,48 +84,7 @@ export default function InstitutionDashboard() {
             router.push('/consent');
             return;
           }
-          // Fetch placements specifically assigned to this institution
-          const placementsRef = collection(db, "placements");
-          const q = query(
-            placementsRef,
-            where("institutionId", "==", currentUser.uid)
-          );
-
-          unsubscribeFirestore = onSnapshot(q, (snapshot) => {
-            const rawPlacements = snapshot.docs.map(d => ({ id: d.id, ...(d.data() as any) }));
-            setPlacements(rawPlacements);
-
-            // Clean up old listeners
-            timeLogsUnsubscribes.forEach(unsub => unsub());
-            timeLogsUnsubscribes = [];
-
-            let allLogs: any[] = [];
-
-            rawPlacements.forEach(placement => {
-              const logsRef = collection(db, "placements", placement.id, "time_logs");
-              const logsQ = query(logsRef, orderBy("date", "desc"));
-
-              const unsub = onSnapshot(logsQ, (logsSnapshot) => {
-                const logsData = logsSnapshot.docs.map(doc => ({
-                  id: doc.id,
-                  placementId: placement.id,
-                  studentName: placement.studentName || "Student",
-                  organizationName: placement.companyData?.name || 'Firma',
-                  ...doc.data() as any
-                }));
-
-                // Update allLogs and set state
-                allLogs = allLogs.filter(l => l.placementId !== placement.id).concat(logsData);
-                // Sort combined logs by date desc
-                allLogs.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-                setTimeLogs([...allLogs]);
-              });
-
-              timeLogsUnsubscribes.push(unsub);
-            });
-
-            setLoading(false);
-          });
+          setLoading(false);
         } else {
           router.push("/dashboard");
         }
@@ -133,8 +96,6 @@ export default function InstitutionDashboard() {
 
     return () => {
       unsubscribeAuth();
-      if (unsubscribeFirestore) unsubscribeFirestore();
-      timeLogsUnsubscribes.forEach(unsub => unsub());
     };
   }, [router]);
 
@@ -250,9 +211,9 @@ export default function InstitutionDashboard() {
                 <div key={placement.id} data-testid="assigned-student-card" className="bg-theme-panel p-4 rounded-xl border border-theme-border shadow-sm flex flex-col gap-2">
                   <div className="flex justify-between items-start">
                     <div>
-                      <div className="font-medium text-theme-primary" data-testid="student-name">{placement.studentName || 'Načítám...'}</div>
+                      <div className="font-medium text-theme-primary" data-testid="student-name">{placement.studentData?.displayName || placement.studentName || 'Načítám...'}</div>
                       <div className="text-xs text-theme-muted font-normal">
-                        {hydratedPlacements.length > 0 ? placement.studentEmail : 'Načítám...'}
+                        {placement.studentData?.email || placement.studentEmail || 'Načítám...'}
                       </div>
                     </div>
                     <span className="text-xs font-bold bg-theme-panel text-theme-secondary px-2 py-1 rounded-full">

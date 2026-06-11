@@ -189,7 +189,7 @@ function CoordinatorDashboardContent() {
       headers.join(","),
       ...placements.map((item) =>
         [
-          `"${item.studentName || ""}"`,
+          `"${(item.studentData?.displayName || item.studentName) || ""}"`,
           `"${item.studentEmail || ""}"`,
           `"${item.organization_name || ""}"`,
           `"${item.organization_ico || ""}"`,
@@ -973,17 +973,17 @@ function CoordinatorDashboardContent() {
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
                             <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold mr-3">
-                              {(item.studentName || item.studentEmail || "?")
+                              {((item.studentData?.displayName || item.studentName) || item.studentEmail || "?")
                                 .charAt(0)
                                 .toUpperCase()}
                             </div>
                             <div>
                               <div className="text-sm font-medium text-gray-900">
-                                {item.studentName
-                                  ? item.studentName
+                                {(item.studentData?.displayName || item.studentName)
+                                  ? (item.studentData?.displayName || item.studentName)
                                   : item.studentEmail}
                               </div>
-                              {item.studentName && (
+                              {(item.studentData?.displayName || item.studentName) && (
                                 <div className="text-xs text-gray-500">
                                   {item.studentEmail}
                                 </div>

@@ -1,0 +1,31 @@
+name: Run Soft-Delete Migration
+
+on:
+  workflow_dispatch:
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '22'
+
+      - name: Install Dependencies
+        run: |
+          cd functions
+          npm install
+
+      - name: Execute Migration Script
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: /tmp/gcp_key.json
+          GCP_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          echo "$GCP_KEY" > /tmp/gcp_key.json
+          cd functions
+          node ../scripts/migrate_soft_delete_fix.js
+          rm -f /tmp/gcp_key.json
