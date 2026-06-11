@@ -15,7 +15,7 @@ import { onAuthStateChanged } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import Chatbot from "@/components/Chatbot";
 import ContractSignature from "@/components/ContractSignature";
-import { Download, Upload, FileText, Trash2, Database } from "lucide-react";
+import { Download, Upload, FileText, Trash2, Database, AlertCircle } from "lucide-react";
 import {
   ref,
   uploadBytes,
@@ -381,6 +381,10 @@ function CoordinatorDashboardContent() {
   // Filter Logic
   const filteredPlacements = placements.filter((item) => {
     if (filterStatus === "ALL") return true;
+    if (filterStatus === "OTHER") {
+       const isMapped = Object.values(COORDINATOR_VIEW_GROUPS).some(group => group.includes(item.status));
+       return !isMapped;
+    }
     return COORDINATOR_VIEW_GROUPS[filterStatus]?.includes(item.status);
   });
 
@@ -938,6 +942,14 @@ function CoordinatorDashboardContent() {
                   {placements.filter((i) => COORDINATOR_VIEW_GROUPS.COMPLETED.includes(i.status)).length}
                 </p>
               </div>
+              <div
+                className={getCardClasses("OTHER")} onClick={() => setFilterStatus("OTHER")}
+              >
+                <p className="text-xs text-gray-500 uppercase font-bold flex items-center gap-1">Ostatní <AlertCircle size={12}/></p>
+                <p className="text-2xl font-bold text-gray-800">
+                  {placements.length - Object.values(COORDINATOR_VIEW_GROUPS).reduce((acc, group) => acc + placements.filter(p => group.includes(p.status)).length, 0)}
+                </p>
+              </div>
             </div>
 
             {/* TABUĽKA */}
@@ -978,10 +990,15 @@ function CoordinatorDashboardContent() {
                                 .toUpperCase()}
                             </div>
                             <div>
-                              <div className="text-sm font-medium text-gray-900">
+                              <div className="text-sm font-medium text-gray-900 flex items-center gap-2">
                                 {(item.studentData?.displayName || item.studentName)
                                   ? (item.studentData?.displayName || item.studentName)
                                   : item.studentEmail}
+                                {item.isOrphaned && (
+                                  <span className="px-2 py-0.5 bg-red-100 text-red-700 text-xs font-semibold rounded-full border border-red-200">
+                                    ⚠️ Osiřelé
+                                  </span>
+                                )}
                               </div>
                               {(item.studentData?.displayName || item.studentName) && (
                                 <div className="text-xs text-gray-500">
