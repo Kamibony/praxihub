@@ -24,13 +24,11 @@ export default function PayrollModule() {
            setRates(currentRates);
         }
 
-        // Fetch valid placements
+        // Fetch valid placements (Fetch ALL, filter in memory for flexibility later, though for payroll we compute from approved logs)
         const placementsRef = collection(db, "placements");
-        const evaluationQ = query(placementsRef, where("status", "==", PlacementStatus.EVALUATION));
-        const closedQ = query(placementsRef, where("status", "==", PlacementStatus.CLOSED));
-
-        const [evalSnap, closedSnap] = await Promise.all([getDocs(evaluationQ), getDocs(closedQ)]);
-        const allPlacements: any[] = [...evalSnap.docs, ...closedSnap.docs].map(d => ({ id: d.id, ...(d.data() as any) }));
+        const q = query(placementsRef);
+        const snap = await getDocs(q);
+        const allPlacements: any[] = snap.docs.map(d => ({ id: d.id, ...(d.data() as any) }));
 
         const groupedData: Record<string, any> = {};
 
@@ -52,12 +50,16 @@ export default function PayrollModule() {
             const userRef = await getDoc(doc(db, "users", placement.studentId));
             const major = userRef.exists() ? userRef.data().major : null;
 
-            // To calculate approved hours, we must fetch time_logs.
+            // To calculate approved hours, we must fetch ALL time_logs and filter.
             const timeLogsRef = collection(db, "placements", placement.id, "time_logs");
-            const approvedLogsQ = query(timeLogsRef, where("status", "==", "approved"));
-            const logsSnap = await getDocs(approvedLogsQ);
+            const logsSnap = await getDocs(timeLogsRef);
 
-            const placementApprovedHours = logsSnap.docs.reduce((sum, logDoc) => sum + (Number(logDoc.data().hours) || 0), 0);
+            const allLogs = logsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() as any }));
+            const approvedLogs = allLogs.filter((log: any) => log.status === 'approved');
+
+            const placementApprovedHours = approvedLogs.reduce((sum, log) => sum + (Number(log.hours) || 0), 0);
+
+            // Note: If we wanted to show pending logs in Payroll, we'd add it to groupedData here.
 
             if (major === "UPV") {
                 groupedData[orgId].approvedHoursUPV += placementApprovedHours;

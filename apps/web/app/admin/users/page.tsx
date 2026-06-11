@@ -318,6 +318,8 @@ export default function UserManagementPage() {
       matchesRole = u.role === 'institution' || u.role === 'company' || u.role === 'mentor';
     } else if (roleFilter === 'coordinator') {
       matchesRole = u.role === 'coordinator' || u.role === 'admin';
+    } else if (roleFilter === 'NONE') {
+      matchesRole = !u.role || u.role === '';
     } else {
       matchesRole = u.role === roleFilter;
     }
@@ -335,7 +337,9 @@ export default function UserManagementPage() {
       case 'coordinator':
       case 'admin':
         return <span className="px-2 py-1 bg-purple-600 text-white rounded-full text-xs font-semibold">Koordinátor</span>;
-      default: return <span className="px-2 py-1 bg-slate-600 text-white rounded-full text-xs font-semibold">{role}</span>;
+      default:
+        if (!role) return <span className="px-2 py-1 bg-red-600 text-white rounded-full text-xs font-semibold">⚠️ Bez role</span>;
+        return <span className="px-2 py-1 bg-slate-600 text-white rounded-full text-xs font-semibold">{role}</span>;
     }
   };
 
@@ -671,6 +675,7 @@ export default function UserManagementPage() {
                 <option value="student">Studenti</option>
                 <option value="institution">Instituce</option>
                 <option value="coordinator">Koordinátoři</option>
+                <option value="NONE">Bez role / Nedokončeno</option>
               </select>
             </div>
           </div>

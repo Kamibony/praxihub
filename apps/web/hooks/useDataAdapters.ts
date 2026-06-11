@@ -39,21 +39,22 @@ export const useHydratedPlacements = (customQuery?: any) => {
                 let studentData = placement.studentId ? userCache[placement.studentId] : null;
                 let institutionData = placement.institutionId ? userCache[placement.institutionId] : null;
 
+                let isOrphaned = false;
                 if (placement.studentId) {
-                    if (studentData) {
-                        if (studentData.isDeleted) {
-                            isDeleted = true;
-                        }
-                    } else {
-                        isDeleted = true;
+                    if (!studentData || studentData.isDeleted) {
+                        isOrphaned = true;
                     }
+                }
+                if (placement.isDeleted === true) {
+                    isDeleted = true;
                 }
 
                 return {
                     ...placement,
                     studentData,
                     institutionData,
-                    isDeleted
+                    isDeleted,
+                    isOrphaned
                 };
             });
 
