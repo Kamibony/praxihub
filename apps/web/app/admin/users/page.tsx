@@ -35,7 +35,7 @@ export default function UserManagementPage() {
             onClick={async () => {
               toast.dismiss(t.id);
               try {
-                await deleteDoc(doc(db, "users", userId));
+                await updateDoc(doc(db, "users", userId), { isDeleted: true, deletedAt: new Date().toISOString() });
                 toast.success("Uživatel smazán.");
               } catch (error) {
                 console.error("Chyba při mazání uživatele:", error);
@@ -269,7 +269,7 @@ export default function UserManagementPage() {
           const data = snapshot.docs.map(doc => ({
             id: doc.id,
             ...doc.data() as any
-          }));
+          })).filter(user => user.isDeleted !== true);
           setUsers(data);
           setLoading(false);
         });
