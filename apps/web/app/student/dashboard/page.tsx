@@ -984,7 +984,7 @@ function StudentDashboardContent() {
 
             <button
               onClick={() => auth.signOut()}
-              className="text-sm px-4 py-3 md:py-2 border border-slate-200 rounded-2xl hover:bg-slate-700/50 transition"
+              className="text-sm px-4 py-3 md:py-2 border border-slate-200 rounded-2xl hover:bg-slate-700/50 transition text-slate-100"
             >
               Odhlásit se
             </button>
@@ -1588,7 +1588,7 @@ function StudentDashboardContent() {
 
                                       <div className="space-y-4 mt-4">
                                         {systemRubricConfig ? (
-                                           <div className="text-sm text-slate-700 bg-slate-800/40 p-4 rounded-xl mb-4 border border-slate-200">
+                                           <div className="text-sm text-slate-100 bg-slate-800/40 p-4 rounded-xl mb-4 border border-slate-700">
                                               <p className="font-bold mb-2 text-indigo-300">{systemRubricConfig.title}</p>
                                               <div className="prose prose-sm prose-invert" dangerouslySetInnerHTML={{ __html: systemRubricConfig.content?.substring(0, 300) + '...' }} />
                                            </div>
