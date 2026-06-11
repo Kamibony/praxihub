@@ -71,7 +71,24 @@ exports.createUserManually = functions.https.onCall(async (data, context) => {
         userData.frameworkAgreementExpiration = null;
     }
 
-    await userRef.set(userData);
+    // Registry Pattern: Ensure absolute uniqueness via a transaction
+    await db.runTransaction(async (transaction) => {
+        const emailRegistryRef = db.collection('used_emails').doc(email.toLowerCase());
+        const emailDoc = await transaction.get(emailRegistryRef);
+
+        if (emailDoc.exists) {
+            throw new functions.https.HttpsError("already-exists", "Uživatel s tímto e-mailem již existuje (registry check).");
+        }
+
+        // Write to registry
+        transaction.set(emailRegistryRef, {
+            uid: userRecord.uid,
+            createdAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+
+        // Write the actual user data
+        transaction.set(userRef, userData);
+    });
 
     return { success: true, uid: userRecord.uid };
   } catch (error) {

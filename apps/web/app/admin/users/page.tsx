@@ -61,6 +61,7 @@ export default function UserManagementPage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState('ALL');
+  const [showDuplicates, setShowDuplicates] = useState(false);
   const [impersonating, setImpersonating] = useState<string | null>(null);
   const [selectedUser, setSelectedUser] = useState<any | null>(null);
 
@@ -307,9 +308,30 @@ export default function UserManagementPage() {
     }
   };
 
+  // Compute duplication frequencies
+  const emailFreq = new Map();
+  const studentIdFreq = new Map();
+  const icoFreq = new Map();
+
+  users.forEach(u => {
+    if (u.email) {
+      const eLower = u.email.toLowerCase();
+      emailFreq.set(eLower, (emailFreq.get(eLower) || 0) + 1);
+    }
+    if (u.studentId) {
+      studentIdFreq.set(u.studentId, (studentIdFreq.get(u.studentId) || 0) + 1);
+    }
+    if (u.ico) {
+      icoFreq.set(u.ico, (icoFreq.get(u.ico) || 0) + 1);
+    }
+  });
+
   const filteredUsers = users.filter(u => {
-    const matchesSearch = (u.name || u.displayName || u.organizationId || u.companyName || u.organizationName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          (u.email || '').toLowerCase().includes(searchQuery.toLowerCase());
+    const sQuery = searchQuery.toLowerCase();
+    const matchesSearch = (u.name || u.displayName || u.organizationId || u.companyName || u.organizationName || '').toLowerCase().includes(sQuery) ||
+                          (u.email || '').toLowerCase().includes(sQuery) ||
+                          (u.studentId || '').toLowerCase().includes(sQuery) ||
+                          (String(u.ico) || '').toLowerCase().includes(sQuery);
 
     let matchesRole = false;
     if (roleFilter === 'ALL') {
@@ -324,8 +346,21 @@ export default function UserManagementPage() {
       matchesRole = u.role === roleFilter;
     }
 
+    const isDuplicate = (u.email && emailFreq.get(u.email.toLowerCase()) > 1) ||
+                        (u.studentId && studentIdFreq.get(u.studentId) > 1) ||
+                        (u.ico && icoFreq.get(u.ico) > 1);
+
+    if (showDuplicates && !isDuplicate) {
+        return false;
+    }
+
     return matchesSearch && matchesRole;
-  });
+  }).map(u => ({
+    ...u,
+    isDuplicate: (u.email && emailFreq.get(u.email.toLowerCase()) > 1) ||
+                 (u.studentId && studentIdFreq.get(u.studentId) > 1) ||
+                 (u.ico && icoFreq.get(u.ico) > 1)
+  }));
 
   const getRoleBadge = (role: string) => {
     switch(role) {
@@ -657,7 +692,7 @@ export default function UserManagementPage() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
               <input
                 type="text"
-                placeholder="Hledat podle jména nebo e-mailu..."
+                placeholder="Hledat podle jména, e-mailu, studentId nebo IČO..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
@@ -677,6 +712,15 @@ export default function UserManagementPage() {
                 <option value="coordinator">Koordinátoři</option>
                 <option value="NONE">Bez role / Nedokončeno</option>
               </select>
+              <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer w-full md:w-auto mt-2 md:mt-0">
+                <input
+                  type="checkbox"
+                  checked={showDuplicates}
+                  onChange={(e) => setShowDuplicates(e.target.checked)}
+                  className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-4 h-4"
+                />
+                Zobrazit duplicity
+              </label>
             </div>
           </div>
 
@@ -701,7 +745,11 @@ export default function UserManagementPage() {
                       onClick={() => setSelectedUser(u)}
                     >
                       <td className="px-6 py-4">
-                        <div className="font-semibold text-slate-900">{u.name || u.displayName || 'Bez jména'}</div>
+                        <div className="font-semibold text-slate-900 flex items-center gap-2">
+                            {u.name || u.displayName || 'Bez jména'}
+                            {u.isDuplicate && <AlertTriangle className="text-red-500" size={14} />}
+                            {u.isDuplicate && <span className="sr-only">Duplicita</span>}
+                        </div>
                         <div className="text-slate-500 text-xs">{u.email || 'Bez e-mailu'}</div>
                       </td>
                       <td className="px-6 py-4">
