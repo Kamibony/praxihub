@@ -130,7 +130,7 @@ export default function LoginPage() {
                 <input
                   type="text"
                   id="identifier"
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition text-slate-900"
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition text-slate-900 dark:bg-slate-800 dark:text-white dark:border-slate-700"
                   placeholder="jmeno@priklad.cz nebo 123456"
                   value={identifier}
                   onChange={(e) => setIdentifier(e.target.value)}

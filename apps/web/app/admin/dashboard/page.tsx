@@ -626,7 +626,7 @@ function CoordinatorDashboardContent() {
                           comm.guarantorName
                         ) : (
                           <select
-                            className="border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            className="bg-white dark:bg-slate-800 border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-900 dark:text-white dark:border-slate-700"
                             value={selectedGuarantors[comm.id] || ""}
                             onChange={(e) =>
                               setSelectedGuarantors((prev) => ({
@@ -799,7 +799,7 @@ function CoordinatorDashboardContent() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         <input
                           type="date"
-                          className="px-3 py-1.5 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                          className="bg-white dark:bg-slate-800 px-3 py-1.5 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm text-slate-900 dark:text-white dark:border-slate-700"
                           value={inst.frameworkAgreementExpiration || ""}
                           onChange={(e) =>
                             updateFrameworkAgreement(inst.id, e.target.value)
@@ -1060,7 +1060,7 @@ function CoordinatorDashboardContent() {
                             {item.status === "PENDING_MATCH" ? (
                               <div className="flex flex-col gap-1 min-w-[150px]" onClick={(e) => e.stopPropagation()}>
                                 <select
-                                  className="text-xs p-1 border border-gray-300 rounded bg-theme-panel border-theme-border text-theme-primary"
+                                  className="text-xs p-1 border border-gray-300 rounded bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white bg-white dark:bg-slate-800 text-slate-900 dark:text-white border-slate-300 dark:border-slate-700"
                                   value={linkingPlacementId === item.id ? matchmakingOrgId : ""}
                                   onChange={(e) => {
                                     setLinkingPlacementId(item.id);

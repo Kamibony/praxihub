@@ -711,7 +711,7 @@ ${currentRulesObj.kompetencni_ramec}
                 <div>
                   <label className="block text-sm font-medium text-theme-primary mb-2">Metodika</label>
                   <textarea
-                    className="w-full h-32 p-4 bg-theme-panel border border-theme-border text-theme-primary rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none font-mono text-sm"
+                    className="w-full h-32 p-4 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none font-mono text-sm"
                     value={activeDept === 'UPV' ? rulesUpv.metodika : rulesKpv.metodika}
                     onChange={(e) => activeDept === 'UPV' ? setRulesUpv({...rulesUpv, metodika: e.target.value}) : setRulesKpv({...rulesKpv, metodika: e.target.value})}
                   />
@@ -719,7 +719,7 @@ ${currentRulesObj.kompetencni_ramec}
                 <div>
                   <label className="block text-sm font-medium text-theme-primary mb-2">Uznatelnost</label>
                   <textarea
-                    className="w-full h-32 p-4 bg-theme-panel border border-theme-border text-theme-primary rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none font-mono text-sm"
+                    className="w-full h-32 p-4 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none font-mono text-sm"
                     value={activeDept === 'UPV' ? rulesUpv.uznatelnost : rulesKpv.uznatelnost}
                     onChange={(e) => activeDept === 'UPV' ? setRulesUpv({...rulesUpv, uznatelnost: e.target.value}) : setRulesKpv({...rulesKpv, uznatelnost: e.target.value})}
                   />
@@ -727,7 +727,7 @@ ${currentRulesObj.kompetencni_ramec}
                 <div>
                   <label className="block text-sm font-medium text-theme-primary mb-2">Kompetenční rámec</label>
                   <textarea
-                    className="w-full h-32 p-4 bg-theme-panel border border-theme-border text-theme-primary rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none font-mono text-sm"
+                    className="w-full h-32 p-4 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none font-mono text-sm"
                     value={activeDept === 'UPV' ? rulesUpv.kompetencni_ramec : rulesKpv.kompetencni_ramec}
                     onChange={(e) => activeDept === 'UPV' ? setRulesUpv({...rulesUpv, kompetencni_ramec: e.target.value}) : setRulesKpv({...rulesKpv, kompetencni_ramec: e.target.value})}
                   />
@@ -752,7 +752,7 @@ ${currentRulesObj.kompetencni_ramec}
               <p className="text-sm text-theme-muted mb-4">Vyzkoušejte, jak AI ohodnotí text podle aktuálních (neuložených) pravidel výše.</p>
 
               <textarea
-                className="w-full h-32 p-3 bg-theme-panel border border-theme-border text-theme-primary rounded-lg mb-4 resize-none text-sm"
+                className="w-full h-32 p-3 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white rounded-lg mb-4 resize-none text-sm"
                 placeholder="Zadejte testovací text studentské reflexe..."
                 value={testReflection}
                 onChange={(e) => setTestReflection(e.target.value)}

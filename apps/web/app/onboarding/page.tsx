@@ -161,7 +161,7 @@ export default function OnboardingPage() {
                     <label className="block mb-2 text-sm font-semibold text-slate-700">Jméno</label>
                     <input
                       type="text"
-                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-900 transition"
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-900 transition dark:bg-slate-800 dark:text-white dark:border-slate-700"
                       placeholder="Jan"
                       value={firstName}
                       onChange={(e) => setFirstName(e.target.value)}
@@ -172,7 +172,7 @@ export default function OnboardingPage() {
                     <label className="block mb-2 text-sm font-semibold text-slate-700">Příjmení</label>
                     <input
                       type="text"
-                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-900 transition"
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-900 transition dark:bg-slate-800 dark:text-white dark:border-slate-700"
                       placeholder="Novák"
                       value={lastName}
                       onChange={(e) => setLastName(e.target.value)}
