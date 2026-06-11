@@ -258,7 +258,7 @@ export default function GenerateContractPage() {
                         value={formData.studentName}
                         onChange={handleChange}
                         placeholder="Zadejte své jméno"
-                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-900 transition opacity-70 cursor-not-allowed"
+                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-900 transition opacity-70 cursor-not-allowed dark:bg-slate-800 dark:text-white dark:border-slate-700"
                         required
                         readOnly
                       />
@@ -354,7 +354,7 @@ export default function GenerateContractPage() {
                         value={formData.position}
                         onChange={handleChange}
                         placeholder="např. IT Stážista"
-                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-900 transition"
+                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-900 transition dark:bg-slate-800 dark:text-white dark:border-slate-700"
                         required
                       />
                     </div>
@@ -366,7 +366,7 @@ export default function GenerateContractPage() {
                           name="startDate"
                           value={formData.startDate}
                           onChange={handleChange}
-                          className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-900 transition"
+                          className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-900 transition dark:bg-slate-800 dark:text-white dark:border-slate-700"
                           required
                         />
                       </div>
@@ -377,7 +377,7 @@ export default function GenerateContractPage() {
                           name="endDate"
                           value={formData.endDate}
                           onChange={handleChange}
-                          className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-900 transition"
+                          className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-900 transition dark:bg-slate-800 dark:text-white dark:border-slate-700"
                           required
                         />
                       </div>

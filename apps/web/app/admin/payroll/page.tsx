@@ -118,11 +118,14 @@ export default function PayrollModule() {
     <div className="min-h-screen bg-transparent">
       <Navbar />
       <div className="pt-24 pb-12 px-6 max-w-7xl mx-auto">
-        <div className="flex justify-between items-start mb-6">
-          <h1 className="text-3xl font-bold font-sans text-theme-primary">Mzdový modul (Payroll)</h1>
+        <div className="card-glass p-6 rounded-2xl border border-theme-border flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+          <div>
+            <h1 className="text-3xl font-bold font-sans text-slate-900 dark:text-white">Mzdový modul (Payroll)</h1>
+            <p className="text-slate-600 dark:text-slate-400 mt-2">Přehled vyplacených odměn organizacím.</p>
+          </div>
           <Link
             href="/admin/dashboard"
-            className="text-sm font-medium text-theme-secondary hover:text-blue-400 transition"
+            className="text-sm font-medium text-slate-600 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 transition bg-white/50 dark:bg-slate-800/50 px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700"
           >
             &larr; Zpět na Dashboard
           </Link>
