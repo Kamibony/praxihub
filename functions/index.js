@@ -2117,8 +2117,27 @@ exports.fetchAresAndLink = functions.https.onCall(async (data, context) => {
         };
       }
 
-      const newOrgRef = await db.collection("organizations").add(orgData);
+      // Registry Pattern: Ensure absolute uniqueness via a transaction
+      const newOrgRef = db.collection("organizations").doc();
       orgId = newOrgRef.id;
+
+      await db.runTransaction(async (transaction) => {
+        const icoRegistryRef = db.collection('used_icos').doc(String(ico).trim());
+        const icoDoc = await transaction.get(icoRegistryRef);
+
+        if (icoDoc.exists) {
+            throw new functions.https.HttpsError("already-exists", "Organizace s tímto IČO již existuje (registry check).");
+        }
+
+        // Write to registry
+        transaction.set(icoRegistryRef, {
+            orgId: orgId,
+            createdAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+
+        // Write the actual organization data
+        transaction.set(newOrgRef, orgData);
+      });
     } else {
       orgId = orgQuery.docs[0].id;
       orgData = orgQuery.docs[0].data();
