@@ -25,7 +25,6 @@ export default function DocumentCenter() {
   const [testReflection, setTestReflection] = useState('');
 
   const [activeTab, setActiveTab] = useState<'AI' | 'IMPORT' | 'TEMPLATES' | 'COMPLIANCE'>('AI');
-  const [runningMigration, setRunningMigration] = useState(false);
   const [parsingPdf, setParsingPdf] = useState(false);
   const [importFormat, setImportFormat] = useState('UPV');
   const [importing, setImporting] = useState(false);
@@ -343,25 +342,6 @@ ${currentRulesObj.kompetencni_ramec}
     }
   };
 
-  const handleMigration = async () => {
-    if (!confirm("Are you sure you want to run the document storage migration? This will migrate all legacy documents to the new secure global storage and permanently delete legacy paths.")) return;
-    setRunningMigration(true);
-    try {
-      const migrateFn = httpsCallable(functions, 'migrateStorage');
-      const res = await migrateFn();
-      const data = res.data as { success: boolean; migratedCount: number };
-      toast.success(`Migrace úspěšná! Přesunuto souborů: ${data.migratedCount}`);
-      // Also refetch docs to update UI if they are on current tab
-      if (activeTab === 'TEMPLATES') fetchDocs('templates');
-      if (activeTab === 'COMPLIANCE') fetchDocs('compliance');
-      if (activeTab === 'AI') fetchDocs('ai_rules');
-    } catch (e: any) {
-      console.error(e);
-      toast.error(`Chyba při migraci: ${e.message}`);
-    }
-    setRunningMigration(false);
-  };
-
   const handlePdfAIImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -501,13 +481,6 @@ ${currentRulesObj.kompetencni_ramec}
         </div>
         <div className="flex justify-between items-center mb-8">
           <p className="text-theme-secondary">Centrální správa dokumentů, šablon a AI metodiky.</p>
-          <button
-            onClick={handleMigration}
-            disabled={runningMigration}
-            className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition disabled:opacity-50"
-          >
-            {runningMigration ? "Probíhá migrace..." : "🚨 RUN MIGRATION"}
-          </button>
         </div>
 
 
