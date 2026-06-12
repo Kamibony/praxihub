@@ -1,7 +1,8 @@
 const admin = require("firebase-admin");
 
 admin.initializeApp({
-  projectId: "praxihub-app"
+  projectId: "praxihub-app",
+  storageBucket: "praxihub-app.appspot.com"
 });
 
 const auth = admin.auth();
@@ -70,20 +71,39 @@ async function emptyStorageFolder(folderName) {
 async function wipe() {
   console.log("Starting Secure Cascading Wipe...");
   try {
-     console.log("1. Wiping time_logs subcollections...");
-     const placements = await db.collection("placements").get();
-     for (const doc of placements.docs) {
-         await deleteCollection(`placements/${doc.id}/time_logs`);
-     }
-
-     console.log("2. Wiping placements collection...");
-     await deleteCollection("placements");
-
-     console.log("3. Wiping Storage Artifacts...");
+     console.log("1. Wiping Storage Artifacts...");
      await emptyStorageFolder("contracts/");
      await emptyStorageFolder("certificates/");
 
-     console.log("4. Wiping Auth Users (except admins)...");
+     console.log("2. Wiping subcollections...");
+     const placements = await db.collection("placements").get();
+     for (const doc of placements.docs) {
+         await deleteCollection(`placements/${doc.id}/time_logs`);
+         await deleteCollection(`placements/${doc.id}/rubrics`);
+     }
+
+     console.log("3. Wiping Core Entity collections...");
+     await deleteCollection("placements");
+     await deleteCollection("users");
+     await deleteCollection("organizations");
+
+     console.log("4. Wiping Ancillary collections...");
+     await deleteCollection("archived_placements");
+     await deleteCollection("public_portfolios");
+     await deleteCollection("commissions");
+     await deleteCollection("research_telemetry");
+     await deleteCollection("audit_logs");
+     await deleteCollection("import_logs");
+
+     console.log("5. Wiping Registry collections...");
+     await deleteCollection("used_emails");
+     await deleteCollection("used_student_ids");
+     await deleteCollection("used_icos");
+
+     console.log("6. Wiping Config collections...");
+     await deleteCollection("system_configs");
+
+     console.log("7. Wiping Auth Users (except admins)...");
      await deleteUsers();
 
      console.log("Cascading Wipe completed successfully.");

@@ -1,9 +1,17 @@
 const admin = require("firebase-admin");
 
 
-admin.initializeApp({
-  projectId: "praxihub-app"
-});
+if (process.env.FIRESTORE_EMULATOR_HOST) {
+    console.log(`Connecting to Firestore emulator at ${process.env.FIRESTORE_EMULATOR_HOST}`);
+}
+
+const config = {};
+if (process.env.FIRESTORE_EMULATOR_HOST && !process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+    config.projectId = 'demo-project';
+} else {
+    config.projectId = 'praxihub-app';
+}
+admin.initializeApp(config);
 
 const auth = admin.auth();
 const db = admin.firestore();
