@@ -1,0 +1,44 @@
+Starting Deduplication Script... Mode: DRY RUN
+
+
+Analyzing group: Email: test@example.com
+Involved UIDs: dup1, dup2
+  -> Winner: dup1 (Placements: 1, LastSignIn: 1970-01-01T00:00:00.000Z, Completeness: 3, Created: 1970-01-01T00:00:00.000Z)
+  -> Loser: dup2 (Placements: 0, LastSignIn: 1970-01-01T00:00:00.000Z, Completeness: 3, Created: 1970-01-01T00:00:00.000Z)
+     - Migrating 0 placements and 0 audit logs from dup2 to dup1
+     - Deleting profile dup2
+  => [DRY RUN] Would merge and purge group: Email: test@example.com
+
+Analyzing group: Email: duplicate@example.com
+Involved UIDs: user_dup_1, user_dup_2
+  -> Winner: user_dup_1 (Placements: 1, LastSignIn: 1970-01-01T00:00:00.000Z, Completeness: 4, Created: 1970-01-01T00:00:00.000Z)
+  -> Loser: user_dup_2 (Placements: 0, LastSignIn: 1970-01-01T00:00:00.000Z, Completeness: 4, Created: 1970-01-01T00:00:00.000Z)
+     - Migrating 0 placements and 0 audit logs from user_dup_2 to user_dup_1
+     - Deleting profile user_dup_2
+  => [DRY RUN] Would merge and purge group: Email: duplicate@example.com
+
+Analyzing group: StudentId: 123
+Involved UIDs: dup1, dup2
+  -> Winner: dup1 (Placements: 1, LastSignIn: 1970-01-01T00:00:00.000Z, Completeness: 3, Created: 1970-01-01T00:00:00.000Z)
+  -> Loser: dup2 (Placements: 0, LastSignIn: 1970-01-01T00:00:00.000Z, Completeness: 3, Created: 1970-01-01T00:00:00.000Z)
+     - Migrating 0 placements and 0 audit logs from dup2 to dup1
+     - Deleting profile dup2
+  => [DRY RUN] Would merge and purge group: StudentId: 123
+
+Analyzing group: StudentId: S123
+Involved UIDs: user_dup_1, user_dup_2
+  -> Winner: user_dup_1 (Placements: 1, LastSignIn: 1970-01-01T00:00:00.000Z, Completeness: 4, Created: 1970-01-01T00:00:00.000Z)
+  -> Loser: user_dup_2 (Placements: 0, LastSignIn: 1970-01-01T00:00:00.000Z, Completeness: 4, Created: 1970-01-01T00:00:00.000Z)
+     - Migrating 0 placements and 0 audit logs from user_dup_2 to user_dup_1
+     - Deleting profile user_dup_2
+  => [DRY RUN] Would merge and purge group: StudentId: S123
+
+Analyzing group: StudentId: S456
+Involved UIDs: user_dup_3, user_dup_4
+  -> Winner: user_dup_3 (Placements: 0, LastSignIn: 1970-01-01T00:00:00.000Z, Completeness: 4, Created: 1970-01-01T00:00:00.000Z)
+  -> Loser: user_dup_4 (Placements: 0, LastSignIn: 1970-01-01T00:00:00.000Z, Completeness: 4, Created: 1970-01-01T00:00:00.000Z)
+     - Migrating 0 placements and 0 audit logs from user_dup_4 to user_dup_3
+     - Deleting profile user_dup_4
+  => [DRY RUN] Would merge and purge group: StudentId: S456
+
+Finished deduplication process.
